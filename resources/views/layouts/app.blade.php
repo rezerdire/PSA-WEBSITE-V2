@@ -6,6 +6,8 @@
 
         {{-- icons --}}
         <script src="https://unpkg.com/lucide@latest"></script> 
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
         <title>@yield('title')</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
