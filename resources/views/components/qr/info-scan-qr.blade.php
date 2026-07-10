@@ -27,8 +27,8 @@ new class extends Component
         Point a member's QR code at the camera to scan it.
     </p>
 
-    {{-- Camera picker: desktop shows a device list, mobile shows a simple front/back toggle --}}
-    <div class="flex items-center gap-2 mb-3" x-show="!isMobile">
+    {{-- Camera picker: single dropdown listing every camera the browser can see --}}
+    <div class="flex items-center gap-2 mb-3">
         <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
             Camera
         </label>
@@ -45,55 +45,6 @@ new class extends Component
                 <option :value="cam.deviceId" x-text="cam.label"></option>
             </template>
         </select>
-    </div>
-
-    <div x-show="isMobile" x-cloak>
-        <div class="flex items-center gap-2 mb-3">
-            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
-                Camera
-            </label>
-            <div class="flex-1 grid grid-cols-2 gap-1.5">
-                <button
-                    type="button"
-                    @click="setFacingMode('environment')"
-                    :class="useExternalCamera ? 'bg-white text-slate-400 border-slate-200' : (facingMode === 'environment'
-                        ? 'bg-[#000066] text-white border-[#000066]'
-                        : 'bg-white text-slate-500 border-slate-200')"
-                    class="text-[13px] font-semibold py-2 rounded-[10px] border transition-colors"
-                >
-                    Back
-                </button>
-                <button
-                    type="button"
-                    @click="setFacingMode('user')"
-                    :class="useExternalCamera ? 'bg-white text-slate-400 border-slate-200' : (facingMode === 'user'
-                        ? 'bg-[#000066] text-white border-[#000066]'
-                        : 'bg-white text-slate-500 border-slate-200')"
-                    class="text-[13px] font-semibold py-2 rounded-[10px] border transition-colors"
-                >
-                    Front
-                </button>
-            </div>
-        </div>
-
-        {{-- External/extra cameras (e.g. Elgato capture card, OTG USB webcam) —
-             only appears if the device actually reports more than the standard
-             front/back pair. --}}
-        <div class="flex items-center gap-2 mb-3" x-show="externalCameras.length > 0" x-cloak>
-            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
-                External
-            </label>
-            <select
-                x-model="selectedExternalId"
-                @change="useExternalCameraDevice()"
-                class="flex-1 border border-slate-200 rounded-[10px] px-3 py-2 text-[13px] text-[#000066] bg-white outline-none focus:border-[#000066]"
-            >
-                <option value="">Use Front / Back above</option>
-                <template x-for="cam in externalCameras" :key="cam.deviceId">
-                    <option :value="cam.deviceId" x-text="cam.label"></option>
-                </template>
-            </select>
-        </div>
     </div>
 
     {{-- Scanner card --}}
@@ -198,14 +149,8 @@ new class extends Component
     function qrScanner() {
         return {
             cameras: [],
-            externalCameras: [],
-            backCamera: null,
-            frontCamera: null,
             selectedCameraId: null,
-            selectedExternalId: '',
-            useExternalCamera: false,
             isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
-            facingMode: 'environment', // mobile default: back camera
             decodedText: null,
             manualInput: '',
             stream: null,
@@ -233,20 +178,8 @@ new class extends Component
 
                     if (this.cameras.length === 0) return;
 
-                    // Split into standard front/back lenses vs anything else
-                    // (external UVC webcams, Elgato capture cards, extra
-                    // telephoto/wide lenses on multi-camera phones, etc.)
-                    this.backCamera = this.cameras.find(c => /back|rear|environment/i.test(c.label)) || null;
-                    this.frontCamera = this.cameras.find(c => /front|user|face/i.test(c.label)) || null;
-
-                    this.externalCameras = this.cameras.filter(c =>
-                        c !== this.backCamera && c !== this.frontCamera
-                    );
-
-                    // Desktop dropdown default selection
-                    if (!this.isMobile) {
-                        this.selectedCameraId = (this.backCamera || this.cameras[0]).deviceId;
-                    }
+                    const back = this.cameras.find(c => /back|rear|environment/i.test(c.label));
+                    this.selectedCameraId = (back || this.cameras[0]).deviceId;
                 } catch (err) {
                     console.error('Could not access camera list:', err);
                 }
@@ -278,18 +211,9 @@ new class extends Component
             async startCamera() {
                 this.stopCamera();
 
-                let videoConstraints;
-
-                if (this.isMobile && this.useExternalCamera && this.selectedExternalId) {
-                    videoConstraints = { deviceId: { exact: this.selectedExternalId } };
-                } else if (this.isMobile) {
-                    const target = this.facingMode === 'user' ? this.frontCamera : this.backCamera;
-                    videoConstraints = target
-                        ? { deviceId: { exact: target.deviceId } }
-                        : { facingMode: { ideal: this.facingMode } }; // fallback if device wasn't identifiable
-                } else {
-                    videoConstraints = { deviceId: this.selectedCameraId ? { exact: this.selectedCameraId } : undefined };
-                }
+                const videoConstraints = {
+                    deviceId: this.selectedCameraId ? { exact: this.selectedCameraId } : undefined,
+                };
 
                 try {
                     this.stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
@@ -310,23 +234,6 @@ new class extends Component
             },
 
             switchCamera() {
-                this.startCamera();
-            },
-
-            setFacingMode(mode) {
-                this.useExternalCamera = false;
-                this.selectedExternalId = '';
-                this.facingMode = mode;
-                this.startCamera();
-            },
-
-            useExternalCameraDevice() {
-                if (!this.selectedExternalId) {
-                    this.useExternalCamera = false;
-                    this.startCamera();
-                    return;
-                }
-                this.useExternalCamera = true;
                 this.startCamera();
             },
 
