@@ -1,0 +1,27 @@
+<?php
+
+use Livewire\Component;
+
+new class extends Component
+{
+   
+};
+?>
+
+@section('title', 'Event Registration - PSA')
+@extends('layouts.app')
+@section('content')
+
+<x-about-us-header
+    title="Midyear Convention 2026"
+    description="Convention & Scientific Meeting" />
+<x-event-registration.event-registration-layout>
+{{-- Main Content --}}
+<livewire:event-registration.psa-checker />
+            {{-- Registration Form Card --}}
+            <x-event-registration.form-layout>
+                <livewire:event-registration.event-reg-form />
+            </x-event-registration.event-registration-layout>
+
+</x-event-registration.event-registration-layout>
+@endsection 

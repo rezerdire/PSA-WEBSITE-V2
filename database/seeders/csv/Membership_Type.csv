@@ -1,0 +1,19 @@
+﻿Memtypecode,Memtype,stat
+RM,"Regular Member      ",1
+LM,"Lifetime Member         ",1
+TM,"Trainee Member      ",1
+HM,"Honorary Member     ",1
+AM,"Affiliate Member    ",1
+OT,OTHERS,1
+NE,"NEW ",0
+RD,Regular Member-Def,1
+LD,Lifetime Member-DEF,1
+TD,Trainee Member-DEF,1
+RE,Regular Member-EB,1
+LE,Lifetime Member-EB,1
+TE,Trainee Member-EB,1
+EM,Emeritus Member,1
+R2,Regular Member,0
+L2,Lifetime Member,0
+R2,Regular Member 2,1
+L2,Lifetime Member 2,1
