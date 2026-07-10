@@ -12,6 +12,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('admin.registrations.export-pdf');
 });
 
+Route::get('/info-scan-qr', function () {
+    return view('components.qr.info-scan-qr');
+})->name('info-scan-qr');
 
 Route::get('/Gallery', function () {
     $events = GalleryEvent::with('days')->get();
