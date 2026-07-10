@@ -158,12 +158,14 @@ new class extends Component {
         return;
     }
 
-    $discountPath = null;
-    if ($this->discountType === 'senior_disc' && $this->discountImg) {
-        $discountPath = $this->discountImg->store('registrations/discount-ids', 'public');
-    }
 
-    $paymentPath = $this->paymentProof->store('registrations/payment-proofs', 'public');
+    // where the uploaded files will be stored
+        $discountPath = null;
+        if ($this->discountType === 'senior_disc' && $this->discountImg) {
+            $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
+        }
+
+        $paymentPath = $this->paymentProof->store('Registration/ProofofPayment', 'uploads');
 
     // If a Rejected registration already exists for this PSA ID, update that
     // same row back to Pending instead of creating a duplicate record.
