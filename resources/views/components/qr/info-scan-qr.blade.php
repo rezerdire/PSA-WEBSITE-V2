@@ -7,16 +7,14 @@ new class extends Component
     //
 };
 ?>
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 @section('title', 'Event Registration - PSA')
 @extends('layouts.app')
 @section('content')
  
 
-<div
-    x-data="qrScanner()"
-    x-init="init()"
-    class="w-full max-w-md mx-auto py-12 px-4"
->
+<div x-data="qrScanner()"
+    x-init="init()" class="w-full max-w-md mx-auto py-12 px-4">
     <p class="font-mono text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
         PSA · Convention Access
     </p>
@@ -102,25 +100,9 @@ new class extends Component
             <span :class="decodedText ? 'text-[#0F9D6C] font-semibold' : 'text-slate-500'" x-text="decodedText ? 'QR code scanned' : 'Scanning for QR code…'"></span>
         </div>
 
-        {{-- manual fallback --}}
-        <div class="flex gap-2 mt-4">
-            <input
-                type="text"
-                x-model="manualInput"
-                @keydown.enter="submitManual()"
-                placeholder="or type Member ID manually"
-                class="flex-1 border border-slate-200 rounded-[10px] px-3 py-2.5 font-mono text-[13px] outline-none focus:border-[#000066]"
-            >
-            <button
-                @click="submitManual()"
-                class="bg-[#000066] text-white font-semibold text-[13px] px-4 rounded-[10px]"
-            >
-                Find
-            </button>
-        </div>
+       
     </div>
 
-    {{-- decoded output preview --}}
     <div x-show="decodedText" x-cloak class="mt-4 bg-white border border-slate-200 rounded-2xl p-5">
         <p class="text-[11px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Decoded value</p>
         <p class="font-mono text-sm text-[#000066] break-all" x-text="decodedText"></p>
@@ -303,3 +285,4 @@ new class extends Component
         };
     }
 </script>
+
