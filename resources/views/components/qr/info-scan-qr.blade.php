@@ -199,6 +199,8 @@ new class extends Component
         return {
             cameras: [],
             externalCameras: [],
+            backCamera: null,
+            frontCamera: null,
             selectedCameraId: null,
             selectedExternalId: '',
             useExternalCamera: false,
@@ -210,34 +212,43 @@ new class extends Component
             scanLoopId: null,
 
             async init() {
-                if (this.isMobile) {
-                    await this.detectExternalCameras();
-                    await this.startCamera();
-                } else {
-                    await this.loadCameras();
-                    if (this.selectedCameraId) await this.startCamera();
-                }
+                await this.loadCameras();
+                if (this.selectedCameraId) await this.startCamera();
             },
 
-            async detectExternalCameras() {
-                // Ask for permission once (labels stay blank until granted),
-                // then look for any camera that ISN'T a standard front/back
-                // lens — e.g. an Elgato capture card or OTG USB webcam.
+            async loadCameras() {
                 try {
+                    // Request permission once so device labels are populated
+                    // (without this, labels come back blank on most browsers).
                     const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     tempStream.getTracks().forEach(t => t.stop());
 
                     const devices = await navigator.mediaDevices.enumerateDevices();
-                    const videoInputs = devices.filter(d => d.kind === 'videoinput');
-
-                    this.externalCameras = videoInputs
-                        .filter(d => !/back|rear|environment|front|user|face/i.test(d.label))
+                    this.cameras = devices
+                        .filter(d => d.kind === 'videoinput')
                         .map((d, i) => ({
                             deviceId: d.deviceId,
-                            label: d.label || `External camera ${i + 1}`,
+                            label: d.label || `Camera ${i + 1}`,
                         }));
+
+                    if (this.cameras.length === 0) return;
+
+                    // Split into standard front/back lenses vs anything else
+                    // (external UVC webcams, Elgato capture cards, extra
+                    // telephoto/wide lenses on multi-camera phones, etc.)
+                    this.backCamera = this.cameras.find(c => /back|rear|environment/i.test(c.label)) || null;
+                    this.frontCamera = this.cameras.find(c => /front|user|face/i.test(c.label)) || null;
+
+                    this.externalCameras = this.cameras.filter(c =>
+                        c !== this.backCamera && c !== this.frontCamera
+                    );
+
+                    // Desktop dropdown default selection
+                    if (!this.isMobile) {
+                        this.selectedCameraId = (this.backCamera || this.cameras[0]).deviceId;
+                    }
                 } catch (err) {
-                    console.error('Could not check for external cameras:', err);
+                    console.error('Could not access camera list:', err);
                 }
             },
 
@@ -268,10 +279,14 @@ new class extends Component
                 this.stopCamera();
 
                 let videoConstraints;
+
                 if (this.isMobile && this.useExternalCamera && this.selectedExternalId) {
                     videoConstraints = { deviceId: { exact: this.selectedExternalId } };
                 } else if (this.isMobile) {
-                    videoConstraints = { facingMode: { ideal: this.facingMode } };
+                    const target = this.facingMode === 'user' ? this.frontCamera : this.backCamera;
+                    videoConstraints = target
+                        ? { deviceId: { exact: target.deviceId } }
+                        : { facingMode: { ideal: this.facingMode } }; // fallback if device wasn't identifiable
                 } else {
                     videoConstraints = { deviceId: this.selectedCameraId ? { exact: this.selectedCameraId } : undefined };
                 }
@@ -301,10 +316,6 @@ new class extends Component
             setFacingMode(mode) {
                 this.useExternalCamera = false;
                 this.selectedExternalId = '';
-                if (this.facingMode === mode && !this.useExternalCamera) {
-                    this.startCamera();
-                    return;
-                }
                 this.facingMode = mode;
                 this.startCamera();
             },
