@@ -5,3 +5,11 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+    @keyframes sweep {
+        0%, 100% { top: 18%; opacity: 0.9; }
+        50% { top: 82%; opacity: 0.5; }
+    }
+    @keyframes pulseCorner {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
+    }

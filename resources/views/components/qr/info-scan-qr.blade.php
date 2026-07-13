@@ -7,14 +7,23 @@ new class extends Component
     //
 };
 ?>
+{{-- jsQR is a plain global-attaching library, safe to load as a normal script tag --}}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+{{-- app.js (bundled via Vite) now imports qr-script.js internally and
+     attaches window.qrScanner — no separate <script src="qr-script.js">
+     tag needed here anymore. --}}
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 @section('title', 'Event Registration - PSA')
 @extends('layouts.app')
 @section('content')
- 
 
+{{-- wire:ignore tells Livewire's morph step to leave this whole subtree
+     alone on re-render, so Alpine's component state (decodedText, cameras,
+     etc.) never gets wiped out from under it. --}}
 <div x-data="qrScanner()"
-    x-init="init()" class="w-full max-w-md mx-auto py-12 px-4">
+    x-init="init()" wire:ignore class="w-full max-w-md mx-auto py-12 px-4">
     <p class="font-mono text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
         PSA · Convention Access
     </p>
@@ -100,7 +109,7 @@ new class extends Component
             <span :class="decodedText ? 'text-[#0F9D6C] font-semibold' : 'text-slate-500'" x-text="decodedText ? 'QR code scanned' : 'Scanning for QR code…'"></span>
         </div>
 
-       
+
     </div>
 
     <div x-show="decodedText" x-cloak class="mt-4 bg-white border border-slate-200 rounded-2xl p-5">
@@ -114,175 +123,3 @@ new class extends Component
         </button>
     </div>
 </div>
-
-<style>
-    @keyframes sweep {
-        0%, 100% { top: 18%; opacity: 0.9; }
-        50% { top: 82%; opacity: 0.5; }
-    }
-    @keyframes pulseCorner {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.35; }
-    }
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-<script>
-    function qrScanner() {
-        return {
-            cameras: [],
-            selectedCameraId: null,
-            isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
-            decodedText: null,
-            manualInput: '',
-            stream: null,
-            scanLoopId: null,
-
-            async init() {
-                await this.loadCameras();
-                if (this.selectedCameraId) await this.startCamera();
-            },
-
-            async loadCameras() {
-                try {
-                    // Request permission once so device labels are populated
-                    // (without this, labels come back blank on most browsers).
-                    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    tempStream.getTracks().forEach(t => t.stop());
-
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    this.cameras = devices
-                        .filter(d => d.kind === 'videoinput')
-                        .map((d, i) => ({
-                            deviceId: d.deviceId,
-                            label: d.label || `Camera ${i + 1}`,
-                        }));
-
-                    if (this.cameras.length === 0) return;
-
-                    const back = this.cameras.find(c => /back|rear|environment/i.test(c.label));
-                    this.selectedCameraId = (back || this.cameras[0]).deviceId;
-                } catch (err) {
-                    console.error('Could not access camera list:', err);
-                }
-            },
-
-            async loadCameras() {
-                try {
-                    // Request permission once so device labels are populated.
-                    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    tempStream.getTracks().forEach(t => t.stop());
-
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    this.cameras = devices
-                        .filter(d => d.kind === 'videoinput')
-                        .map((d, i) => ({
-                            deviceId: d.deviceId,
-                            label: d.label || `Camera ${i + 1}`,
-                        }));
-
-                    if (this.cameras.length === 0) return;
-
-                    const back = this.cameras.find(c => /back|rear|environment/i.test(c.label));
-                    this.selectedCameraId = (back || this.cameras[0]).deviceId;
-                } catch (err) {
-                    console.error('Could not access camera list:', err);
-                }
-            },
-
-            async startCamera() {
-                this.stopCamera();
-
-                const videoConstraints = {
-                    deviceId: this.selectedCameraId ? { exact: this.selectedCameraId } : undefined,
-                };
-
-                try {
-                    this.stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
-                    this.$refs.video.srcObject = this.stream;
-                    await this.$refs.video.play();
-                    this.scanLoop();
-                } catch (err) {
-                    console.error('Camera start failed:', err);
-                }
-            },
-
-            stopCamera() {
-                if (this.scanLoopId) cancelAnimationFrame(this.scanLoopId);
-                if (this.stream) {
-                    this.stream.getTracks().forEach(t => t.stop());
-                    this.stream = null;
-                }
-            },
-
-            switchCamera() {
-                this.startCamera();
-            },
-
-            scanLoop() {
-                const video = this.$refs.video;
-                const canvas = this.$refs.canvas;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-                // Decode at ~8 scans/sec instead of every animation frame
-                // (~60/sec) — jsQR is fairly heavy per call, and QR codes
-                // don't need 60fps to be caught reliably.
-                const scanIntervalMs = 125;
-                let lastScanTime = 0;
-
-                // Downscale before decoding — jsQR doesn't need full camera
-                // resolution (e.g. 1920x1080) to read a code, and smaller
-                // images decode dramatically faster.
-                const maxDecodeWidth = 480;
-
-                const tick = (timestamp) => {
-                    if (this.decodedText) return; // stop scanning once matched
-
-                    if (
-                        video.readyState === video.HAVE_ENOUGH_DATA &&
-                        timestamp - lastScanTime >= scanIntervalMs
-                    ) {
-                        lastScanTime = timestamp;
-
-                        const scale = Math.min(1, maxDecodeWidth / video.videoWidth);
-                        const w = Math.round(video.videoWidth * scale);
-                        const h = Math.round(video.videoHeight * scale);
-
-                        if (canvas.width !== w || canvas.height !== h) {
-                            canvas.width = w;
-                            canvas.height = h;
-                        }
-
-                        ctx.drawImage(video, 0, 0, w, h);
-                        const imageData = ctx.getImageData(0, 0, w, h);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                            inversionAttempts: 'dontInvert', // skip extra inverted-color pass, faster
-                        });
-
-                        if (code && code.data) {
-                            this.decodedText = code.data;
-                            this.stopCamera();
-                            return;
-                        }
-                    }
-                    this.scanLoopId = requestAnimationFrame(tick);
-                };
-                this.scanLoopId = requestAnimationFrame(tick);
-            },
-
-            submitManual() {
-                const val = this.manualInput.trim();
-                if (!val) return;
-                this.decodedText = val;
-                this.stopCamera();
-            },
-
-            scanAgain() {
-                this.decodedText = null;
-                this.manualInput = '';
-                this.startCamera();
-            },
-        };
-    }
-</script>
-
