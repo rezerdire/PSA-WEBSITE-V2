@@ -11,13 +11,13 @@ use Illuminate\Support\Str;
 use Symfony\Component\Finder\Finder;
 
 // Rebuilds gallery_events / gallery_days / gallery_categories / gallery_images
-// from files that are ALREADY on disk under storage/app/public/gallery/...
+// from files that are ALREADY on disk under storage/app/public/images/gallery/...
 // Use this after something wiped the DB (e.g. migrate:fresh) but the files survived.
 //
 // Expected layout per category folder:
-//   gallery/{event-slug}/{day-slug}/{category-slug}/original.jpg
-//   gallery/{event-slug}/{day-slug}/{category-slug}/large/original.webp
-//   gallery/{event-slug}/{day-slug}/{category-slug}/thumbs/original.webp
+//   images/gallery/{event-slug}/{day-slug}/{category-slug}/original.jpg
+//   images/gallery/{event-slug}/{day-slug}/{category-slug}/large/original.webp
+//   images/gallery/{event-slug}/{day-slug}/{category-slug}/thumbs/original.webp
 //
 // large/ and thumbs/ files are matched to the original by basename (extension ignored).
 //
@@ -29,7 +29,7 @@ use Symfony\Component\Finder\Finder;
 class RestoreGalleryFromDisk extends Command
 {
     protected $signature = 'gallery:restore
-        {--event= : Only restore this event slug (folder name under storage/app/public/gallery). Restores all events if omitted.}
+        {--event= : Only restore this event slug (folder name under storage/app/public/images/gallery). Restores all events if omitted.}
         {--dry-run : Preview what would be created without touching the DB}';
 
     protected $description = 'Rebuild gallery_* DB rows from existing processed files already on disk';
@@ -39,7 +39,7 @@ class RestoreGalleryFromDisk extends Command
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        $galleryRoot = storage_path('app/public/gallery');
+        $galleryRoot = public_path('images/gallery');
 
         if (! is_dir($galleryRoot)) {
             $this->error("Gallery folder not found: {$galleryRoot}");
@@ -124,8 +124,9 @@ class RestoreGalleryFromDisk extends Command
                             continue;
                         }
 
-                        // Relative paths as stored on the 'public' disk (matches your Blade's Storage::disk('public')->url(...) usage)
-                        $relBase = "gallery/{$eventSlug}/{$daySlug}/{$categorySlug}";
+                        // Relative paths as stored on the 'public' disk — must match
+                        // the actual root (storage/app/public/images/gallery/...)
+                        $relBase = "images/gallery/{$eventSlug}/{$daySlug}/{$categorySlug}";
                         $relOriginal = "{$relBase}/{$filename}";
                         $relLarge = "{$relBase}/large/" . basename($largeFile);
                         $relThumb = "{$relBase}/thumbs/" . basename($thumbFile);
