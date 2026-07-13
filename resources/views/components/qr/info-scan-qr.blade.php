@@ -16,6 +16,8 @@ new class extends Component {
     public string  $lastName     = '';
     public string  $middleName   = '';
     public string  $chapterName  = '';
+    public string $email = '';
+    public string $phonenumber = '';
 
 
     public function lookup(string $code): void
@@ -45,12 +47,41 @@ new class extends Component {
         $this->middleName  = $member->mem_middle_name ?? '';
         $this->chapterName = $chapter->psa_chapter_desc ?? ($member->psa_chapter_code ?? '');
         $this->memberFound = true;
+        $this->phonenumber = $this->formatMobile($member->mem_mobile_no1 ?? '');
+        $this->email = $member->mem_email_address ?? '';
     }
 
 
+    // conversion of mobile number to standard format
+            private function formatMobile(?string $number): string
+        {
+            $number = trim((string) $number);
+
+            if ($number === '') {
+                return '';
+            }
+
+            // Already has leading 0
+            if (str_starts_with($number, '0')) {
+                return $number;
+            }
+
+            // Handle +63 / 63 prefix
+            if (str_starts_with($number, '63')) {
+                return '0' . substr($number, 2);
+            }
+
+            // Bare 10-digit mobile (e.g. 9171234567) -> prefix 0
+            if (preg_match('/^9\d{9}$/', $number)) {
+                return '0' . $number;
+            }
+
+            return $number;
+        }
+
     public function scanAgain(): void
     {
-        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName']);
+        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName', 'phonenumber', 'email']);
         $this->dispatch('scanner-reset');
     }
 };
@@ -58,14 +89,14 @@ new class extends Component {
 
 <div class="w-full max-w-md mx-auto py-12 px-4">
 
-    <p class="font-mono text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
+    <p class="text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
         PSA · Convention Access
     </p>
-    <h1 class="font-[Space_Grotesk] text-2xl font-bold text-[#000066] tracking-tight mb-1">
+    <h1 class=" text-2xl font-bold text-[#000066] tracking-tight mb-1">
         Member Scanner
     </h1>
-    <p class="text-sm text-slate-500 mb-4">
-        Point a member's QR code at the camera, or upload an image of one.
+    <p class="text-sm text-slate-500 mb-4">     
+        Point your QR code at the camera, or upload your image.
     </p>
 
     <div x-data="qrScanner()"
@@ -238,7 +269,7 @@ new class extends Component {
                     <div class="flex items-start gap-4 py-2">
                         <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">PSA ID</span>
                         <span class="text-sm font-mono font-semibold text-[#000066]">{{ $psaId }}</span>
-                    </div>
+                    </div>  
                     <div class="flex items-start gap-4 py-2">
                         <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Full Name</span>
                         <span class="text-sm font-medium text-gray-700">
@@ -250,6 +281,16 @@ new class extends Component {
                         <span class="text-sm font-medium text-gray-700">{{ $chapterName }}</span>
                     </div>
                 </div>
+
+                   <div class="flex items-start gap-4 py-2">
+                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Contact No.</span>
+                        <span class="text-sm font-medium text-gray-700">{{ $phonenumber }}</span>
+                    </div>
+                    <div class="flex items-start gap-4 py-2">
+                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Email</span>
+                        <span class="text-sm font-medium text-gray-700">{{ $email }}</span>
+                    </div>
+                </div>
             @else
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-red-100">
@@ -259,7 +300,7 @@ new class extends Component {
                     </div>
                     <p class="text-red-600 font-semibold text-sm">No matching PSA ID</p>
                 </div>
-                <p class="text-xs text-gray-500 font-mono">Scanned value: {{ $scannedId }}</p>
+                <p class="text-xs text-gray-500 font-mono">QR Scanned value: {{ $scannedId }}</p>
             @endif
 
             <button
