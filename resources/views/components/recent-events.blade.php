@@ -7,33 +7,7 @@ use Livewire\Component;
 
 new class extends Component
 {
-    public ?GalleryEvent $featuredEvent = null;
-    public $previewImages;
-
-    public function mount(): void
-    {
-        $this->featuredEvent = GalleryEvent::with('days')->latest()->first();
-
-        if ($this->featuredEvent) {
-            $dayIds = $this->featuredEvent->days->pluck('id');
-
-            $this->previewImages = GalleryImage::with('category')
-                ->whereHas('category', fn ($q) => $q->whereIn('gallery_day_id', $dayIds))
-                ->inRandomOrder()
-                ->limit(6)
-                ->get();
-        } else {
-            $this->previewImages = collect();
-        }
-    }
-
-    public function render()
-    {
-        return <<<'BLADE'
-            <div>@include('components.recent-events-view')</div>
-        BLADE;
-    }
-};
+}
 ?>
 
 
