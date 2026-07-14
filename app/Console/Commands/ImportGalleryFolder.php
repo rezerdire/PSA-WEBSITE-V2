@@ -112,7 +112,7 @@ class ImportGalleryFolder extends Command
                     ['name' => $categoryName, 'order' => 0]
                 );
                 // path
-                $destDir = "gallery/{$eventSlug}/{$daySlug}/{$categorySlug}";
+                $destDir = "images/gallery/{$eventSlug}/{$daySlug}/{$categorySlug}";
                 // pathing connection
                 foreach ($files as $index => $filePath) {
                     $filename = basename($filePath);
@@ -127,10 +127,11 @@ class ImportGalleryFolder extends Command
                         continue;
                     }
                     // root path
-                    Storage::disk('public')->put(
-                        $destPath,
-                        file_get_contents($filePath)
-                    );
+                    $destFullPath = public_path($destPath);
+                    if (! is_dir(dirname($destFullPath))) {
+                        mkdir(dirname($destFullPath), 0755, true);
+                    }
+                    copy($filePath, $destFullPath);
                     // Image creation
                     $image = GalleryImage::create([
                         'gallery_category_id' => $category->id,

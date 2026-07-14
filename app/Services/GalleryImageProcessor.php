@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
@@ -16,9 +15,13 @@ class GalleryImageProcessor
         $this->manager = new ImageManager(new Driver());
     }
 
+    /**
+     * $originalPath is relative to public/, e.g. "gallery/aca-2025/day1/asean-night/IMG_001.jpg"
+     */
     public function process(string $originalPath): array
     {
-        $fullPath = Storage::disk('public')->path($originalPath);
+        $fullPath = public_path($originalPath);
+
         $image = $this->manager->read($fullPath);
 
         $width = $image->width();
@@ -27,20 +30,30 @@ class GalleryImageProcessor
         $dir = Str::beforeLast($originalPath, '/');
         $name = Str::beforeLast(Str::afterLast($originalPath, '/'), '.');
 
-        $thumbPath = "{$dir}/thumbs/{$name}.webp";
-        $largePath = "{$dir}/large/{$name}.webp";
+        $thumbRelative = "{$dir}/thumbs/{$name}.webp";
+        $largeRelative = "{$dir}/large/{$name}.webp";
+
+        $thumbFullPath = public_path($thumbRelative);
+        $largeFullPath = public_path($largeRelative);
+
+        if (! is_dir(dirname($thumbFullPath))) {
+            mkdir(dirname($thumbFullPath), 0755, true);
+        }
+        if (! is_dir(dirname($largeFullPath))) {
+            mkdir(dirname($largeFullPath), 0755, true);
+        }
 
         $thumb = clone $image;
         $thumb->scaleDown(width: 480);
-        Storage::disk('public')->put($thumbPath, (string) $thumb->toWebp(70));
+        file_put_contents($thumbFullPath, (string) $thumb->toWebp(70));
 
         $large = clone $image;
         $large->scaleDown(width: 1920);
-        Storage::disk('public')->put($largePath, (string) $large->toWebp(82));
+        file_put_contents($largeFullPath, (string) $large->toWebp(82));
 
         return [
-            'thumb' => $thumbPath,
-            'large' => $largePath,
+            'thumb' => $thumbRelative,
+            'large' => $largeRelative,
             'width' => $width,
             'height' => $height,
         ];

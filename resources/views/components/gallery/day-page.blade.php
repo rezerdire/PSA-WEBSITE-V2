@@ -92,8 +92,8 @@ new class extends Component
         stopDrag() { this.dragging = false; },
     }"
     x-init="items = @js($images->map(fn ($image) => [
-        'thumb' => Storage::disk('public')->url($image->thumb_path),
-        'large' => Storage::disk('public')->url($image->large_path),
+        'thumb' => asset($image->thumb_path),
+        'large' => asset($image->large_path),
         'alt' => $image->category->name,
     ]))"
     @keydown.escape.window="lightbox = false"
@@ -165,7 +165,7 @@ new class extends Component
                 class="block w-full aspect-square overflow-hidden rounded-lg border border-slate-200"
             >
                 <img
-                    src="{{ Storage::disk('public')->url($image->thumb_path) }}"
+                    src="{{ asset($image->thumb_path) }}"
                     loading="lazy"
                     decoding="async"
                     width="{{ $image->width }}"
