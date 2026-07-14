@@ -108,7 +108,7 @@
                     @foreach ($event->days as $day)
                         <a
                             href="{{ route('gallery.day', [$event, $day]) }}"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border border-slate-200 text-slate-600hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
                         >
                             <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9h18M9 21V9m6 12V9M4 3h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/>
