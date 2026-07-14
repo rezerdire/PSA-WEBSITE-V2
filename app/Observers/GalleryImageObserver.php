@@ -10,11 +10,12 @@ class GalleryImageObserver
     /**
      * Handle the GalleryImage "created" event.
      */
-    public function created(GalleryImage $galleryImage): void
-    {
+public function created(GalleryImage $galleryImage): void
+{
+    if (! $galleryImage->thumb_path || ! $galleryImage->large_path) {
         ProcessGalleryImage::dispatch($galleryImage);
     }
-
+}
     /**
      * Handle the GalleryImage "updated" event.
      */
