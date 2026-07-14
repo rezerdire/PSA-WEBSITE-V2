@@ -31,7 +31,7 @@ new class extends Component
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <p class="slabel text-[11px] md:text-xs font-bold uppercase tracking-widest text-blue-600">ACA 2025 Gallery</p>
         <a href="{{ route('Gallery') }}" class="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
-          View More Photos
+          View Full Gallery
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
       </div>
