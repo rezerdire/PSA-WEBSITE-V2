@@ -16,4 +16,14 @@ class GalleryImage extends Model
     {
         return $this->belongsTo(GalleryCategory::class, 'gallery_category_id');
     }
+
+        public function getThumbUrlAttribute(): string
+    {
+        return asset($this->thumb_path);
+    }
+
+    public function getLargeUrlAttribute(): string
+    {
+        return asset($this->large_path);
+    }
 }   

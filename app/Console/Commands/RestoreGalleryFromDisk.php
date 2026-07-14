@@ -8,38 +8,37 @@ use App\Models\GalleryEvent;
 use App\Models\GalleryImage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 use Symfony\Component\Finder\Finder;
 
-// Rebuilds gallery_events / gallery_days / gallery_categories / gallery_images
-// from files that are ALREADY on disk under storage/app/public/gallery/...
-// Use this after something wiped the DB (e.g. migrate:fresh) but the files survived.
-//
-// Expected layout per category folder:
-//   gallery/{event-slug}/{day-slug}/{category-slug}/original.jpg
-//   gallery/{event-slug}/{day-slug}/{category-slug}/large/original.webp
-//   gallery/{event-slug}/{day-slug}/{category-slug}/thumbs/original.webp
-//
-// large/ and thumbs/ files are matched to the original by basename (extension ignored).
+// Scans public/images/gallery/{event}/{day}/{category}/ for originals that already
+// have matching large/ and thumbs/ webp variants (e.g. after gallery:process-in-place),
+// and (re)populates the gallery_* tables from what's on disk — no re-encoding.
 //
 // Usage:
 //   php artisan gallery:restore --dry-run
 //   php artisan gallery:restore
-//   php artisan gallery:restore --event=aca-2025   (restore just one event folder)
+//   php artisan gallery:restore --event=aca_2025
 
 class RestoreGalleryFromDisk extends Command
 {
     protected $signature = 'gallery:restore
-        {--event= : Only restore this event slug (folder name under storage/app/public/gallery). Restores all events if omitted.}
-        {--dry-run : Preview what would be created without touching the DB}';
+        {--event= : Only restore this event folder (e.g. aca_2025). Restores all events if omitted.}
+        {--dry-run : Preview what would be restored without touching the DB}';
 
-    protected $description = 'Rebuild gallery_* DB rows from existing processed files already on disk';
+    protected $description = 'Rebuild gallery_* DB rows from existing originals + large/thumbs webp variants under public/images/gallery';
 
-    protected array $imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    protected array $imageExtensions = ['jpg', 'jpeg', 'png'];
+
+    protected ImageManager $manager;
 
     public function handle(): int
     {
+        $this->manager = new ImageManager(new Driver());
+
         $dryRun = (bool) $this->option('dry-run');
-        $galleryRoot = storage_path('app/public/gallery');
+        $galleryRoot = public_path('images/gallery');
 
         if (! is_dir($galleryRoot)) {
             $this->error("Gallery folder not found: {$galleryRoot}");
@@ -51,24 +50,23 @@ class RestoreGalleryFromDisk extends Command
             : $this->subdirectories($galleryRoot);
 
         if (empty($eventFolders)) {
-            $this->warn('No event folders found to restore.');
+            $this->warn('No event folders found.');
             return self::SUCCESS;
         }
 
-        $totalImages = 0;
+        $totalRestored = 0;
         $totalSkipped = 0;
+        $totalMissingVariant = 0;
 
         foreach ($eventFolders as $eventPath) {
             $eventSlug = basename($eventPath);
-            $eventName = Str::headline($eventSlug);
-
-            $this->info("\nEvent: {$eventName} ({$eventSlug})");
+            $this->info("\nEvent: {$eventSlug}");
 
             $event = $dryRun
-                ? null
+                ? GalleryEvent::firstWhere('slug', $eventSlug)
                 : GalleryEvent::firstOrCreate(
                     ['slug' => $eventSlug],
-                    ['name' => $eventName]
+                    ['name' => Str::headline($eventSlug)]
                 );
 
             foreach ($this->subdirectories($eventPath) as $dayPath) {
@@ -77,61 +75,60 @@ class RestoreGalleryFromDisk extends Command
 
                 $this->info("  Day: {$dayLabel} ({$daySlug})");
 
-                $day = $dryRun
-                    ? null
-                    : GalleryDay::firstOrCreate(
-                        ['gallery_event_id' => $event->id, 'slug' => $daySlug],
-                        ['label' => $dayLabel, 'order' => 0]
-                    );
+                $day = $dryRun ? null : GalleryDay::firstOrCreate(
+                    ['gallery_event_id' => $event->id, 'slug' => $daySlug],
+                    ['label' => $dayLabel, 'order' => 0]
+                );
 
                 foreach ($this->subdirectories($dayPath) as $categoryPath) {
                     $rawName = basename($categoryPath);
                     $categorySlug = Str::slug($rawName);
                     $categoryName = Str::upper(trim(str_replace(['_', '-'], ' ', $rawName)));
 
-                    // Only files directly inside the category folder are "originals" —
-                    // large/ and thumbs/ are subfolders and won't be picked up here.
                     $originals = $this->imageFiles($categoryPath);
-                    $largeDir = $categoryPath . DIRECTORY_SEPARATOR . 'large';
-                    $thumbsDir = $categoryPath . DIRECTORY_SEPARATOR . 'thumbs';
 
                     if (empty($originals)) {
-                        $this->warn("    Skipping '{$categoryName}' — no original files found directly in folder.");
                         continue;
                     }
 
                     $this->line("    Category: {$categoryName} — " . count($originals) . ' image(s)');
 
-                    if ($dryRun) {
-                        continue;
-                    }
-
-                    $category = GalleryCategory::firstOrCreate(
+                    $category = $dryRun ? null : GalleryCategory::firstOrCreate(
                         ['gallery_day_id' => $day->id, 'slug' => $categorySlug],
                         ['name' => $categoryName, 'order' => 0]
                     );
 
+                    $largeDir = $categoryPath . DIRECTORY_SEPARATOR . 'large';
+                    $thumbsDir = $categoryPath . DIRECTORY_SEPARATOR . 'thumbs';
+
                     foreach ($originals as $index => $originalFullPath) {
                         $filename = basename($originalFullPath);
-                        $basename = pathinfo($filename, PATHINFO_FILENAME);
+                        $name = pathinfo($filename, PATHINFO_FILENAME);
 
-                        $largeFile = $this->findByBasename($largeDir, $basename);
-                        $thumbFile = $this->findByBasename($thumbsDir, $basename);
+                        $thumbFullPath = $thumbsDir . DIRECTORY_SEPARATOR . "{$name}.webp";
+                        $largeFullPath = $largeDir . DIRECTORY_SEPARATOR . "{$name}.webp";
 
-                        if (! $largeFile || ! $thumbFile) {
-                            $this->warn("      Missing large/thumb for '{$filename}' — skipping.");
-                            $totalSkipped++;
+                        if (! file_exists($thumbFullPath) || ! file_exists($largeFullPath)) {
+                            $this->warn("      Missing variant(s) for '{$filename}' — run gallery:process-in-place first.");
+                            $totalMissingVariant++;
                             continue;
                         }
 
-                        // Relative paths as stored on the 'public' disk (matches your Blade's Storage::disk('public')->url(...) usage)
-                        $relBase = "gallery/{$eventSlug}/{$daySlug}/{$categorySlug}";
-                        $relOriginal = "{$relBase}/{$filename}";
-                        $relLarge = "{$relBase}/large/" . basename($largeFile);
-                        $relThumb = "{$relBase}/thumbs/" . basename($thumbFile);
+                        // Path relative to public/, matching what the app stores in the DB
+                        $originalRelative = 'images/gallery/' . Str::after($originalFullPath, $galleryRoot . DIRECTORY_SEPARATOR);
+                        $originalRelative = str_replace(DIRECTORY_SEPARATOR, '/', $originalRelative);
+
+                        $thumbRelative = str_replace(DIRECTORY_SEPARATOR, '/',
+                            'images/gallery/' . Str::after($thumbFullPath, $galleryRoot . DIRECTORY_SEPARATOR));
+                        $largeRelative = str_replace(DIRECTORY_SEPARATOR, '/',
+                            'images/gallery/' . Str::after($largeFullPath, $galleryRoot . DIRECTORY_SEPARATOR));
+
+                        if ($dryRun) {
+                            continue;
+                        }
 
                         $alreadyExists = GalleryImage::where('gallery_category_id', $category->id)
-                            ->where('path', $relOriginal)
+                            ->where('path', $originalRelative)
                             ->exists();
 
                         if ($alreadyExists) {
@@ -139,19 +136,24 @@ class RestoreGalleryFromDisk extends Command
                             continue;
                         }
 
-                        [$width, $height] = $this->getDimensions($largeFile);
+                        try {
+                            [$width, $height] = getimagesize($originalFullPath);
+                        } catch (\Throwable $e) {
+                            $this->warn("      Could not read dimensions for '{$filename}': " . $e->getMessage());
+                            $width = $height = null;
+                        }
 
                         GalleryImage::create([
                             'gallery_category_id' => $category->id,
-                            'path' => $relOriginal,
-                            'thumb_path' => $relThumb,
-                            'large_path' => $relLarge,
+                            'path' => $originalRelative,
+                            'thumb_path' => $thumbRelative,
+                            'large_path' => $largeRelative,
                             'width' => $width,
                             'height' => $height,
                             'order' => $index,
                         ]);
 
-                        $totalImages++;
+                        $totalRestored++;
                     }
                 }
             }
@@ -162,7 +164,7 @@ class RestoreGalleryFromDisk extends Command
         if ($dryRun) {
             $this->info('Dry run complete — nothing was written. Remove --dry-run to actually restore.');
         } else {
-            $this->info("Restored {$totalImages} image row(s), skipped {$totalSkipped} (already existing or missing pairs).");
+            $this->info("Restored {$totalRestored} image(s), skipped {$totalSkipped} already in DB, {$totalMissingVariant} missing variant(s).");
         }
 
         return self::SUCCESS;
@@ -191,26 +193,5 @@ class RestoreGalleryFromDisk extends Command
             array_map(fn ($f) => $f->getPathname(), iterator_to_array($finder)),
             fn ($f) => in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), $this->imageExtensions)
         ));
-    }
-
-    /**
-     * Find a file inside $dir whose filename (without extension) matches $basename.
-     */
-    protected function findByBasename(string $dir, string $basename): ?string
-    {
-        foreach ($this->imageFiles($dir) as $file) {
-            if (pathinfo($file, PATHINFO_FILENAME) === $basename) {
-                return $file;
-            }
-        }
-
-        return null;
-    }
-
-    protected function getDimensions(string $absolutePath): array
-    {
-        $size = @getimagesize($absolutePath);
-
-        return $size ? [$size[0], $size[1]] : [null, null];
     }
 }
