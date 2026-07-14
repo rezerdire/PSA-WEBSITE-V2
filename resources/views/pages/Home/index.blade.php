@@ -15,7 +15,7 @@ new class extends Component
     <x-mission-vision-section />
     <x-recent-events />
 
-    <x-gallery-section />
+@livewire('gallery-section')
     <x-contact-section />
 @endsection
 
