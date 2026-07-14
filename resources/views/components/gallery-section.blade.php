@@ -80,7 +80,7 @@ new class extends Component
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-3 md:p-4"
         @click.self="lightbox = false"
         @keydown.escape.window="lightbox = false"
         style="display: none;"
@@ -88,7 +88,7 @@ new class extends Component
         <div class="relative max-w-5xl w-full">
           <button
             @click="lightbox = false"
-            class="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium"
+            class="absolute -top-9 md:-top-10 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-1.5 text-xs md:text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -96,8 +96,8 @@ new class extends Component
             Close
           </button>
           <img :src="activeSrc" :alt="activeAlt"
-               class="w-full rounded-2xl shadow-2xl object-contain max-h-[80vh]">
-          <p class="text-center text-white/70 text-sm mt-4" x-text="activeAlt"></p>
+               class="w-full rounded-xl md:rounded-2xl shadow-2xl object-contain max-h-[75vh] md:max-h-[80vh]">
+          <p class="text-center text-white/70 text-xs md:text-sm mt-3 md:mt-4" x-text="activeAlt"></p>
         </div>
       </div>
 
