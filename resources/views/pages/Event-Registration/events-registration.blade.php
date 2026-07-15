@@ -13,7 +13,7 @@ new class extends Component
 @section('content')
 
 <x-about-us-header
-    title="Midyear Convention 2026"
+    title="Annual Convention 2026"
     description="Convention & Scientific Meeting" />
 <x-event-registration.event-registration-layout>
 {{-- Main Content --}}

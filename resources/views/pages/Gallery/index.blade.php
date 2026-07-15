@@ -61,7 +61,7 @@
 
                     {{-- Event title overlay --}}
                     <div class="absolute bottom-0 left-0 right-0 z-30 px-6 pb-5 pointer-events-none">
-                        <h2 class="text-white text-2xl sm:text-3xl font-bold tracking-tight drop-shadow">
+                        <h2 class="text-white text-2xl sm:text-3xl font-bold tracking-tight drop-shadow uppercase">
                             {{ $event->name }}
                         </h2>
                         <p class="text-white/70 text-sm mt-0.5">
