@@ -69,7 +69,7 @@ new class extends Component
       <a href="#" class="block bg-white rounded-2xl overflow-hidden card border border-slate-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 hover:border-blue-200 hover:ring-1 hover:ring-blue-200">
         <div class="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
           <img src="{{ asset('images/event-cover-photo/PSARP-CP.png') }}"
-               alt="PSARP Annual Convention"
+               alt="PSA Review Program (PSARP)"
                class="w-full h-full object-cover" loading="lazy">
           <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           <span class="absolute top-3 left-3 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-100 text-slate-600">
