@@ -78,7 +78,7 @@ new class extends Component
         </div>
         <div class="p-5 sm:p-6">
           <h3 class="font-display text-lg sm:text-xl text-slate-900 mb-2.5 sm:mb-3 leading-tight">
-            PSARP Annual Convention
+            PSA Review Program (PSARP)
           </h3>
           <div class="space-y-1.5 sm:space-y-2 text-xs text-slate-500 mb-3 sm:mb-4">
             <div class="flex items-center gap-2">
