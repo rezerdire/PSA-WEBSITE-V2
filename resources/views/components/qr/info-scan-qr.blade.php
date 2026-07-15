@@ -2,7 +2,6 @@
 
 use App\Models\Member;
 use App\Models\Chapter;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -57,9 +56,7 @@ new class extends Component {
         $this->memberFound = true;
         $this->phonenumber = $this->formatMobile($member->mem_mobile_no1 ?? '');
         $this->email       = $member->mem_email_address ?? '';
-        $this->memPic      = $member->mem_pic
-            ? Storage::disk('member-pics')->url(basename($member->mem_pic))
-            : null;
+        $this->memPic      = $member->mem_pic ?? null;
     }
 
     // Livewire auto-calls this when $newPic is set by wire:model upload
@@ -79,6 +76,16 @@ new class extends Component {
         }
 
         $filename = "{$this->psaId}.jpg";
+        $destDir  = public_path('member-pics');
+
+        // Guard against a stray file existing where the directory should be
+        if (is_file($destDir)) {
+            unlink($destDir);
+        }
+
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
 
         $sourcePath = $this->newPic->getRealPath();
         [$origWidth, $origHeight, $type] = getimagesize($sourcePath);
@@ -111,19 +118,16 @@ new class extends Component {
         $target = imagecreatetruecolor(600, 600);
         imagecopyresampled($target, $source, 0, 0, $srcX, $srcY, 600, 600, $size, $size);
 
-        ob_start();
-        imagejpeg($target, null, 85);
-        $jpegData = ob_get_clean();
-
-        Storage::disk('member-pics')->put($filename, $jpegData);
+        imagejpeg($target, $destDir . DIRECTORY_SEPARATOR . $filename, 85);
 
         imagedestroy($source);
         imagedestroy($target);
 
-        // Store the bare filename in DB; disk resolves the actual path/URL
-        $member->update(['mem_pic' => $filename]);
+        $relativePath = "member-pics/{$filename}";
 
-        $this->memPic = Storage::disk('member-pics')->url($filename) . '?v=' . time();
+        $member->update(['mem_pic' => $relativePath]);
+
+        $this->memPic = $relativePath . '?v=' . time();
         $this->newPic = null;
         $this->uploadingPic = false;
     }
