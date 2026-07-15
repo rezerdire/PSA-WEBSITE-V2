@@ -323,7 +323,12 @@ new class extends Component {
     </div>
 
 @if ($scannedId)
-    <div class="mt-4 bg-white border border-slate-200 rounded-2xl p-6">
+    <div
+        x-data="{ hidden: false }"
+        x-show="!hidden"
+        x-transition.opacity.duration.150ms
+        class="mt-4 bg-white border border-slate-200 rounded-2xl p-6"
+    >
 
         @if ($memberFound)
             <div class="flex flex-col items-center text-center mb-5">
@@ -386,7 +391,12 @@ new class extends Component {
         @endif
 
         <button
-            wire:click="scanAgain"
+            type="button"
+            @click="
+                hidden = true;
+                window.dispatchEvent(new CustomEvent('scanner-reset'));
+                $wire.scanAgain();
+            "
             class="w-full mt-5 border border-slate-200 text-[#000066] font-semibold text-[13.5px] py-2.5 rounded-[10px] hover:bg-slate-50"
         >
             Scan again
