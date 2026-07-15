@@ -3,8 +3,10 @@
 use App\Models\Member;
 use App\Models\Chapter;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
 
     // Result state shown after a scan
     public ?string $scannedId    = null;
@@ -16,9 +18,14 @@ new class extends Component {
     public string  $lastName     = '';
     public string  $middleName   = '';
     public string  $chapterName  = '';
-    public string $email = '';
-    public string $phonenumber = '';
+    public string  $memberType   = '';
+    public string  $email = '';
+    public ?string $memPic = null;
+    public string  $phonenumber = '';
 
+    // New: photo upload
+    public $newPic = null;
+    public bool $uploadingPic = false;
 
     public function lookup(string $code): void
     {
@@ -26,6 +33,7 @@ new class extends Component {
         $this->scannedId   = $code;
         $this->memberFound = false;
         $this->notFound    = false;
+        $this->newPic      = null;
 
         if (!preg_match('/^\d{4}$/', $code)) {
             $this->notFound = true;
@@ -46,48 +54,85 @@ new class extends Component {
         $this->lastName    = $member->mem_last_name   ?? '';
         $this->middleName  = $member->mem_middle_name ?? '';
         $this->chapterName = $chapter->psa_chapter_desc ?? ($member->psa_chapter_code ?? '');
+        $this->memberType  = $member->membershipType?->Memtype ?? '';
         $this->memberFound = true;
         $this->phonenumber = $this->formatMobile($member->mem_mobile_no1 ?? '');
-        $this->email = $member->mem_email_address ?? '';
+        $this->email       = $member->mem_email_address ?? '';
+        $this->memPic      = $member->mem_pic ?? null;
     }
 
+    public function uploadPic(): void
+    {
+        $this->validate([
+            'newPic' => 'required|image|max:5120', // 5MB max
+        ]);
+
+        $this->uploadingPic = true;
+
+        $member = Member::find($this->psaId);
+
+        if (!$member) {
+            $this->uploadingPic = false;
+            return;
+        }
+
+        $filename = "{$this->psaId}.jpg";
+        $destDir  = public_path('member-pics');
+
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        // Convert/save as jpg regardless of uploaded format, to keep filenames consistent
+        $image = \Illuminate\Support\Facades\Image::make($this->newPic->getRealPath())
+            ->orientate()
+            ->fit(600, 600)
+            ->encode('jpg', 85);
+
+        file_put_contents($destDir . DIRECTORY_SEPARATOR . $filename, (string) $image);
+
+        $relativePath = "member-pics/{$filename}";
+
+        $member->update(['mem_pic' => $relativePath]);
+
+        $this->memPic = $relativePath . '?v=' . time(); // bust cache
+        $this->newPic = null;
+        $this->uploadingPic = false;
+    }
 
     // conversion of mobile number to standard format
-            private function formatMobile(?string $number): string
-        {
-            $number = trim((string) $number);
+    private function formatMobile(?string $number): string
+    {
+        $number = trim((string) $number);
 
-            if ($number === '') {
-                return '';
-            }
+        if ($number === '') {
+            return '';
+        }
 
-            // Already has leading 0
-            if (str_starts_with($number, '0')) {
-                return $number;
-            }
-
-            // Handle +63 / 63 prefix
-            if (str_starts_with($number, '63')) {
-                return '0' . substr($number, 2);
-            }
-
-            // Bare 10-digit mobile (e.g. 9171234567) -> prefix 0
-            if (preg_match('/^9\d{9}$/', $number)) {
-                return '0' . $number;
-            }
-
+        if (str_starts_with($number, '0')) {
             return $number;
         }
 
+        if (str_starts_with($number, '63')) {
+            return '0' . substr($number, 2);
+        }
+
+        if (preg_match('/^9\d{9}$/', $number)) {
+            return '0' . $number;
+        }
+
+        return $number;
+    }
+
     public function scanAgain(): void
     {
-        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName', 'phonenumber', 'email']);
+        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName', 'memberType', 'phonenumber', 'email', 'memPic', 'newPic']);
         $this->dispatch('scanner-reset');
     }
 };
 ?>
 
-<div class="w-full max-w-md mx-auto py-12 px-4">
+<div    class="w-full max-w-md mx-auto py-12 px-4">
 
     <p class="text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
         PSA · Convention Access
@@ -251,64 +296,75 @@ new class extends Component {
         </template>
     </div>
 
+@if ($scannedId)
+    <div class="mt-4 bg-white border border-slate-200 rounded-2xl p-6">
 
-    @if ($scannedId)
-        <div class="mt-4 bg-white border border-slate-200 rounded-2xl p-5">
+        @if ($memberFound)
+            <div class="flex flex-col items-center text-center mb-5">
+               @if ($memPic)
+    <img src="{{ asset($memPic) }}" alt="{{ $firstName }} {{ $lastName }}"
+         class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md ring-1 ring-slate-200 mb-3">
+@else
+    <div class="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center mb-3 ring-1 ring-slate-200">
+        <span class="text-2xl font-bold text-slate-400">
+            {{ strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1)) }}
+        </span>
+    </div>
+@endif
 
-            @if ($memberFound)
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-green-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <p class="text-[#0F9D6C] font-semibold text-sm">Member found</p>
+<div wire:ignore.self class="mb-3">
+    <label class="cursor-pointer text-xs font-semibold text-[#000066] hover:underline">
+        <span wire:loading.remove wire:target="newPic">Change photo</span>
+        <span wire:loading wire:target="newPic">Uploading…</span>
+        <input type="file" wire:model="newPic" accept="image/*" class="hidden">
+    </label>
+    @error('newPic') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+</div>
+                <h2 class="text-lg font-bold text-[#000066] leading-tight">
+                    {{ $firstName }} {{ $middleName ? $middleName . ' ' : '' }}{{ $lastName }}
+                </h2>
+                <p class="text-sm text-slate-500">{{ $chapterName }}</p>
+
+                <div class="flex items-center gap-1.5 mt-2 bg-green-50 px-3 py-1 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-xs font-semibold text-green-700">{{ $memberType }}</span>
                 </div>
+            </div>
 
-                <div class="divide-y divide-slate-50">
-                    <div class="flex items-start gap-4 py-2">
-                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">PSA ID</span>
-                        <span class="text-sm font-mono font-semibold text-[#000066]">{{ $psaId }}</span>
-                    </div>  
-                    <div class="flex items-start gap-4 py-2">
-                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Full Name</span>
-                        <span class="text-sm font-medium text-gray-700">
-                            {{ $firstName }} {{ $middleName ? $middleName . ' ' : '' }}{{ $lastName }}
-                        </span>
-                    </div>
-                    <div class="flex items-start gap-4 py-2">
-                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Chapter</span>
-                        <span class="text-sm font-medium text-gray-700">{{ $chapterName }}</span>
-                    </div>
+            <div class="divide-y divide-slate-100 border-t border-slate-100">
+                <div class="flex items-center justify-between py-3">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">PSA ID</span>
+                    <span class="text-sm font-mono font-semibold text-[#000066]">{{ $psaId }}</span>
                 </div>
+                <div class="flex items-center justify-between py-3">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Contact No.</span>
+                    <span class="text-sm font-medium text-gray-700">{{ $phonenumber }}</span>
+                </div>
+                <div class="flex items-center justify-between py-3">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Email</span>
+                    <span class="text-sm font-medium text-gray-700">{{ $email }}</span>
+                </div>
+            </div>
+        @else
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-red-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <p class="text-red-600 font-semibold text-sm">No matching PSA ID</p>
+            </div>
+            <p class="text-xs text-gray-500 font-mono">QR Scanned value: {{ $scannedId }}</p>
+        @endif
 
-                   <div class="flex items-start gap-4 py-2">
-                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Contact No.</span>
-                        <span class="text-sm font-medium text-gray-700">{{ $phonenumber }}</span>
-                    </div>
-                    <div class="flex items-start gap-4 py-2">
-                        <span class="text-xs text-gray-400 w-24 shrink-0 pt-0.5">Email</span>
-                        <span class="text-sm font-medium text-gray-700">{{ $email }}</span>
-                    </div>
-                </div>
-            @else
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-red-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </div>
-                    <p class="text-red-600 font-semibold text-sm">No matching PSA ID</p>
-                </div>
-                <p class="text-xs text-gray-500 font-mono">QR Scanned value: {{ $scannedId }}</p>
-            @endif
-
-            <button
-                wire:click="scanAgain"
-                class="w-full mt-5 border border-slate-200 text-[#000066] font-semibold text-[13.5px] py-2.5 rounded-[10px] hover:bg-slate-50"
-            >
-                Scan again
-            </button>
-        </div>
-    @endif
+        <button
+            wire:click="scanAgain"
+            class="w-full mt-5 border border-slate-200 text-[#000066] font-semibold text-[13.5px] py-2.5 rounded-[10px] hover:bg-slate-50"
+        >
+            Scan again
+        </button>
+    </div>
+@endif
 </div>
