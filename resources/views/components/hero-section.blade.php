@@ -38,7 +38,7 @@ new class extends Component
 
       {{-- SLIDE 0: Original hero --}}
       <div
-        x-show="slide === 0"
+        x-show="slide === 1"
         x-transition:enter="transition-opacity ease-out duration-700"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -87,7 +87,7 @@ new class extends Component
 
       {{-- SLIDE 1: SIMWARS event --}}
       <div
-        x-show="slide === 1"
+        x-show="slide === 0"
         x-transition:enter="transition-opacity ease-out duration-700"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -127,7 +127,7 @@ new class extends Component
 
     </div>
 
-    {{-- Carousel controls: arrows + dots grouped together, below content, never overlapping text --}}
+    {{--  buttons --}}
     <div class="flex items-center justify-center gap-6 mt-8 sm:mt-12">
       <button @click="prev()" aria-label="Previous slide" class="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
