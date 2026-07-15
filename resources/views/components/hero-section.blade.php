@@ -16,7 +16,7 @@ new class extends Component
     next() { this.slide = (this.slide + 1) % this.total },
     prev() { this.slide = (this.slide - 1 + this.total) % this.total },
     go(i) { this.slide = i },
-    start() { this.timer = setInterval(() => this.next(), 6000) },
+    start() { this.timer = setInterval(() => this.next(), 10000) }, //10 sec interval for auto slide
     stop() { clearInterval(this.timer) }
   }"
   x-init="start()"
