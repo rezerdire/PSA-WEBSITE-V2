@@ -56,7 +56,7 @@ new class extends Component {
         $this->memberFound = true;
         $this->phonenumber = $this->formatMobile($member->mem_mobile_no1 ?? '');
         $this->email       = $member->mem_email_address ?? '';
-        $this->memPic      = $member->mem_pic ?? null;
+        $this->memPic      = $this->picUrlWithVersion($member->mem_pic ?? null);
     }
 
     // Livewire auto-calls this when $newPic is set by wire:model upload
@@ -127,9 +127,21 @@ new class extends Component {
 
         $member->update(['mem_pic' => $relativePath]);
 
-        $this->memPic = $relativePath . '?v=' . time();
+        $this->memPic = $this->picUrlWithVersion($relativePath);
         $this->newPic = null;
         $this->uploadingPic = false;
+    }
+
+    private function picUrlWithVersion(?string $relativePath): ?string
+    {
+        if (!$relativePath) {
+            return null;
+        }
+
+        $fullPath = public_path($relativePath);
+        $version  = is_file($fullPath) ? filemtime($fullPath) : time();
+
+        return $relativePath . '?v=' . $version;
     }
 
     private function formatMobile(?string $number): string
