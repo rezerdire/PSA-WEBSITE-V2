@@ -45,6 +45,7 @@ class Member extends Model
         'mem_pma_id_no',
         'mem_fellow_no',
         'mem_phic_no',
+        'mem_pic',
     ];
 
     protected $casts = [
