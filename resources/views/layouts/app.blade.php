@@ -16,7 +16,7 @@
     </head>
     <body class = "bg-white text-slate-900 antialiased">
         @livewire('partials.navbar')
-      <main class="min-h-screen">
+      <main>
         @yield('content')
     </main>
         @livewireScripts
