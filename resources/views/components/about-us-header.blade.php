@@ -9,12 +9,9 @@ new class extends Component {};
     'description' => null,
 ])
 
-<section class="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 py-16 overflow-hidden">
-    <div class="absolute inset-0 opacity-10 pointer-events-none"
-         style="background-image: radial-gradient(circle at 70% 50%, #fff 0%, transparent 60%)">
-    </div>
+<section class="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 py-10 overflow-hidden">
 
-    <div class="relative max-w-6xl mx-auto px-6 text-center">
+    <div class="relative max-w-6xl mx-auto px-3 text-center">
         <p class="text-blue-200 text-xs font-semibold tracking-[0.2em] uppercase mb-3 mt-10">
             {{ $eyebrow }}
         </p>

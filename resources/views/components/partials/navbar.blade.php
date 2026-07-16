@@ -49,13 +49,14 @@ new class extends Component
                class="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/60 py-1 z-50">
             <a href="#" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Midyear Convention 2026</a>
             <a href="#" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">ACA 2025 Manila</a>
-            <a href="#" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">PJA</a>
+            <a href="{{ route('pja') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">PJA</a>
           </div>
         </div>
 
         {{-- Gallery Dropdown --}}
         <a wire:navigate href="{{ route('Gallery') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Gallery</a>
         <a wire:navigate href="{{ route('Event-Registration') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Event Registration</a>
+        <a wire:navigate href="{{ route('info-scan-qr') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Profile Scanner</a>
 
         <a wire:navigate href="{{ route('Login') }}" class="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Login </a>
 
@@ -95,6 +96,9 @@ new class extends Component
   <a wire:navigate href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">CME Activities</a>
   <a wire:navigate href="{{ route('Gallery') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Gallery</a>
   <a wire:navigate href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Membership</a>
+  <a wire:navigate href="{{ route('pja') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">PJA</a>
+  <a wire:navigate href="{{ route('info-scan-qr') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Profile Scanner</a>
+
   <a wire:navigate href="{{ route('Event-Registration') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Event Registration</a>
   <a wire:navigate href="{{ route('Login') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Login</a>
 
