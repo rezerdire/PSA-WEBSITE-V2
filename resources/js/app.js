@@ -22,6 +22,25 @@ Alpine.data('qrScanner', () => ({
     async init() {
         await this.loadCameras();
         if (this.selectedCameraId) await this.startCamera();
+
+        // Stop the camera whenever we navigate away from this page,
+        // whether via Livewire SPA navigation, full page unload, or
+        // the browser back-forward cache restoring/leaving the page.
+        this._onNavigating = () => this.stopCamera();
+        this._onPageHide = () => this.stopCamera();
+
+        document.addEventListener('livewire:navigating', this._onNavigating);
+        window.addEventListener('pagehide', this._onPageHide);
+
+        // Alpine calls destroy() automatically when this element is
+        // removed from the DOM (e.g. wire:navigate swaps the page).
+        this.$el.addEventListener('alpine:destroy', () => this.stopCamera());
+    },
+
+    destroy() {
+        this.stopCamera();
+        document.removeEventListener('livewire:navigating', this._onNavigating);
+        window.removeEventListener('pagehide', this._onPageHide);
     },
 
     async loadCameras() {
@@ -73,12 +92,27 @@ Alpine.data('qrScanner', () => ({
         }
     },
 
+    // Single, merged stopCamera: cancels the scan loop AND stops every
+    // track on both this.stream and the <video> element's srcObject
+    // (belt-and-braces, since either could be the one still holding
+    // the camera open depending on how startCamera() last ran).
     stopCamera() {
-        if (this.scanLoopId) cancelAnimationFrame(this.scanLoopId);
+        if (this.scanLoopId) {
+            cancelAnimationFrame(this.scanLoopId);
+            this.scanLoopId = null;
+        }
+
         if (this.stream) {
             this.stream.getTracks().forEach(t => t.stop());
             this.stream = null;
         }
+
+        if (this.$refs.video && this.$refs.video.srcObject) {
+            this.$refs.video.srcObject.getTracks().forEach(track => track.stop());
+            this.$refs.video.srcObject = null;
+        }
+
+        this.decoding = false;
     },
 
     switchCamera() {
@@ -117,9 +151,9 @@ Alpine.data('qrScanner', () => ({
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
                     inversionAttempts: 'dontInvert',
                 });
-            
-            // scan delay for 1 sec
-           if (code && code.data) {
+
+                // scan delay for 1 sec
+                if (code && code.data) {
                     this.stopCamera();
                     this.decoding = true;
                     setTimeout(() => {
@@ -229,5 +263,4 @@ Alpine.data('qrScanner', () => ({
         img.src = url;
     },
 }));
-
 // QR SCANNER END

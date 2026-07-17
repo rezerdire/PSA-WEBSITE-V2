@@ -16,7 +16,7 @@
         [
             'key' => 'Registration Form',
             'title' => 'Registration Form',
-            'description' => 'Register for the convention',
+            'description' => 'Registration for the convention',
             'icon' => 'document-text',
             'href' => '#',
         ],
