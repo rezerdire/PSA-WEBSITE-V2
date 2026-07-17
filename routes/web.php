@@ -49,3 +49,8 @@ Route::view('/CME/Convention', 'pages.CME.convention')->name('convention');
 
 Route::view('/Forloop', 'pages.Login.forloop')->name('forloop');
 Route::view('/Login', 'pages.Login.login')->name('Login');
+
+Route::get('/sim-wars', function () {
+    return view('sim_wars/sim_wars');
+})->name('sim-wars');
+
