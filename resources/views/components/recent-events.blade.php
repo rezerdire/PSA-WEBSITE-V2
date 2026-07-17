@@ -102,7 +102,7 @@ new class extends Component
       </a>
 
       {{-- card3 --}}
-      <a href="https://psa-inc.org/sim-wars" class="block bg-white rounded-2xl overflow-hidden card border border-slate-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 hover:border-blue-200 hover:ring-1 hover:ring-blue-200">
+      <a href="{{ route('sim-wars') }}" class="block bg-white rounded-2xl overflow-hidden card border border-slate-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 hover:border-blue-200 hover:ring-1 hover:ring-blue-200">
         <div class="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
           <img src="{{ asset('images/event-cover-photo/SIMWARS-CP.jpg') }}"
                alt="SIM Wars Trilogy"
