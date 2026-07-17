@@ -54,3 +54,8 @@ Route::get('/sim-wars', function () {
     return view('sim_wars/sim_wars');
 })->name('sim-wars');
 
+
+// PSA HYMN
+Route::get('/psa-hymn', function () {
+    return view('pages.AboutUs.pagehymn');
+})->name('psa-hymn');

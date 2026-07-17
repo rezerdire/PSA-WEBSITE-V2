@@ -57,9 +57,9 @@ new class extends Component
                         <iframe
                             x-show="playing"
                             x-cloak
-                            src="https://www.youtube.com/embed/{{ $panel['youtube'] }}?autoplay=1"
+                            src="https://www.youtube.com/embed/{{ $panel['youtube'] }}"
                             title="{{ $panel['title'] ?? 'Video' }}"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowfullscreen
                             referrerpolicy="strict-origin-when-cross-origin"
                             class="absolute inset-0 w-full h-full border-0 rounded-xl">

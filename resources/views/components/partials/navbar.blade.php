@@ -35,7 +35,8 @@ new class extends Component
             <a wire:navigate href="{{ route('Office-and-board') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Officers &amp; Board</a>
             <a wire:navigate href="{{ route('SubSpecialty-SIG') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Subspecialty &amp; SIG</a>
             <a wire:navigate href="{{ route('Chapter-Presidents') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Chapter Presidents</a>
-            <a wire:navigate href="{{ route('Legacy') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Past Presidents</a>
+            <a wire:navigate href="{{ route('Legacy') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Legacy</a>
+            <a  href="{{ route('psa-hymn') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">PSA Hymn</a>
           </div>
         </div>
 
@@ -89,6 +90,8 @@ new class extends Component
       <a wire:navigate href="{{ route('SubSpecialty-SIG') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Subspecialty &amp; SIG</a>
       <a wire:navigate href="{{ route('Chapter-Presidents') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Chapter Presidents</a>
       <a wire:navigate href="{{ route('Legacy') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Past Presidents</a>
+      <a wire:navigate href="{{ route('psa-hymn') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">PSA Hymn</a>
+
     </div>
   </div>
 
