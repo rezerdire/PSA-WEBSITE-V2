@@ -13,6 +13,7 @@ new class extends Component
 @section('content')
     <x-hero-section />
     <x-mission-vision-section />
+    <x-convention-highlight />
     <x-recent-events />
 
 @livewire('gallery-section')

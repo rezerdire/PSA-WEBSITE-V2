@@ -64,7 +64,7 @@
                     href="{{ $link['href'] }}"
                     class="group relative bg-white rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-6 sm:p-8 flex flex-col items-center text-center"
                 >
-                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-5 group-hover:bg-[#000066] transition-colors duration-300">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-5 group-hover:bg-blue-600 transition-colors duration-300">
                         <x-dynamic-component
                             :component="'heroicon-o-' . $link['icon']"
                             class="w-7 h-7 sm:w-8 sm:h-8 text-[#000066] group-hover:text-white transition-colors duration-300"
@@ -79,7 +79,7 @@
                         {{ $link['description'] }}
                     </p>
 
-                    <span class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl bg-[#ac071a] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                    <span class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl bg-blue-600 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
                 </a>
             @endforeach
         </div>
