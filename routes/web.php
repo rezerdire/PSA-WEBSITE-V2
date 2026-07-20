@@ -43,9 +43,9 @@ Route::view('/About-Us/SubSpecialty-SIG', 'pages.AboutUs.subspecialty-sig')->nam
 Route::view('/Chapter-Presidents', 'pages.AboutUs.chapter-presidents')->name('Chapter-Presidents');
 Route::view('/Legacy', 'pages.AboutUs.legacy')->name('Legacy');
 Route::view('/Membership', 'pages.Membership.member-registation')->name('Membership');
-Route::view('/Event-Registration', 'pages.Event-Registration.events-registration')->name('Event-Registration');
+Route::view('/Annual-Convention-2026/Registration', 'pages.Event-Registration.events-registration')->name('Event-Registration');
 Route::view('/CME/PJA', 'pages.CME.pja')->name('pja');  
-Route::view('/CME/Convention', 'pages.CME.convention')->name('convention');
+Route::view('/Annual-Convention-2026', 'pages.CME.convention')->name('convention');
 
 Route::view('/Forloop', 'pages.Login.forloop')->name('forloop');
 Route::view('/Login', 'pages.Login.login')->name('Login');

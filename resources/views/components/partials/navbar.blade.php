@@ -55,10 +55,10 @@ new class extends Component
 
         {{-- Gallery Dropdown --}}
         <a wire:navigate href="{{ route('Gallery') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Gallery</a>
-        <a wire:navigate href="{{ route('Event-Registration') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Event Registration</a>
+        <a wire:navigate href="{{ route('Event-Registration') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Annual Convention</a>
         <a wire:navigate href="{{ route('info-scan-qr') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Profile Scanner</a>
 
-        <a wire:navigate href="{{ route('Login') }}" class="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Login </a>
+        {{-- <a wire:navigate href="{{ route('Login') }}" class="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Login </a> --}}
 
         {{-- <a href="{{ route('Membership') }}" class="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Membership </a> --}}
       </div>
@@ -94,16 +94,27 @@ new class extends Component
 
     </div>
   </div>
+{{-- end about us section --}}
 
-  <a wire:navigate href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">CME Activities</a>
+{{-- CME section --}}
+<div x-data="{ aboutOpen: false }">
+    <button @click="aboutOpen = !aboutOpen" class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+      CME Activities
+      <svg class="w-3 h-3 opacity-50 transition-transform duration-200" :class="{ 'rotate-180': aboutOpen }" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div x-show="aboutOpen" x-transition class="pl-4">
+      <a wire:navigate href="{{ route('convention') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Annual Convention 2026</a>
+      <a wire:navigate href="{{ route('pja') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">PJA</a>
+ 
+    </div>
+  </div>
+
+
   <a wire:navigate href="{{ route('Gallery') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Gallery</a>
-  <a wire:navigate href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Membership</a>
-  <a wire:navigate href="{{ route('pja') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">PJA</a>
   <a wire:navigate href="{{ route('info-scan-qr') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Profile Scanner</a>
-  <a wire:navigate href="{{ route('convention') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Annual Convention 2026</a>
-
-  <a wire:navigate href="{{ route('Event-Registration') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Event Registration</a>
-  <a wire:navigate href="{{ route('Login') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Login</a>
+  {{-- <a wire:navigate href="{{ route('Login') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Login</a> --}}
 
 </div>
   </div>

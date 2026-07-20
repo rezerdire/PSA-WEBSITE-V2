@@ -195,14 +195,21 @@ new class extends Component {
 
     $this->registrationId = (string) $registration->id;
     $this->submitted      = true;
+
+    // adding this event to the browser's window so that the frontend can scroll to top
+        $this->dispatch('registration-submitted');
+
 }
 };
 ?>
 {{-- FRONTEND --}}
-<div class="p-6 md:p-10">
-
+<div class="p-6 md:p-10" x-data x-on:registration-submitted.window="
+    $nextTick(() => {
+        document.getElementById('registration-success')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    })
+">
     @if ($submitted)
-        <div class="max-w-lg mx-auto py-10">
+    <div class="max-w-lg mx-auto py-10" id="registration-success">
 
             <div class="flex justify-center mb-6">
                 <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background-color: #e8f5e9;">
@@ -225,7 +232,7 @@ new class extends Component {
                 </div>
                 <div class="divide-y divide-gray-50">
                     @foreach ([
-                        ['Reference No.',  '#' . str_pad($registrationId, 6, '0', STR_PAD_LEFT)],
+                        // ['Reference No.',  '#' . str_pad($registrationId, 6, '0', STR_PAD_LEFT)],
                         ['Full Name',       $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName],
                         ['PSA ID',          $psaId],
                         ['Membership',      ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership],
@@ -249,7 +256,8 @@ new class extends Component {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
                 </svg>
                 <p class="text-xs text-blue-700 leading-relaxed">
-                    Please take note of your <strong>Reference No.</strong> above. The PSA secretariat will review your submission and update your registration status. You may follow up using your PSA ID <strong>{{ $psaId }}</strong>.
+                    {{-- Please take note of your <strong>Reference No.</strong> above.  --}}
+                    The PSA secretariat will review your submission and update your registration status. You may follow up using your PSA ID <strong>{{ $psaId }}</strong>.
                 </p>
             </div>
 

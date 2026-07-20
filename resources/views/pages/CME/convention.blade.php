@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Midyear Convention 2026')
+@section('title', 'Annual Convention 2026')
 
 @section('content')
 
@@ -18,36 +18,36 @@
             'title' => 'Registration Form',
             'description' => 'Registration for the convention',
             'icon' => 'document-text',
-            'href' => '#',
+            'href' => route('Event-Registration'), 
         ],
-        [
-            'key' => 'scientific',
-            'title' => 'Scientific Program',
-            'description' => 'View the full lineup of talks and sessions',
-            'icon' => 'book-open',
-            'href' => '#',
-        ],
-        [
-            'key' => 'social',
-            'title' => 'Social Programs',
-            'description' => 'Evening events and networking activities',
-            'icon' => 'sparkles',
-            'href' => '#',
-        ],
-        [
-            'key' => 'tours',
-            'title' => 'Tours & Accommodations',
-            'description' => 'Hotel options and city tour packages',
-            'icon' => 'paper-airplane',
-            'href' => '#',
-        ],
-        [
-            'key' => 'pickleball',
-            'title' => 'Pickleball Tournament',
-            'description' => 'Register for the friendly sports tournament',
-            'icon' => 'trophy',
-            'href' => '#',
-        ],
+        // [
+        //     'key' => 'scientific',
+        //     'title' => 'Scientific Program',
+        //     'description' => 'View the full lineup of talks and sessions',
+        //     'icon' => 'book-open',
+        //     'href' => '#',
+        // ],
+        // [
+        //     'key' => 'social',
+        //     'title' => 'Social Programs',
+        //     'description' => 'Evening events and networking activities',
+        //     'icon' => 'sparkles',
+        //     'href' => '#',
+        // ],
+        // [
+        //     'key' => 'tours',
+        //     'title' => 'Tours & Accommodations',
+        //     'description' => 'Hotel options and city tour packages',
+        //     'icon' => 'paper-airplane',
+        //     'href' => '#',
+        // ],
+        // [
+        //     'key' => 'pickleball',
+        //     'title' => 'Pickleball Tournament',
+        //     'description' => 'Register for the friendly sports tournament',
+        //     'icon' => 'trophy',
+        //     'href' => '#',
+        // ],
     ];
 @endphp
 
