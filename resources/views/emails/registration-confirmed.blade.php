@@ -75,7 +75,7 @@
                                         . ($registration->middle_name ? ' ' . $registration->middle_name : '')
                                         . ' ' . $registration->last_name;
                                     $rows = [
-                                        ['Reference No.', '#' . str_pad($registration->id, 6, '0', STR_PAD_LEFT)],
+                                        // ['Reference No.', '#' . str_pad($registration->id, 6, '0', STR_PAD_LEFT)],
                                         ['Full Name',     $fullName],
                                         ['PSA ID',        $registration->psa_id],
                                         ['Membership',    $memMap[$registration->membership] ?? $registration->membership],
@@ -110,7 +110,7 @@
                                    style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;">
                                 <tr>
                                     <td style="padding:14px 18px;font-size:12px;color:#1d4ed8;line-height:1.7;">
-                                        Please take note of your <strong>Reference No.</strong> above.
+                                        {{-- Please take note of your <strong>Reference No.</strong> above. --}}
                                         The PSA secretariat will review your submission and update your registration status.
                                         You may follow up using your PSA ID <strong>{{ $registration->psa_id }}</strong>.
                                     </td>
