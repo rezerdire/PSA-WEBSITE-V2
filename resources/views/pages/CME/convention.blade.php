@@ -6,13 +6,13 @@
 
 @php
     $links = [
-        [
-            'key' => 'poster',
-            'title' => 'Poster',
-            'description' => 'Download the official convention poster',
-            'icon' => 'photo',
-            'href' => '#',
-        ],
+        // [
+        //     'key' => 'poster',
+        //     'title' => 'Poster',
+        //     'description' => 'Download the official convention poster',
+        //     'icon' => 'photo',
+        //     'href' => '#',
+        // ],
         [
             'key' => 'Registration Form',
             'title' => 'Registration Form',
@@ -20,20 +20,20 @@
             'icon' => 'document-text',
             'href' => route('Event-Registration'), 
         ],
-        // [
-        //     'key' => 'scientific',
-        //     'title' => 'Scientific Program',
-        //     'description' => 'View the full lineup of talks and sessions',
-        //     'icon' => 'book-open',
-        //     'href' => '#',
-        // ],
-        // [
-        //     'key' => 'social',
-        //     'title' => 'Social Programs',
-        //     'description' => 'Evening events and networking activities',
-        //     'icon' => 'sparkles',
-        //     'href' => '#',
-        // ],
+        [
+            'key' => 'scientific',
+            'title' => 'Scientific Program',
+            'description' => 'View the full lineup of talks and sessions',
+            'icon' => 'book-open',
+            'href' => '#',
+        ],
+        [
+            'key' => 'social',
+            'title' => 'Social Programs',
+            'description' => 'Evening events and networking activities',
+            'icon' => 'sparkles',
+            'href' => '#',
+        ],
         // [
         //     'key' => 'tours',
         //     'title' => 'Tours & Accommodations',
@@ -41,13 +41,13 @@
         //     'icon' => 'paper-airplane',
         //     'href' => '#',
         // ],
-        // [
-        //     'key' => 'pickleball',
-        //     'title' => 'Pickleball Tournament',
-        //     'description' => 'Register for the friendly sports tournament',
-        //     'icon' => 'trophy',
-        //     'href' => '#',
-        // ],
+        [
+            'key' => 'sponsorships',
+            'title' => 'Sponsors & Exhibitors',
+            'description' => 'Support the convention and get featured',
+            'icon' => 'user-group',
+            'href' => '#',
+        ],
     ];
 @endphp
 
