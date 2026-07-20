@@ -118,7 +118,11 @@ new class extends Component
 
     </div>{{-- end wire:ignore --}}
 
-    {{-- Livewire's input lives OUTSIDE wire:ignore so it survives re-renders --}}
+    {{-- Livewire's input lives OUTSIDE wire:ignore so it survives re-renders.
+         NOTE: no native "required" here on purpose — a hidden required file
+         input makes the browser silently block form submission with a
+         console-only "not focusable" error instead of submitting to Livewire.
+         Requiredness is enforced server-side in the component's validation rules. --}}
     @if ($wireModel)
         <input
             x-ref="livewireInput"
@@ -126,7 +130,6 @@ new class extends Component
             name="{{ $name }}"
             wire:model="{{ $wireModel }}"
             accept="{{ $accept }}"
-            {{ $required ? 'required' : '' }}
             class="hidden">
     @else
         <input
@@ -134,7 +137,6 @@ new class extends Component
             type="file"
             name="{{ $name }}"
             accept="{{ $accept }}"
-            {{ $required ? 'required' : '' }}
             class="hidden">
     @endif
 
