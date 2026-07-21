@@ -22,9 +22,13 @@ new class extends Component
             x-transition:enter-end="opacity-100 translate-y-0">
 
             @if(!empty($panel['title']))
-                <h2 class="text-center text-2xl font-bold text-gray-800 mb-2">
-                    {{ $panel['title'] }}
-                </h2>
+            <div class = "flex justify-center" >
+                <div class = "py-2 m-2 bg-blue-500/100 w-sm rounded-xl text-sm">
+                    <h2 class="text-center text-2xl font-bold text-gray-800 mb-2 text-white">
+                        {{ $panel['title'] }}
+                    </h2>
+                </div>
+            </div>
             @endif
 
             @if(!empty($panel['subtitle']))
@@ -35,7 +39,7 @@ new class extends Component
 
             {{-- YT --}}
             @if(!empty($panel['youtube']))
-                <div class="w-full max-w-4xl mx-auto mt-12 px-6">
+                <div class="w-full max-w-4xl mx-auto mt-2 px-6">
                     <div x-data="{ playing: false }" class="relative w-full aspect-video">
                         <div
                             x-show="!playing"

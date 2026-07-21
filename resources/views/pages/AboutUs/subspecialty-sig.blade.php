@@ -21,11 +21,13 @@ new class extends Component
     <x-sub-navbar :tabs="[
         ['key' => 'subspecialty', 'label' => 'Subspecialty'],
         ['key' => 'sig',          'label' => 'Special Interest Groups'],
+        ['key' => 'rasphil',      'label' => 'RASPHIL Convention 2026'],
     ]" />
 
     <x-about-us-content :panels="[
         ['key' => 'subspecialty', 'title' => 'Subspecialty', 'image' => '/images/Subspecialty-and-ISG.png', 'alt' => 'PSA Subspecialty'],
-        ['key' => 'sig',          'title' => 'Special Interest Groups', 'image' => '/images/Special-Interest-Group.png',          'alt' => 'PSA Special Interest Groups'],
-    ]" />
+        ['key' => 'sig',          'title' => 'Special Interest Groups', 'image' => '/images/Special-Interest-Group.png',      'alt' => 'PSA Special Interest Groups'],
+        ['key' => 'rasphil',      'title' => 'RASPHIL Convention 2026', 'youtube' => 'MD38OAWUjBs',   'alt' => 'RASPHIL Convention 2026', 'subtitle' => '23rd - 24th January 2026 | Metrocentre, Tagbilaran City, Bohol'],
+   ]" />
 
 </div>
