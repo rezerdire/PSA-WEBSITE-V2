@@ -23,9 +23,9 @@ new class extends Component
     ]" />
 
     <x-about-us-content :panels="[
-        ['key' => 'luzon','title' => 'Luzon',    'image' => '/images/Chapter-Presidents_Luzon.png',    'alt' => 'Luzon'],
-        ['key' => 'visayas','title' => 'Visayas',  'image' => '/images/Chapter-Presidents_Visayas.png',  'alt' => 'Visayas'],
-        ['key' => 'mindanao','title' => 'Mindanao', 'image' => '/images/Chapter-Presidents_Mindanao.png', 'alt' => 'Mindanao'],
+        ['key' => 'luzon',    'image' => '/images/Chapter-Presidents_Luzon.png',    'alt' => 'Luzon'],
+        ['key' => 'visayas',  'image' => '/images/Chapter-Presidents_Visayas.png',  'alt' => 'Visayas'],
+        ['key' => 'mindanao', 'image' => '/images/Chapter-Presidents_Mindanao.png', 'alt' => 'Mindanao'],
     ]" />
 
 </div>

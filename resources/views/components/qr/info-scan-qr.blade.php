@@ -174,11 +174,9 @@ new class extends Component {
     }
 };
 ?>
-<div    class="w-full max-w-md mx-auto py-12 px-4">
+<div class="w-full max-w-md mx-auto py-12 px-4 mt-10">
 
-    <p class="text-[11px] tracking-[0.14em] uppercase text-[#ac071a] font-semibold ml-0.5 mb-1.5">
-        PSA · Convention Access
-    </p>
+ 
     <h1 class=" text-2xl font-bold text-[#000066] tracking-tight mb-1">
         Member Scanner
     </h1>

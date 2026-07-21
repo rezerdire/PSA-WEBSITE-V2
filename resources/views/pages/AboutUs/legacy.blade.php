@@ -24,10 +24,10 @@ new class extends Component
     ]" />
 
     <x-about-us-content :panels="[
-        ['key' => 'past-presidents', 'title' => 'Past Presidents','image' => '/images/Past_Presidents_2025.png',   'alt' => 'PSA Past Presidents'],
-        ['key' => 'quintin-awardee', 'title' => 'Quintin J. Gomez Awardee','image' => '/images/Quintin_J_Gomez_Awardees.png',   'alt' => 'Quintin J. Gomez Awardee'],
-        ['key' => 'silao-awardee',   'title' => 'Manuel V. Silao Leadership Awardee','image' => '/images/Manuel_Silao_Leadership_Awardee.png','alt' => 'Manuel V. Silao Awardee'],
-        ['key' => 'psa-hymn',        'title' => 'PSA Hymn','youtube' => 'hkIcSJ5enp8'],
+        ['key' => 'past-presidents','image' => '/images/Past_Presidents_2025.png',   'alt' => 'PSA Past Presidents'],
+        ['key' => 'quintin-awardee', 'image' => '/images/Quintin_J_Gomez_Awardees.png',   'alt' => 'Quintin J. Gomez Awardee'],
+        ['key' => 'silao-awardee',   'image' => '/images/Manuel_Silao_Leadership_Awardee.png','alt' => 'Manuel V. Silao Awardee'],
+        ['key' => 'psa-hymn',        'youtube' => 'hkIcSJ5enp8'],
     ]" />
 
 </div>
