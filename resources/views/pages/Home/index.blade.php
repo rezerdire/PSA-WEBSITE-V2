@@ -9,6 +9,7 @@ new class extends Component
 ?>
 @section('title', 'Philippine Society of Anesthesiologists')
 @extends('layouts.app')
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 @section('content')
     <x-hero-section />

@@ -69,9 +69,10 @@ Route::view('/CME/Mid-Year-Convention/Workshop', 'pages.CME.midyearconvention.wo
 Route::view('/CME/Mid-Year-Convention/SocialProgram', 'pages.CME.midyearconvention.soicalprogram')->name('midyearconvention-socialprogram');
 Route::view('/CME/Mid-Year-Convention/Tour&Accomodation', 'pages.CME.midyearconvention.touraccomodation')->name('midyearconvention-touraccomodation');
 Route::view('/CME/Mid-Year-Convention/PickleballTournament', 'pages.CME.midyearconvention.pickleballtourna')->name('midyearconvention-pickleballtourna');
-
 Route::view('/CME/Mid-Year-Convention/ScientificProgram', 'pages.CME.midyearconvention.scientificprogram')->name('midyearconvention-scientificprogram');
-
-
 // mid year root 
 Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name('mid-year-convention');
+
+
+// Annual Convention 2026
+Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')->name('annual-convention-poster');
