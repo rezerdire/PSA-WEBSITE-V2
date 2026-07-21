@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Annual Convention 2026')
+@section('title', 'Midyear Convention 2026')
 
 @section('content')
 
@@ -11,42 +11,42 @@
             'title' => 'Poster',
             'description' => 'Download the official convention poster',
             'icon' => 'photo',
-            'href' => '#',
+            'href' => route('midyearconvention-poster'),
         ],
         [
-            'key' => 'Registration Form',
-            'title' => 'Registration Form',
-            'description' => 'Registration for the convention',
+            'key' => 'Evaluation Form',
+            'title' => 'Evaluation Form',
+            'description' => 'Provide feedback about the convention',
             'icon' => 'document-text',
-            'href' => route('Event-Registration'), 
+            'href' => 'https://docs.google.com/forms/d/e/1FAIpQLSdEBEohaluvEpkjfbyqf92B4XcsUVZ7x0DRXrpyMN6gnwWNkg/viewform?pli=1', 
         ],
         [
             'key' => 'scientific',
             'title' => 'Scientific Program',
             'description' => 'View the full lineup of talks and sessions',
             'icon' => 'book-open',
-            'href' => '#',
+            'href' => route('midyearconvention-scientificprogram'),
         ],
         [
             'key' => 'social',
             'title' => 'Social Programs',
             'description' => 'Evening events and networking activities',
             'icon' => 'sparkles',
-            'href' => '#',
+            'href' => route('midyearconvention-socialprogram'),
         ],
-        // [
-        //     'key' => 'tours',
-        //     'title' => 'Tours & Accommodations',
-        //     'description' => 'Hotel options and city tour packages',
-        //     'icon' => 'paper-airplane',
-        //     'href' => '#',
-        // ],
         [
-            'key' => 'sponsorships',
-            'title' => 'Sponsors & Exhibitors',
-            'description' => 'Support the convention and get featured',
-            'icon' => 'user-group',
-            'href' => '#',
+            'key' => 'tours',
+            'title' => 'Tours & Accommodations',
+            'description' => 'Hotel options and city tour packages',
+            'icon' => 'paper-airplane',
+            'href' => route('midyearconvention-touraccomodation'),
+        ],
+        [
+            'key' => 'pickleballtournament',
+            'title' => 'Pickleball Tournament',
+            'description' => 'Compete in the convention pickleball tournament',
+            'icon' => 'trophy',
+            'href' => route('midyearconvention-pickleballtourna'),
         ],
     ];
 @endphp
@@ -54,7 +54,7 @@
 <div class="min-h-screen bg-white">
 
     {{-- Header --}}
-     <x-about-us-header title="ANNUAL CONVENTION 2026" description="Jun 16, 2026 | PSA Convention | Quezon City" />
+     <x-about-us-header title="MIDYEAR CONVENTION 2026" description="May 14, 2026 | KCC Events & Convention Center | General Santos City" />
 <div class="max-w-6xl mx-auto px-6 py-14">
 
      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-12 pb-16 sm:pb-24 ">

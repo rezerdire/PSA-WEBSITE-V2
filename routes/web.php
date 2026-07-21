@@ -46,6 +46,7 @@ Route::view('/Membership', 'pages.Membership.member-registation')->name('Members
 Route::view('/AnnualConvention2026/Registration', 'pages.Event-Registration.events-registration')->name('Event-Registration');
 Route::view('/CME/PJA', 'pages.CME.pja')->name('pja');  
 Route::view('/AnnualConvention2026', 'pages.CME.convention')->name('convention');
+Route::view('/CME/Mid-Year-Convention', 'pages.CME.mid-year-convention')->name('mid-year-convention');
 
 Route::view('/Forloop', 'pages.Login.forloop')->name('forloop');
 Route::view('/Login', 'pages.Login.login')->name('Login');
@@ -59,3 +60,18 @@ Route::get('/sim-wars', function () {
 Route::get('/psa-hymn', function () {
     return view('pages.AboutUs.pagehymn');
 })->name('psa-hymn');
+
+
+// Midyear Convention 2026
+// file: midyearconvention
+Route::view('/CME/Mid-Year-Convention/Poster', 'pages.CME.midyearconvention.poster')->name('midyearconvention-poster');
+Route::view('/CME/Mid-Year-Convention/Workshop', 'pages.CME.midyearconvention.workshop')->name('midyearconvention-workshop');
+Route::view('/CME/Mid-Year-Convention/SocialProgram', 'pages.CME.midyearconvention.soicalprogram')->name('midyearconvention-socialprogram');
+Route::view('/CME/Mid-Year-Convention/Tour&Accomodation', 'pages.CME.midyearconvention.touraccomodation')->name('midyearconvention-touraccomodation');
+Route::view('/CME/Mid-Year-Convention/PickleballTournament', 'pages.CME.midyearconvention.pickleballtourna')->name('midyearconvention-pickleballtourna');
+
+Route::view('/CME/Mid-Year-Convention/ScientificProgram', 'pages.CME.midyearconvention.scientificprogram')->name('midyearconvention-scientificprogram');
+
+
+// mid year root 
+Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name('mid-year-convention');

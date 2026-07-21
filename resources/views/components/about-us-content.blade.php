@@ -10,8 +10,8 @@ new class extends Component
     'panels' => [],
 ])
 
-<div class="max-w-6xl mx-auto px-6 py-14">
-    @foreach($panels as $panel)
+<div class="max-w-6xl mx-auto px-6 py-14 sm:py-4  ">
+        @foreach($panels as $panel)
         <div
             x-show="activeTab === '{{ $panel['key'] }}'"
             @if(!$loop->first) 
@@ -72,13 +72,16 @@ new class extends Component
                     </div>
                 </div>
 
+                
             @elseif(!empty($panel['image']))
                 <img
                     src="{{ $panel['image'] }}"
                     alt="{{ $panel['alt'] ?? '' }}"
-                    class="w-full h-auto object-cover">
+                    class="w-full h-auto object-cover mb-2">
             @endif
 
         </div>
     @endforeach
+
+    
 </div>

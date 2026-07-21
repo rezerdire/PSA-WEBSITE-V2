@@ -21,8 +21,8 @@ new class extends Component {};
     ]" />
 
     <x-about-us-content :panels="[
-        ['key' => 'executive',  'title' => 'Executive Officers', 'image' => '/images/PSA_Executive_Officers.png',  'alt' => 'PSA Executive Officers'],
-        ['key' => 'directors',  'title' => 'Board of Directors', 'image' => '/images/PSA_Board_of_Directors.png',  'alt' => 'PSA Board of Directors'],
-        ['key' => 'regional',   'title' => 'Regional Directors', 'image' => '/images/PSA_Regional_Directors.png',   'alt' => 'PSA Regional Directors'],
+        ['key' => 'executive',   'image' => '/images/PSA_Executive_Officers.png',  'alt' => 'PSA Executive Officers'],
+        ['key' => 'directors',   'image' => '/images/PSA_Board_of_Directors.png',  'alt' => 'PSA Board of Directors'],
+        ['key' => 'regional',    'image' => '/images/PSA_Regional_Directors.png',   'alt' => 'PSA Regional Directors'],
     ]" />
 </div>
