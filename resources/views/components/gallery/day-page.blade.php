@@ -113,18 +113,18 @@ new class extends Component
             <div class="flex items-center gap-3">
                 <span class="w-1 h-8 bg-blue-600 rounded-full"></span>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight uppercase">
                         {{ $event->name }}
                     </h1>
-                    <p class="text-sm text-slate-500">{{ $day->label }}</p>
+                    <p class="text-sm text-slate-500 uppercase">{{ $day->label }}</p>
                 </div>
             </div>
 
             {{-- Day tab strip --}}
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 uppercase">
                 @foreach ($event->days as $d)
                     @if ($d->id === $day->id)
-                        <span class="px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 text-white">
+                        <span class="px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 text-white uppercase">
                             {{ $d->label }}
                         </span>
                     @else
