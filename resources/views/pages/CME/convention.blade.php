@@ -3,6 +3,7 @@
 @section('title', 'Annual Convention 2026')
 
 @section('content')
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 @php
     $links = [
@@ -11,7 +12,7 @@
             'title' => 'Poster',
             'description' => 'Download the official convention poster',
             'icon' => 'photo',
-            'href' => '#',
+            'href' => route('annual-convention-poster'),
         ],
         [
             'key' => 'Registration Form',
