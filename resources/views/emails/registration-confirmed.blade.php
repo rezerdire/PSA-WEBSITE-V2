@@ -47,7 +47,7 @@
                     <tr>
                         <td align="center" style="padding-bottom: 28px;">
                             <p style="margin:0;font-size:13px;color:#9ca3af;max-width:400px;line-height:1.6;">
-                                Your registration for <strong style="color:#374151;">PSA Midyear Convention 2026</strong>
+                                Your registration for <strong style="color:#374151;">PSA Annual Convention 2026</strong>
                                 has been received and is currently pending review.
                             </p>
                         </td>
