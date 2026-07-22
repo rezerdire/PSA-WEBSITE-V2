@@ -182,14 +182,16 @@
             text-align: center;
             padding: 10px 0;
         }
-
-        .payment-container img {
-            width: 280px;
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
-
+.payment-container img {
+    width: 280px;
+    max-width: 100%;
+    height: auto;
+    max-height: 130mm;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+    margin: 0 auto;
+}
         .payment-no-image {
             color: #9ca3af;
             font-size: 11px;
@@ -219,7 +221,6 @@
     </style>
 </head>
 <body>
-
 @foreach ($registrations as $index => $reg)
 <div class="page{{ !$loop->last ? ' page-break' : '' }}">
 
@@ -271,7 +272,7 @@
         <tr>
             <td class="label">Registration Date</td>
             <td class="value" style="font-family: 'Courier New', monospace; font-size: 11px;">
-                {{ $reg->created_at ? $reg->created_at->format('Y/m/d  H:i:s') : '—' }}
+                {{ $reg->created_at ? $reg->created_at->timezone('Asia/Manila')->format('Y/m/d  H:i:s') : '—' }}
             </td>
         </tr>
         <tr>
@@ -288,24 +289,6 @@
             </td>
         </tr>
     </table>
-
-    @if ($reg->status === 'Rejected' && ($reg->rejection_title || $reg->rejection_reason))
-        <div class="section-title" style="color:#991b1b; border-color:#991b1b;">Rejection Details</div>
-        <table class="info-grid">
-            @if ($reg->rejection_title)
-            <tr>
-                <td class="label">Title</td>
-                <td class="value" style="font-weight:bold;">{{ $reg->rejection_title }}</td>
-            </tr>
-            @endif
-            @if ($reg->rejection_reason)
-            <tr>
-                <td class="label">Reason</td>
-                <td class="value">{!! strip_tags($reg->rejection_reason) !!}</td>
-            </tr>
-            @endif
-        </table>
-    @endif
 
     <div class="section-title">Proof of Payment</div>
 
@@ -324,8 +307,3 @@
 
 </div>
 @endforeach
-
-</body>
-</html>
-
-{{-- PDF --}}
