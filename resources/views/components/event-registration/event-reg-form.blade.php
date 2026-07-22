@@ -221,7 +221,7 @@
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-bold mb-2" style="color: #000066;">Registration Submitted!</h2>
                     <p class="text-gray-500 text-sm">
-                        Your registration for <span class="font-semibold text-gray-700">PSA Midyear Convention 2026</span> has been received and is currently pending review.
+                        Your registration for <span class="font-semibold text-gray-700">PSA Annual Convention 2026</span> has been received and is currently pending review.
                     </p>
                 </div>
 
