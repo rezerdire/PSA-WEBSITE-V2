@@ -36,12 +36,14 @@ class RegistrationsTable
 
                 TextColumn::make('id')
                     ->label('Ref #')
+                    ->width('90px')
                     ->formatStateUsing(fn ($state) => '#' . str_pad($state, 6, '0', STR_PAD_LEFT))
                     ->sortable()
                     ->searchable(),
 
                 TextColumn::make('psa_id')
                     ->label('PSA ID')
+                    ->width('110px')
                     ->fontFamily('mono')
                     ->weight('bold')
                     ->badge()
@@ -50,11 +52,13 @@ class RegistrationsTable
 
                 TextColumn::make('full_name')
                     ->label('Full Name')
+                    ->grow()
                     ->searchable(['first_name', 'last_name', 'middle_name'])
                     ->sortable(['last_name', 'first_name']),
 
                 TextColumn::make('member.mem_email_address')
                     ->label('Email (PSA Record)')
+                    ->width('220px')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 ImageColumn::make('proof_payment')
@@ -114,6 +118,7 @@ class RegistrationsTable
                     ),
 
                 TextColumn::make('status')
+                    ->width('120px')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'Approved' => 'success',
@@ -131,6 +136,7 @@ class RegistrationsTable
 
                 TextColumn::make('created_at')
                     ->label('Submitted')
+                    ->width('160px')
                     ->dateTime('M d, Y g:i A')
                     ->sortable()
                     ->toggleable(),
