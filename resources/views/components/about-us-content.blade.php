@@ -72,13 +72,21 @@ new class extends Component
                     </div>
                 </div>
 
-                
-            @elseif(!empty($panel['image']))
+                @elseif(!empty($panel['image']))
+            @if(!empty($panel['link']))
+                <a href="{{ $panel['link'] }}" class="block">
+                    <img
+                        src="{{ $panel['image'] }}"
+                        alt="{{ $panel['alt'] ?? '' }}"
+                        class="w-full h-auto object-cover mb-2">
+                </a>
+            @else
                 <img
                     src="{{ $panel['image'] }}"
                     alt="{{ $panel['alt'] ?? '' }}"
                     class="w-full h-auto object-cover mb-2">
             @endif
+        @endif
 
         </div>
     @endforeach

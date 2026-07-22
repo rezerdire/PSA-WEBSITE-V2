@@ -9,6 +9,7 @@
     <x-about-us-header
         title="Midyear Convention 2026" description="May 14, 2026 | KCC Events & Convention Center | General Santos City" />
 
+        
         <div class = "flex justify-center">
     <x-sub-navbar :tabs="[
         ['key' => 'poster',  'label' => 'Poster'],
