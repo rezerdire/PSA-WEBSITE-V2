@@ -6,6 +6,7 @@ use App\Models\Registration;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class RegistrationPdfController extends Controller
 {
@@ -62,20 +63,20 @@ class RegistrationPdfController extends Controller
     }
 
     private function encodeImage(?string $relativePath): ?string
-    {
-        if (! $relativePath) {
-            return null;
-        }
-
-        $fullPath = storage_path('app/public/' . ltrim($relativePath, '/'));
-
-        if (! file_exists($fullPath)) {
-            return null;
-        }
-
-        $mime = mime_content_type($fullPath);
-        $data = base64_encode(file_get_contents($fullPath));
-
-        return "data:{$mime};base64,{$data}";
+{
+    if (! $relativePath) {
+        return null;
     }
+
+    $disk = Storage::disk('uploads');
+
+    if (! $disk->exists($relativePath)) {
+        return null;
+    }
+
+    $mime = $disk->mimeType($relativePath) ?: 'image/jpeg';
+    $data = base64_encode($disk->get($relativePath));
+
+    return "data:{$mime};base64,{$data}";
+}
 }

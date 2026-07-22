@@ -73,6 +73,7 @@ new class extends Component
           </div>
 
           <div class="flex justify-center lg:justify-end">
+            <a href =""
             <img src = "{{ asset('annual-convention/annualposter.png') }}" alt="PSA 58th Annual Convention Poster" class="rounded-2xl shadow-xl shadow-blue-100 max-h-[520px] w-auto object-contain">
           </div>
         </div>
