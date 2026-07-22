@@ -14,7 +14,7 @@ new class extends Component
 
       {{-- Logo --}}
       <a href="{{ route('home') }}" class="flex items-center gap-1">
-            <img src="{{ asset('Images/PSA_LOGO.png') }}" alt="PSA Logo" class="h-12 w-10 w-auto">
+            <img src="{{ asset('images/PSA_LOGO.png') }}" alt="PSA Logo" class="h-12 w-10 w-auto">
         <div class="leading-tight">
           <span class="block text-sm font-bold text-slate-900 tracking-tight uppercase">Philippine Society of <br> Anesthesiologists, Inc</span>
         </div>

@@ -6,6 +6,7 @@ new class extends Component {};
 @section('title', 'Officers & Boards - PSA')
 @extends('layouts.app')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+@section('content')
 
 {{-- Officers & Boards --}}
 <div x-data="{ activeTab: 'executive' }" class="bg-white min-h-screen">
@@ -26,3 +27,5 @@ new class extends Component {};
         ['key' => 'regional',    'image' => '/images/PSA_Regional_Directors.png',   'alt' => 'PSA Regional Directors'],
     ]" />
 </div>
+
+@endsection

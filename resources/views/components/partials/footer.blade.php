@@ -15,7 +15,7 @@ new class extends Component
       <div class="lg:col-span-2">
         <div class="flex items-center gap-1 mb-5">
               <a href="#" class="flex items-center gap-1">
-        <img src="{{ asset('Images/PSA_LOGO.png') }}" alt="PSA Logo" class="h-10 w-auto">
+        <img src="{{ asset('images/PSA_LOGO.png') }}" alt="PSA Logo" class="h-10 w-auto">
         </a>
           <div>
             <p class="font-bold text-sm uppercase">Philippine Society of <br> Anesthesiologists, INC</p>
