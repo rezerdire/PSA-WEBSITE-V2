@@ -58,7 +58,7 @@ new class extends Component
         {{-- Gallery Dropdown --}}
         <a wire:navigate href="{{ route('Gallery') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Gallery</a>
         <a wire:navigate href="{{ route('convention') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">Annual Convention 2026</a>
-        <a wire:navigate href="{{ route('info-scan-qr') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">ID Scanner</a>
+        {{-- <a wire:navigate href="{{ route('info-scan-qr') }}" class="nav-link px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">ID Scanner</a> --}}
 
         {{-- <a wire:navigate href="{{ route('Login') }}" class="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Login </a> --}}
 
@@ -115,8 +115,9 @@ new class extends Component
 
 
   <a wire:navigate href="{{ route('Gallery') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Gallery</a>
-  <a wire:navigate href="{{ route('info-scan-qr') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Profile Scanner</a>
+  {{-- <a wire:navigate href="{{ route('info-scan-qr') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Profile Scanner</a> --}}
   {{-- <a wire:navigate href="{{ route('Login') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Login</a> --}}
+  <a wire:navigate href="{{ route('convention') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Annual Convention 2026</a>
 
 </div>
   </div>
