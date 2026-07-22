@@ -224,7 +224,7 @@
 @foreach ($registrations as $index => $reg)
 <div class="page{{ !$loop->last ? ' page-break' : '' }}">
 
-    <div class="event-name">PSA Midyear Convention 2026</div>
+    <div class="event-name">PSA Annual Convention 2026</div>
     <div class="event-sub">Philippine Society of Anesthesiologists &nbsp;·&nbsp; Registration Record</div>
 
     <div class="header-divider"></div>
@@ -301,7 +301,7 @@
     </div>
 
     <div class="page-footer">
-        <span class="footer-left">PSA Midyear Convention 2026 &nbsp;·&nbsp; Registration Records Export</span>
+        <span class="footer-left">PSA Annual Convention 2026 &nbsp;·&nbsp; Registration Records Export</span>
         <span class="footer-right">Generated: {{ $generatedAt }} &nbsp;·&nbsp; Page {{ $index + 1 }} of {{ $registrations->count() }}</span>
     </div>
 
