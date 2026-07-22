@@ -2,6 +2,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 @section('title', 'PJA')
 @extends('layouts.app')
+@section('content')
 
 <div x-data="{ activeTab: 'PJA' }" class="bg-white min-h-screen">
 
@@ -14,3 +15,4 @@
     ]" />
 
 </div>
+@endsection

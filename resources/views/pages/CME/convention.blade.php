@@ -51,11 +51,10 @@
         ],
     ];
 @endphp
-
 <div class="min-h-screen bg-white">
 
     {{-- Header --}}
-     <x-about-us-header title="ANNUAL CONVENTION 2026" description="Jun 16, 2026 | PSA Convention | Quezon City" />
+     <x-about-us-header title="ANNUAL CONVENTION 2026" description="November 25-27, 2026 | Marriott Grand Ballroom | Pasay City" />
 <div class="max-w-6xl mx-auto px-6 py-14">
 
      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-12 pb-16 sm:pb-24 ">

@@ -9,6 +9,7 @@
         <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
         <title>@yield('title')</title>
+        <link rel="icon" type="image/png" href="{{ asset('images/PSA_LOGO.png') }}">
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 

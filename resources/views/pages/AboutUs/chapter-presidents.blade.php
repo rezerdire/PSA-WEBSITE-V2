@@ -10,7 +10,7 @@ new class extends Component
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 @section('title', 'Chapter Presidents')
 @extends('layouts.app')
-
+@section('content')
 <div x-data="{ activeTab: 'luzon' }" class="bg-white min-h-screen">
 
     {{-- KVP --}}
@@ -29,3 +29,4 @@ new class extends Component
     ]" />
 
 </div>
+@endsection

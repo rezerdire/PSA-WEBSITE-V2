@@ -11,7 +11,7 @@ new class extends Component
 @section('title', 'Legacy')
 @extends('layouts.app')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+@section('content')         
 <div x-data="{ activeTab: 'past-presidents' }" class="bg-white min-h-screen">
 {{-- default tab --}}
     <x-about-us-header title="Legacy" description="Honoring the distinguished leaders who have shaped the PSA." />
@@ -31,3 +31,4 @@ new class extends Component
     ]" />
 
 </div>
+@endsection

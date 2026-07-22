@@ -10,7 +10,7 @@ new class extends Component
 @section('title', 'Officers & Boards - PSA')
 @extends('layouts.app')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+@section('content')
 {{-- subspecialty and SIG --}}
 <div x-data="{ activeTab: 'subspecialty' }" class="bg-white min-h-screen">
 
@@ -31,3 +31,4 @@ new class extends Component
    ]" />
 
 </div>
+@endsection
