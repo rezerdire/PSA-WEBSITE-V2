@@ -18,7 +18,7 @@ class RegistrationConfirmed extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'PSA Midyear Convention 2026 — Registration Received',
+            subject: 'PSA Annual Convention 2026 — Registration Received',
         );
     }
 
