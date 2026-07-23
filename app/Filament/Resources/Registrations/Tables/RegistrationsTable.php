@@ -30,6 +30,7 @@ class RegistrationsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            
             ->recordAction('view_record')
             ->recordUrl(null)
             ->columns([
@@ -155,6 +156,8 @@ class RegistrationsTable
                     ->label('Submitted')
                     ->width('160px')
                     ->dateTime('M d, Y g:i A')
+                                                        ->timezone('Asia/Manila')
+
                     ->sortable()
                     ->toggleable(),
 
@@ -304,6 +307,8 @@ class RegistrationsTable
                                 TextEntry::make('created_at')
                                     ->label('Submitted At')
                                     ->dateTime('F d, Y g:i A')
+                                    ->timezone('Asia/Manila')
+
                                     ->icon('heroicon-m-calendar')
                                     ->columnSpanFull(),
 
