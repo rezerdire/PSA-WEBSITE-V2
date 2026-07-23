@@ -483,8 +483,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                                 <p class="text-md text-green-700 leading-relaxed">
-                                    As a <strong>Life Member</strong>, you are exempt from the registration fee. No proof of payment is needed.
-                                </p>
+                                    As a <strong>Life Member</strong>, you are exempt from the registration fee. No proof of payment is needed, 
+                                    You can submit the form once you fill up all the details above.</p>
                             </div>
                         </div>
                     @else
