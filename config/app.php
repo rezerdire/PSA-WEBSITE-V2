@@ -65,6 +65,7 @@ return [
     |
     */
 
+    // CHANGE UTC -> ASIA MANILA AM I COOKED
     'timezone' => 'Asia/Manila',
 
     /*
