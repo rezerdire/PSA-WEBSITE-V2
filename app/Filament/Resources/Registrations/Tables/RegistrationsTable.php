@@ -232,139 +232,152 @@ class RegistrationsTable
             ->recordActions([
 
 
-                // Action::make('view_record')
-                //     ->label('View')
-                //     ->icon('heroicon-o-eye')
-                //     ->modalHeading(fn (Registration $r) => '' . $r->full_name) 
-                //     ->modalWidth('3xl')
-                //     ->modalSubmitAction(false)
-                //     ->modalCancelActionLabel('Close')
-                //     ->infolist([
+                Action::make('view_record')
+                    
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->extraAttributes(['class' => 'hidden'])
+                    ->modalHeading(fn (Registration $r) => '' . $r->full_name) 
+                    ->modalWidth('3xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->infolist([
 
-                //         Section::make('Personal Information')
-                //             ->columns(2)
-                //             ->schema([
-                //                 TextEntry::make('psa_id')
-                //                     ->label('PSA ID')
-                //                     ->badge()
-                //                     ->color('primary')
-                //                     ->fontFamily('mono'),
+                        Section::make('Personal Information')
+                            ->columns(2)
+                            ->schema([
+                                TextEntry::make('psa_id')
+                                    ->label('PSA ID')
+                                    ->badge()
+                                    ->color('primary')
+                                    ->fontFamily('mono'),
 
-                //                 TextEntry::make('status')
-                //                     ->label('Status')
-                //                     ->badge()
-                //                     ->color(fn ($state) => match ($state) {
-                //                         'Approved' => 'success',
-                //                         'Rejected' => 'danger',
-                //                         'Pending'  => 'warning',
-                //                         default    => 'gray',
-                //                     }),
+                                TextEntry::make('status')
+                                    ->label('Status')
+                                    ->badge()
+                                    ->color(fn ($state) => match ($state) {
+                                        'Approved' => 'success',
+                                        'Rejected' => 'danger',
+                                        'Pending'  => 'warning',
+                                        default    => 'gray',
+                                    }),
 
-                //                 TextEntry::make('full_name')
-                //                     ->label('Full Name')
-                //                     ->columnSpanFull(),
+                                TextEntry::make('full_name')
+                                    ->label('Full Name')
+                                    ->columnSpanFull(),
 
-                //                 TextEntry::make('membership')
-                //                     ->label('Membership Type')
-                //                     ->badge()
-                //                     ->formatStateUsing(fn ($state) => match ($state) {
-                //                         'RM'    => 'Regular Member',
-                //                         'LM'    => 'Life Member',
-                //                         'TM'    => 'Trainee Member',
-                //                         default => $state,
-                //                     })
-                //                     ->color(fn ($state) => match ($state) {
-                //                         'RM'    => 'info',
-                //                         'LM'    => 'success',
-                //                         'TM'    => 'warning',
-                //                         default => 'gray',
-                //                     }),
+                                TextEntry::make('membership')
+                                    ->label('Membership Type')
+                                    ->badge()
+                                    ->formatStateUsing(fn ($state) => match ($state) {
+                                        'RM'    => 'Regular Member',
+                                        'LM'    => 'Life Member',
+                                        'TM'    => 'Trainee Member',
+                                        default => $state,
+                                    })
+                                    ->color(fn ($state) => match ($state) {
+                                        'RM'    => 'info',
+                                        'LM'    => 'success',
+                                        'TM'    => 'warning',
+                                        default => 'gray',
+                                    }),
 
-                //                 TextEntry::make('email')
-                //                     ->label('Email Address')
-                //                     ->icon('heroicon-m-envelope'),
+                                TextEntry::make('email')
+                                    ->label('Email Address')
+                                    ->icon('heroicon-m-envelope'),
 
-                //                 TextEntry::make('contact_number')
-                //                     ->label('Contact Number')
-                //                     ->icon('heroicon-m-phone'),
+                                            TextEntry::make('email')
+                                    ->label('Email Address')
+                                    ->icon('heroicon-m-envelope'),
 
-                //                 TextEntry::make('created_at')
-                //                     ->label('Submitted At')
-                //                     ->dateTime('F d, Y g:i A')
-                //                     ->icon('heroicon-m-calendar')
-                //                     ->columnSpanFull(),
+                            TextEntry::make('hospital_name')
+                                ->label('Hospital Name & Address')
+                                ->icon('heroicon-m-building-office-2')
+                                ->html()
+                                ->formatStateUsing(fn ($state, $record) => nl2br(e($state) . ($record->hospital_address ? " | " . e($record->hospital_address) : ''))),
 
-                //                 TextEntry::make('rejection_title')
-                //                     ->label('Rejection Title')
-                //                     ->visible(fn (Registration $r) => $r->status === Registration::STATUS_REJECTED && filled($r->rejection_title))
-                //                     ->columnSpanFull(),
+                                
+                                TextEntry::make('contact_number')
+                                    ->label('Contact Number')
+                                    ->icon('heroicon-m-phone'),
 
-                //                 TextEntry::make('rejection_reason')
-                //                     ->label('Rejection Reason')
-                //                     ->html()
-                //                     ->visible(fn (Registration $r) => $r->status === Registration::STATUS_REJECTED && filled($r->rejection_reason))
-                //                     ->columnSpanFull(),
-                //             ]),
-                //     // uploads
-                //         Section::make('Attachments')
-                //             ->columns(2)
-                //             ->schema([
-                //                 ImageEntry::make('proof_payment')
-                //                     ->disk('uploads')
-                //                     ->label('Proof of Payment')
-                //                     ->height(200)
-                //                     ->placeholder('No Uploaded Photo')
-                //                     ->extraImgAttributes(['class' => 'rounded-lg object-cover w-full'])
-                //                     // photo in the table
-                //                        ->getStateUsing(fn ($record) => $record->proof_payment
-                //                         ? asset('uploads/' . $record->proof_payment)
-                //                         : null)
-                //                         // pop up modal for image preview when the admin click the photo
-                //                     ->action(
-                //                         // pop up modal for image preview
-                //                         Action::make('previewPayment')
-                //                             ->modalHeading('Proof of Payment')
-                //                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
-                //                                 $record->proof_payment
-                //                                     ? '<div class="flex justify-center p-2">
-                //                                         <img src="' . asset('uploads/' . $record->proof_payment) . '"
-                //                                             class="max-h-[70vh] rounded-lg object-contain" />
-                //                                     </div>'
-                //                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
-                //                             ))
-                //                             ->modalSubmitAction(false)
-                //                             ->modalCancelActionLabel('Close')
-                //                             ->modalWidth('lg')
-                //                     ),
+                                TextEntry::make('created_at')
+                                    ->label('Submitted At')
+                                    ->dateTime('F d, Y g:i A')
+                                    ->icon('heroicon-m-calendar')
+                                    ->columnSpanFull(),
 
-                //                 ImageEntry::make('discount_id')
-                //                     ->disk('uploads')
-                //                     ->label('Senior Discount ID')
-                //                     ->height(200)
-                //                     ->extraImgAttributes(['class' => 'rounded-lg object-cover cursor-pointer'])
-                //                     ->placeholder('No Uploaded Photo')
-                //                        ->getStateUsing(fn ($record) => $record->discount_id
-                //                         ? asset('uploads/' . $record->discount_id)
-                //                         : null)
+                                TextEntry::make('rejection_title')
+                                    ->label('Rejection Title')
+                                    ->visible(fn (Registration $r) => $r->status === Registration::STATUS_REJECTED && filled($r->rejection_title))
+                                    ->columnSpanFull(),
 
-                //                     ->action(
-                //                         Action::make('previewDiscountId')
-                //                             ->modalHeading('Senior Discount ID')
-                //                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
-                //                                 $record->discount_id
-                //                                     ? '<div class="flex justify-center p-2">
-                //                                         <img src="' . asset('uploads/' . $record->discount_id) . '"
-                //                                                 class="max-h-[70vh] rounded-lg object-contain" />
-                //                                     </div>'
-                //                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
-                //                             ))
-                //                             ->modalSubmitAction(false)
-                //                             ->modalCancelActionLabel('Close')
-                //                             ->modalWidth('3xl')
-                //                     ),
-                //             ]),
-                //     ])
-                //     ->action(fn () => null),
+                                TextEntry::make('rejection_reason')
+                                    ->label('Rejection Reason')
+                                    ->html()
+                                    ->visible(fn (Registration $r) => $r->status === Registration::STATUS_REJECTED && filled($r->rejection_reason))
+                                    ->columnSpanFull(),
+                            ]),
+                    // uploads
+                        Section::make('Attachments')
+                            ->columns(2)
+                            ->schema([
+                                ImageEntry::make('proof_payment')
+                                    ->disk('uploads')
+                                    ->label('Proof of Payment')
+                                    ->height(200)
+                                    ->placeholder('No Uploaded Photo')
+                                    ->extraImgAttributes(['class' => 'rounded-lg object-cover w-full'])
+                                    // photo in the table
+                                       ->getStateUsing(fn ($record) => $record->proof_payment
+                                        ? asset('uploads/' . $record->proof_payment)
+                                        : null)
+                                        // pop up modal for image preview when the admin click the photo
+                                    ->action(
+                                        // pop up modal for image preview
+                                        Action::make('previewPayment')
+                                            ->modalHeading('Proof of Payment')
+                                            ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
+                                                $record->proof_payment
+                                                    ? '<div class="flex justify-center p-2">
+                                                        <img src="' . asset('uploads/' . $record->proof_payment) . '"
+                                                            class="max-h-[70vh] rounded-lg object-contain" />
+                                                    </div>'
+                                                    : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
+                                            ))
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelActionLabel('Close')
+                                            ->modalWidth('lg')
+                                    ),
+
+                                ImageEntry::make('discount_id')
+                                    ->disk('uploads')
+                                    ->label('Senior Discount ID')
+                                    ->height(200)
+                                    ->extraImgAttributes(['class' => 'rounded-lg object-cover cursor-pointer'])
+                                    ->placeholder('No Uploaded Photo')
+                                       ->getStateUsing(fn ($record) => $record->discount_id
+                                        ? asset('uploads/' . $record->discount_id)
+                                        : null)
+
+                                    ->action(
+                                        Action::make('previewDiscountId')
+                                            ->modalHeading('Senior Discount ID')
+                                            ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
+                                                $record->discount_id
+                                                    ? '<div class="flex justify-center p-2">
+                                                        <img src="' . asset('uploads/' . $record->discount_id) . '"
+                                                                class="max-h-[70vh] rounded-lg object-contain" />
+                                                    </div>'
+                                                    : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
+                                            ))
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelActionLabel('Close')
+                                            ->modalWidth('3xl')
+                                    ),
+                            ]),
+                    ])
+                    ->action(fn () => null),
 
                 Action::make('approve')
                     ->label('Approve')
