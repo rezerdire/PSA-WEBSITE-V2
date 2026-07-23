@@ -84,7 +84,22 @@
         $this->middleName     = $member->mem_middle_name ?? '';
         $this->membership     = $memType;
         $this->memberVerified = true;
+
+
+        // Life Member Payment Excempted Discount Section:
+        // discount option will be = none since it is a life member.
+        if ($this->isPaymentExempt()) {
+            $this->discountType = 'non_disc';
+            $this->discountImg  = null;
+        }
     }
+        // Filter of Life Member
+        public function isPaymentExempt(): bool
+        {
+            return $this->membership === 'LM';
+        }
+
+
         public function resetVerification(): void
         {
             $this->psaId          = '';
@@ -95,6 +110,8 @@
             $this->middleName     = '';
             $this->membership     = '';
         }
+
+    
 
         protected function rules(): array
         {
@@ -115,10 +132,13 @@
                 'discountType'    => ['required', Rule::in(['senior_disc', 'non_disc'])],
                 'discountImg'     => [
                     'nullable',
-                    Rule::requiredIf($this->discountType === 'senior_disc'),
+                    Rule::requiredIf(!$this->isPaymentExempt() && $this->discountType === 'senior_disc'),
                     'image', 'max:5120',
                 ],
-                'paymentProof'    => ['required', 'image', 'max:5120'],
+                'paymentProof'    => [
+                    $this->isPaymentExempt() ? 'nullable' : 'required',
+                    'image', 'max:5120',
+                ],
             ];
         }
 
@@ -127,6 +147,13 @@
         if (!$this->memberVerified) {
             $this->addError('psaId', 'Please verify your PSA ID before submitting.');
             return;
+        }
+
+        // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null 
+        if ($this->isPaymentExempt()) {
+            $this->discountType = 'non_disc';
+            $this->discountImg  = null;
+            $this->paymentProof = null;
         }
 
         $this->validate();
@@ -165,7 +192,9 @@
                 $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
             }
 
-            $paymentPath = $this->paymentProof->store('Registration/ProofofPayment', 'uploads');
+            $paymentPath = $this->paymentProof
+                ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads')
+                : null;
 
         // If a Rejected registration already exists for this PSA ID, update that
         // same row back to Pending instead of creating a duplicate record.
@@ -402,42 +431,74 @@
                                 </div>
                                 <p class="text-xs text-gray-400 mt-2">* Auto-filled from your PSA membership record</p>
                             </div>
-
-                            <div x-data="{ disc: @entangle('discountType') }">
-                                <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
-                                <div class="space-y-2 mb-4">
-                                    @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
-                                        <x-form.radio-option
-                                            :value="$value"
-                                            :label="$label"
-                                            model="disc"
-                                            color="red" />
-                                    @endforeach
+                            {{-- for life member: same static/disabled pattern as Membership Type above --}}
+                            @if ($this->isPaymentExempt())
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
+                                    <div class="space-y-2">
+                                        @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
+                                            <x-form.radio-option
+                                                :value="$value"
+                                                :label="$label"
+                                                :active="$discountType === $value"
+                                                :disabled="true"
+                                                color="blue" />
+                                        @endforeach
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">* Not applicable — Life Members are exempt from the registration fee</p>
                                 </div>
-                                <div x-show="disc === 'senior_disc'" x-transition>
-                                    <x-event-registration.image-upload
-                                        name="discount_img"
-                                        wireModel="discountImg"
-                                        label="Senior Citizen ID"
-                                        color="#000066" />
-                                    @error('discountImg') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @else
+                                <div x-data="{ disc: @entangle('discountType') }">
+                                    <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
+                                    <div class="space-y-2 mb-4">
+                                        @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
+                                            <x-form.radio-option
+                                                :value="$value"
+                                                :label="$label"
+                                                model="disc"
+                                                color="red" />
+                                        @endforeach
+                                    </div>
+                                    <div x-show="disc === 'senior_disc'" x-transition>
+                                        <x-event-registration.image-upload
+                                            name="discount_img"
+                                            wireModel="discountImg"
+                                            label="Senior Citizen ID"
+                                            color="#000066" />
+                                        @error('discountImg') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
 
                         </div>
                     </div>
 
                     {{-- Proof of Payment --}}
-                    <div class="mb-6">
-                        <x-event-registration.section-title title="Proof of Payment" />
-                        <x-event-registration.image-upload
-                            name="payment_proof"
-                            wireModel="paymentProof"
-                            label="Payment Screenshot"
-                            :required="true"
-                            color="#ac071a" />
-                        @error('paymentProof') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    {{-- life member exempted message --}}
+                    @if ($this->isPaymentExempt())
+                        <div class="mb-6">
+                            <x-event-registration.section-title title="Proof of Payment" />
+                            <div class="rounded-xl border border-green-100 bg-green-50 px-5 py-4 flex gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <p class="text-md text-green-700 leading-relaxed">
+                                    As a <strong>Life Member</strong>, you are exempt from the registration fee. No proof of payment is needed.
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="mb-6">
+                            <x-event-registration.section-title title="Proof of Payment" />
+                            <x-event-registration.image-upload
+                                name="payment_proof"
+                                wireModel="paymentProof"
+                                label="Payment Screenshot"
+                                :required="true"
+                                color="#ac071a" />
+                            @error('paymentProof') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
 
                     {{-- Error Summary (all validation errors, shown right before Submit) --}}
                     @if ($errors->any())
