@@ -64,12 +64,14 @@ class RegistrationsTable
                         'RM'    => 'Regular Member',
                         'LM'    => 'Life Member',
                         'TM'    => 'Trainee Member',
+                        'NM' => 'Non-Member',
                         default => $state,
                         })
                         ->color(fn ($state) => match ($state) {
                         'RM'    => 'info',
                         'LM'    => 'success',
                         'TM'    => 'warning',
+                        'NM' => 'danger',
                         default => 'gray',
                         }),
                     
@@ -104,7 +106,7 @@ class RegistrationsTable
                             ))
                             ->modalSubmitAction(false)
                             ->modalCancelActionLabel('Close')
-                            ->modalWidth('lg')
+                            ->modalWidth('xl')
                     ),
 
 
@@ -177,6 +179,7 @@ class RegistrationsTable
                         'RM' => 'Regular Member',
                         'LM' => 'Life Member',
                         'TM' => 'Trainee Member',
+                        'NM' => 'Non-Member'
                     ]),
 
                 SelectFilter::make('chapter')
@@ -249,12 +252,13 @@ class RegistrationsTable
                         Section::make('Personal Information')
                             ->columns(2)
                             ->schema([
+                          
                                 TextEntry::make('psa_id')
                                     ->label('PSA ID')
                                     ->badge()
                                     ->color('primary')
                                     ->fontFamily('mono'),
-
+                        
                                 TextEntry::make('status')
                                     ->label('Status')
                                     ->badge()
@@ -276,14 +280,24 @@ class RegistrationsTable
                                         'RM'    => 'Regular Member',
                                         'LM'    => 'Life Member',
                                         'TM'    => 'Trainee Member',
+                                        'NM' => 'Non Member',
                                         default => $state,
                                     })
                                     ->color(fn ($state) => match ($state) {
                                         'RM'    => 'info',
                                         'LM'    => 'success',
                                         'TM'    => 'warning',
+                                        'NM' => 'danger',
+
                                         default => 'gray',
                                     }),
+
+
+                                                
+                                TextEntry::make('prc_number')
+                                ->label('PRC Number')
+                                ->badge()
+                                ->color('warning'),
 
                                 TextEntry::make('email')
                                     ->label('Email Address')
@@ -298,7 +312,6 @@ class RegistrationsTable
                                 ->icon('heroicon-m-building-office-2')
                                 ->html()
                                 ->formatStateUsing(fn ($state, $record) => nl2br(e($state) . ($record->hospital_address ? " | " . e($record->hospital_address) : ''))),
-
                                 
                                 TextEntry::make('contact_number')
                                     ->label('Contact Number')
@@ -308,7 +321,6 @@ class RegistrationsTable
                                     ->label('Submitted At')
                                     ->dateTime('F d, Y g:i A')
                                     ->timezone('Asia/Manila')
-
                                     ->icon('heroicon-m-calendar')
                                     ->columnSpanFull(),
 
@@ -352,7 +364,7 @@ class RegistrationsTable
                                             ))
                                             ->modalSubmitAction(false)
                                             ->modalCancelActionLabel('Close')
-                                            ->modalWidth('lg')
+                                            ->modalWidth('xl')
                                     ),
 
                                 ImageEntry::make('discount_id')

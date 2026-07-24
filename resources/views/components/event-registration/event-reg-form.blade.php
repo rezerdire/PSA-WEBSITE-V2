@@ -408,7 +408,10 @@
                             <x-form.input label="Hospital Address" name="hospitalAddress" wire:model="hospitalAddress"
                                 placeholder="City, Province" />
 
+                            <div class="sm:col-span-3">
                             <x-form.input label="Country" name="country" wire:model="country" placeholder="Philippines" />
+                            </div>
+                            
                         </div>
                     </div>
 
