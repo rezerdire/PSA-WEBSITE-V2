@@ -16,12 +16,7 @@ new class extends Component
     title="Annual Convention 2026"
     description="Register for the annual convention 2026!" />
 <x-event-registration.event-registration-layout>
-{{-- Main Content --}}
-<livewire:event-registration.psa-checker />
-            {{-- Registration Form Card --}}
-            <x-event-registration.form-layout>
-                <livewire:event-registration.event-reg-form />
-            </x-event-registration.event-registration-layout>
-
+    {{-- Registration Form Card --}}
+        <livewire:event-registration.event-registration-switcher />
 </x-event-registration.event-registration-layout>
 @endsection 
