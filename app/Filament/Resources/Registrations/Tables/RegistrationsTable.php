@@ -303,10 +303,6 @@ class RegistrationsTable
                                     ->label('Email Address')
                                     ->icon('heroicon-m-envelope'),
 
-                                            TextEntry::make('email')
-                                    ->label('Email Address')
-                                    ->icon('heroicon-m-envelope'),
-
                             TextEntry::make('hospital_name')
                                 ->label('Hospital Name & Address')
                                 ->icon('heroicon-m-building-office-2')

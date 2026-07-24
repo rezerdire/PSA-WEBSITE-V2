@@ -81,11 +81,11 @@
                             <p style="margin:0 auto;font-size:13px;color:#9ca3af;max-width:400px;line-height:1.6;text-align:center;">
                                 @if ($isApproved)
                                     Great news, {{ $registration->first_name }}! Your registration for
-                                    <strong style="color:#374151;">PSA Midyear Convention 2026</strong>
+                                    <strong style="color:#374151;">PSA Annual Convention 2026</strong>
                                     has been approved. We look forward to seeing you at the convention.
                                 @else
                                     Hello {{ $registration->first_name }}, we're sorry to inform you that your
-                                    registration for <strong style="color:#374151;">PSA Midyear Convention 2026</strong>
+                                    registration for <strong style="color:#374151;">PSA Annual Convention 2026</strong>
                                     could not be approved at this time.
                                 @endif
                             </p>
