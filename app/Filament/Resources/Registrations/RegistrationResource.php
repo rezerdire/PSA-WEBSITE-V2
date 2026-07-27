@@ -22,11 +22,29 @@ class RegistrationResource extends Resource
     protected static ?string $model = Registration::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    
+        // Method for pending badge number
+        public static function getPendingStatus(): int
+        {
+            return Registration::where('status', Registration::STATUS_PENDING)->count();
+        }
+        // convert to string
+        public static function getNavigationBadge(): ?string
+        {
+            $pending = static::getPendingStatus();
 
-    public static function form(Schema $schema): Schema
-    {
-        return RegistrationForm::configure($schema);
-    }
+            return $pending > 0 ? (string) $pending : null;
+        }
+
+        public static function getNavigationBadgeColor(): ?string
+        {
+            return static::getPendingStatus() > 0 ? 'warning' : null;
+        }
+        public static function form(Schema $schema): Schema
+        {
+            return RegistrationForm::configure($schema);
+        }
+        // end of badge
 
     public static function infolist(Schema $schema): Schema
     {
