@@ -10,8 +10,8 @@
 
         <title>@yield('title')</title>
         <link rel="icon" type="image/png" href="{{ asset('images/PSA_LOGO.png') }}">
-
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
     </head>

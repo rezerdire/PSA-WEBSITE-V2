@@ -13,3 +13,9 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.35; }
     }
+
+
+@theme {
+  --font-heading:"Cormorant Garamond", serif;
+
+}

@@ -24,7 +24,8 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-        
+            ->favicon(asset('Images/PSA_LOGO.png'))
+            ->brandName('PSA Admin')
             ->default()
             ->id('admin')
             ->path('admin')
