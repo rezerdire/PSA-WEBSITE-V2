@@ -33,23 +33,15 @@ class Member extends Model
         'member_id_no',
         'psa_chapter_code',
         'psa_mem_type',
+        'mem_stat',
         'mem_last_name',
         'mem_first_name',
         'mem_middle_name',
         'mem_home_address',
         'mem_mobile_no1',
         'mem_email_address',
-        'mem_birth_date',
         'mem_gender',
         'mem_prc_no',
-        'mem_pma_id_no',
-        'mem_fellow_no',
-        'mem_phic_no',
-        'mem_pic',
-    ];
-
-    protected $casts = [
-        'mem_birth_date' => 'date',
     ];
 
     /**
@@ -97,7 +89,7 @@ class Member extends Model
     }
 
     // FILAMENT STATS WIDGET
-        public function registration(): HasOne
+    public function registration(): HasOne
     {
         return $this->hasOne(Registration::class, 'psa_id', 'member_id_no');
     }
