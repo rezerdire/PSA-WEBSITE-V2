@@ -62,9 +62,15 @@ new class extends Component {
     // Livewire auto-calls this when $newPic is set by wire:model upload
     public function updatedNewPic(): void
     {
-        $this->validate([
-            'newPic' => 'required|image|max:5120',
-        ]);
+    $this->validate([
+            'newPic' => [
+                'required',
+                'image',
+                'mimes:jpeg,jpg,png,webp,',
+                'max:5120',
+            ],
+        ], 
+        ['newPic.mimes' => 'Only JPEG, PNG, or WEBP images are allowed. GIFs, HEIC and other formats are not supported.',]);
 
         $this->uploadingPic = true;
 
@@ -362,13 +368,14 @@ new class extends Component {
 @endif
 
 <div wire:ignore.self class="mb-3">
-    <label class="cursor-pointer text-xs font-semibold text-[#000066] hover:underline">
-        <span wire:loading.remove wire:target="newPic">Change photo</span>
+    <label class="cursor-pointer text-xs font-semibold text-[#000066] ">
+        <span wire:loading.remove wire:target="newPic"  class = "bg-blue-600 text-white px-2 py-2 rounded-lg text-xs font-semibold cursor-pointer hover:bg-blue-500">Change photo</span>
         <span wire:loading wire:target="newPic">Uploading…</span>
         <input type="file" wire:model="newPic" accept="image/*" class="hidden">
     </label>
     @error('newPic') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
 </div>
+
                 <h2 class="text-lg font-bold text-[#000066] leading-tight">
                     {{ $firstName }} {{ $middleName ? $middleName . ' ' : '' }}{{ $lastName }}
                 </h2>
