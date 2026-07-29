@@ -93,4 +93,9 @@ class Member extends Model
     {
         return $this->hasOne(Registration::class, 'psa_id', 'member_id_no');
     }
+
+        public function picture()
+    {
+        return $this->hasOne(MemberPicture::class, 'psa_id', 'member_id_no');
+    }
 }
