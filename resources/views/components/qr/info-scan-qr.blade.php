@@ -56,7 +56,7 @@ new class extends Component {
         $this->memberFound = true;
         $this->phonenumber = $this->formatMobile($member->mem_mobile_no1 ?? '');
         $this->email       = $member->mem_email_address ?? '';
-        $this->memPic      = $this->picUrlWithVersion($member->mem_pic ?? null);
+        $this->memPic      = $this->picUrlWithVersion($member->picture?->mem_pic);
     }
 
     // Livewire auto-calls this when $newPic is set by wire:model upload
@@ -125,7 +125,11 @@ new class extends Component {
 
         $relativePath = "member-pics/{$filename}";
 
-        $member->update(['mem_pic' => $relativePath]);
+        // Upsert into member_pictures via the relationship instead of writing to members.mem_pic
+        $member->picture()->updateOrCreate(
+            ['psa_id' => $this->psaId],
+            ['mem_pic' => $relativePath]
+        );
 
         $this->memPic = $this->picUrlWithVersion($relativePath);
         $this->newPic = null;
