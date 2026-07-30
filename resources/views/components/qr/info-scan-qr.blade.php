@@ -8,6 +8,7 @@ use Livewire\WithFileUploads;
 new class extends Component {
     use WithFileUploads;
 
+    // VAR
     public ?string $scannedId    = null;
     public bool    $memberFound  = false;
     public bool    $notFound     = false;
@@ -22,8 +23,12 @@ new class extends Component {
     public ?string $memPic = null;
     public string  $phonenumber = '';
 
-    public $newPic = null;
-    public bool $uploadingPic = false;
+    public $newPic = null; //var
+    public bool $uploadingPic = false; //t/f
+
+    // preview of new photo and current photo
+    public ?string $previewPicUrl = null;
+    public bool    $hasPendingPic = false;
 
     public function lookup(string $code): void
     {
@@ -32,6 +37,9 @@ new class extends Component {
         $this->memberFound = false;
         $this->notFound    = false;
         $this->newPic      = null;
+        // prev pic
+        $this->previewPicUrl = null;
+        $this->hasPendingPic = false;
 
         if (!preg_match('/^\d{4}$/', $code)) {
             $this->notFound = true;
@@ -59,18 +67,30 @@ new class extends Component {
         $this->memPic      = $this->picUrlWithVersion($member->picture?->mem_pic);
     }
 
-    // Livewire auto-calls this when $newPic is set by wire:model upload
+
+    // validation for new pic
     public function updatedNewPic(): void
     {
-    $this->validate([
+        $this->validate([
             'newPic' => [
                 'required',
                 'image',
                 'mimes:jpeg,jpg,png,webp,',
                 'max:5120',
             ],
-        ], 
-        ['newPic.mimes' => 'Only JPEG, PNG, or WEBP images are allowed. GIFs, HEIC and other formats are not supported.',]);
+        ],
+        ['newPic.mimes' => 'Only JPEG, PNG, or WEBP images are allowed. GIFs, HEIC and other formats are not supported.',]); 
+
+        $this->previewPicUrl = $this->newPic->temporaryUrl(); //pending pic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+        $this->hasPendingPic = true;
+    }
+
+
+    public function savePic(): void
+    {
+        if (!$this->newPic || !$this->hasPendingPic) {
+            return;
+        }
 
         $this->uploadingPic = true;
 
@@ -138,8 +158,22 @@ new class extends Component {
         );
 
         $this->memPic = $this->picUrlWithVersion($relativePath);
-        $this->newPic = null;
-        $this->uploadingPic = false;
+
+        // Clear pending/preview state now that it's saved
+        $this->newPic         = null;
+        $this->previewPicUrl  = null;
+        $this->hasPendingPic  = false;
+        $this->uploadingPic   = false;
+    }
+
+    // Called when the user taps "Cancel" on the preview — discards the
+    // pending upload and rolls back to whatever picture was already saved.
+    public function cancelPic(): void
+    {
+        $this->newPic        = null;
+        $this->previewPicUrl = null;
+        $this->hasPendingPic = false;
+        $this->resetErrorBag('newPic');
     }
 
     private function picUrlWithVersion(?string $relativePath): ?string
@@ -179,7 +213,7 @@ new class extends Component {
 
     public function scanAgain(): void
     {
-        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName', 'memberType', 'phonenumber', 'email', 'memPic', 'newPic']);
+        $this->reset(['scannedId', 'memberFound', 'notFound', 'psaId', 'firstName', 'lastName', 'middleName', 'chapterName', 'memberType', 'phonenumber', 'email', 'memPic', 'newPic', 'previewPicUrl', 'hasPendingPic']);
         $this->dispatch('scanner-reset');
     }
 };
@@ -356,25 +390,132 @@ new class extends Component {
 
         @if ($memberFound)
             <div class="flex flex-col items-center text-center mb-5">
-               @if ($memPic)
-    <img src="{{ asset($memPic) }}" alt="{{ $firstName }} {{ $lastName }}"
-         class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md ring-1 ring-slate-200 mb-3">
-@else
-    <div class="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center mb-3 ring-1 ring-slate-200">
-        <span class="text-2xl font-bold text-slate-400">
-            {{ strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1)) }}
-        </span>
-    </div>
-@endif
+                {{-- Show pending preview if one exists, otherwise the saved picture --}}
+                @if ($hasPendingPic && $previewPicUrl)
+                    <img src="{{ $previewPicUrl }}" alt="Preview"
+                         class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-amber-400 mb-2">
+                    <p class="text-[11px] font-semibold text-amber-600 mb-2">Preview — not saved yet</p>
+                @elseif ($memPic)
+                    <img src="{{ asset($memPic) }}" alt="{{ $firstName }} {{ $lastName }}"
+                         class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md ring-1 ring-slate-200 mb-3">
+                @else
+                    <div class="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center mb-3 ring-1 ring-slate-200">
+                        <span class="text-2xl font-bold text-slate-400">
+                            {{ strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1)) }}
+                        </span>
+                    </div>
+                @endif
 
-<div wire:ignore.self class="mb-3">
-    <label class="cursor-pointer text-xs font-semibold text-[#000066] ">
-        <span wire:loading.remove wire:target="newPic"  class = "bg-blue-600 text-white px-2 py-2 rounded-lg text-xs font-semibold cursor-pointer hover:bg-blue-500">Change photo</span>
-        <span wire:loading wire:target="newPic">Uploading…</span>
-        <input type="file" wire:model="newPic" accept="image/*" class="hidden">
-    </label>
-    @error('newPic') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-</div>
+                @if (!$hasPendingPic)
+                    <div
+                        wire:ignore.self
+                        class="mb-3"
+                        x-data="photoCropper()"
+                    >
+                        <label class="cursor-pointer text-xs font-semibold text-[#000066] ">
+                            <span wire:loading.remove wire:target="newPic" class="bg-blue-600 text-white px-2 py-2 rounded-lg text-xs font-semibold cursor-pointer hover:bg-blue-500">Change photo</span>
+                            <span wire:loading wire:target="newPic">Uploading…</span>
+                            <input type="file" x-ref="rawInput" accept="image/*" class="hidden" @change="openCropper($event)">
+                        </label>
+                        @error('newPic') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+
+                        <!-- Crop modal -->
+                        <div
+                            x-show="show"
+                            x-cloak
+                            class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+                            style="display: none;"
+                        >
+                            <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+                                <h3 class="text-sm font-bold text-[#000066] mb-3 text-center">Adjust photo</h3>
+
+                                <div
+                                    class="relative mx-auto overflow-hidden rounded-xl bg-slate-900 select-none touch-none"
+                                    style="width: 280px; height: 280px;"
+                                    @mousedown="startDrag($event)"
+                                    @mousemove.prevent="onDrag($event)"
+                                    @mouseup="endDrag()"
+                                    @mouseleave="endDrag()"
+                                    @touchstart="startDrag($event)"
+                                    @touchmove.prevent="onDrag($event)"
+                                    @touchend="endDrag()"
+                                >
+                                    <img
+                                        x-show="imageSrc"
+                                        :src="imageSrc"
+                                        draggable="false"
+                                        class="absolute top-1/2 left-1/2 max-w-none pointer-events-none"
+                                        :style="imgStyle()"
+                                    >
+                                    <!-- circular crop guide -->
+                                    <div class="absolute inset-0 pointer-events-none"
+                                         style="background: radial-gradient(circle 140px at center, transparent 139px, rgba(0,0,0,0.55) 140px);">
+                                    </div>
+                                    <div class="absolute inset-0 rounded-full m-auto pointer-events-none border-2 border-white/80"
+                                         style="width: 280px; height: 280px; border-radius: 9999px;">
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 mt-4">
+                                    <span class="text-[11px] text-slate-400">−</span>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        x-model.number="zoomPct"
+                                        @input="onZoom()"
+                                        class="flex-1 accent-[#000066]"
+                                    >
+                                    <span class="text-[11px] text-slate-400">+</span>
+                                </div>
+
+                                <div class="flex items-center gap-2 mt-4">
+                                    <button
+                                        type="button"
+                                        @click="confirmCrop()"
+                                        :disabled="uploading"
+                                        class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-60"
+                                    >
+                                        <span x-show="!uploading">Use photo</span>
+                                        <span x-show="uploading">Uploading…</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="cancelCrop()"
+                                        :disabled="uploading"
+                                        class="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    {{-- Save / Cancel actions for the pending preview --}}
+                    <div class="flex items-center gap-2 mb-3">
+                        <button
+                            type="button"
+                            wire:click="savePic"
+                            wire:loading.attr="disabled"
+                            wire:target="savePic"
+                            class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-60"
+                        >
+                            <span wire:loading.remove wire:target="savePic">Save photo</span>
+                            <span wire:loading wire:target="savePic">Saving…</span>
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="cancelPic"
+                            wire:loading.attr="disabled"
+                            wire:target="savePic"
+                            class="border border-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                @endif
 
                 <h2 class="text-lg font-bold text-[#000066] leading-tight">
                     {{ $firstName }} {{ $middleName ? $middleName . ' ' : '' }}{{ $lastName }}
@@ -429,3 +570,152 @@ new class extends Component {
     </div>
 @endif
 </div>
+
+@script
+<script>
+    Alpine.data('photoCropper', () => ({
+        show: false,
+        imageSrc: null,
+        _img: null,
+        naturalWidth: 0,
+        naturalHeight: 0,
+        viewSize: 280,
+        minScale: 1,
+        maxScale: 4,
+        scale: 1,
+        zoomPct: 0, // 0..1 slider position mapped onto [minScale, maxScale]
+        offsetX: 0,
+        offsetY: 0,
+        dragging: false,
+        lastX: 0,
+        lastY: 0,
+        uploading: false,
+
+        openCropper(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    this._img = img;
+                    this.naturalWidth = img.width;
+                    this.naturalHeight = img.height;
+                    this.imageSrc = ev.target.result;
+
+                    // minScale = smallest zoom that still fully covers the circular viewport
+                    this.minScale = Math.max(this.viewSize / img.width, this.viewSize / img.height);
+                    this.maxScale = this.minScale * 4;
+                    this.scale = this.minScale;
+                    this.zoomPct = 0;
+                    this.offsetX = 0;
+                    this.offsetY = 0;
+                    this.show = true;
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = ''; // allow re-selecting the same file later
+        },
+
+        imgStyle() {
+            const w = this.naturalWidth * this.scale;
+            const h = this.naturalHeight * this.scale;
+            return `width: ${w}px; height: ${h}px; transform: translate(-50%, -50%) translate(${this.offsetX}px, ${this.offsetY}px);`;
+        },
+
+        clampOffset() {
+            const dispW = this.naturalWidth * this.scale;
+            const dispH = this.naturalHeight * this.scale;
+            const maxX = Math.max(0, (dispW - this.viewSize) / 2);
+            const maxY = Math.max(0, (dispH - this.viewSize) / 2);
+            this.offsetX = Math.min(maxX, Math.max(-maxX, this.offsetX));
+            this.offsetY = Math.min(maxY, Math.max(-maxY, this.offsetY));
+        },
+
+        startDrag(e) {
+            if (!this.imageSrc) return;
+            this.dragging = true;
+            const point = e.touches ? e.touches[0] : e;
+            this.lastX = point.clientX;
+            this.lastY = point.clientY;
+        },
+
+        onDrag(e) {
+            if (!this.dragging) return;
+            const point = e.touches ? e.touches[0] : e;
+            const dx = point.clientX - this.lastX;
+            const dy = point.clientY - this.lastY;
+            this.lastX = point.clientX;
+            this.lastY = point.clientY;
+            this.offsetX += dx;
+            this.offsetY += dy;
+            this.clampOffset();
+        },
+
+        endDrag() {
+            this.dragging = false;
+        },
+
+        onZoom() {
+            this.scale = this.minScale + (this.maxScale - this.minScale) * this.zoomPct;
+            this.clampOffset();
+        },
+
+        cancelCrop() {
+            this.show = false;
+            this.imageSrc = null;
+            this._img = null;
+        },
+
+        confirmCrop() {
+            if (!this._img) return;
+
+            const outputSize = 600;
+            const canvas = document.createElement('canvas');
+            canvas.width = outputSize;
+            canvas.height = outputSize;
+            const ctx = canvas.getContext('2d');
+
+            const dispW = this.naturalWidth * this.scale;
+            const dispH = this.naturalHeight * this.scale;
+
+            // Top-left of the displayed image relative to the viewport's top-left
+            const viewLeft = (this.viewSize / 2) - (dispW / 2) + this.offsetX;
+            const viewTop  = (this.viewSize / 2) - (dispH / 2) + this.offsetY;
+
+            // Map the viewport's crop window back into source-image pixel coordinates
+            const srcX = (0 - viewLeft) / this.scale;
+            const srcY = (0 - viewTop) / this.scale;
+            const srcSize = this.viewSize / this.scale;
+
+            ctx.drawImage(
+                this._img,
+                srcX, srcY, srcSize, srcSize,
+                0, 0, outputSize, outputSize
+            );
+
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const file = new File([blob], 'cropped.jpg', { type: 'image/jpeg' });
+
+                this.uploading = true;
+                this.$wire.upload(
+                    'newPic',
+                    file,
+                    () => {
+                        this.uploading = false;
+                        this.show = false;
+                        this.imageSrc = null;
+                        this._img = null;
+                    },
+                    () => {
+                        this.uploading = false;
+                    }
+                );
+            }, 'image/jpeg', 0.92);
+        },
+    }));
+</script>
+@endscript
