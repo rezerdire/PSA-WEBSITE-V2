@@ -427,17 +427,18 @@ new class extends Component {
                             <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-sm max-h-[92vh] overflow-y-auto">
                                 <h3 class="text-sm font-bold text-[#000066] mb-3 text-center">Adjust photo</h3>
 
-                                <div
-                                    x-ref="viewport"
-                                    class="relative mx-auto overflow-hidden rounded-xl bg-slate-900 select-none touch-none w-full max-w-[280px] aspect-square"
-                                    @mousedown="startDrag($event)"
-                                    @mousemove.prevent="onDrag($event)"
-                                    @mouseup="endDrag()"
-                                    @mouseleave="endDrag()"
-                                    @touchstart="startDrag($event)"
-                                    @touchmove.prevent="onDrag($event)"
-                                    @touchend="endDrag()"
-                                >
+                               <div
+                                x-ref="viewport"
+                                class="relative mx-auto overflow-hidden rounded-xl bg-slate-900 select-none touch-none w-full max-w-[280px] aspect-square"
+                                style="touch-action: none;"
+                                @mousedown="startDrag($event)"
+                                @mousemove.prevent="onDrag($event)"
+                                @mouseup="endDrag()"
+                                @mouseleave="endDrag()"
+                                @touchstart.prevent="startDrag($event)"
+                                @touchmove.prevent="onDrag($event)"
+                                @touchend="endDrag()"
+                            >
                                     <img
                                         x-show="imageSrc"
                                         :src="imageSrc"
