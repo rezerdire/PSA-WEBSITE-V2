@@ -81,7 +81,7 @@ new class extends Component {
         ],
         ['newPic.mimes' => 'Only JPEG, PNG, or WEBP images are allowed. GIFs, HEIC and other formats are not supported.',]); 
 
-        $this->previewPicUrl = $this->newPic->temporaryUrl(); //pending pic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+        $this->previewPicUrl = $this->newPic->temporaryUrl(); //pending pic
         $this->hasPendingPic = true;
     }
 
@@ -93,18 +93,17 @@ new class extends Component {
         }
 
         $this->uploadingPic = true;
-
+        // finding the member based on the id number in QR
         $member = Member::find($this->psaId);
 
         if (!$member) {
             $this->uploadingPic = false;
             return;
         }
-
+        // filname = psa_id+image extension
         $filename = "{$this->psaId}.jpg";
         $destDir  = public_path('member-pics');
-
-        // Guard against a stray file existing where the directory should be
+        // public directory
         if (is_file($destDir)) {
             unlink($destDir);
         }
@@ -136,12 +135,12 @@ new class extends Component {
             }
         }
 
-        // Crop to square (center crop) then resize to 600x600
+        // editing feature where a user can crop his picture when upload before saving
         $size = min($origWidth, $origHeight);
         $srcX = (int) (($origWidth - $size) / 2);
         $srcY = (int) (($origHeight - $size) / 2);
 
-        $target = imagecreatetruecolor(600, 600);
+        $target = imagecreatetruecolor(600, 600); //600 x 600
         imagecopyresampled($target, $source, 0, 0, $srcX, $srcY, 600, 600, $size, $size);
 
         imagejpeg($target, $destDir . DIRECTORY_SEPARATOR . $filename, 85);
@@ -151,7 +150,7 @@ new class extends Component {
 
         $relativePath = "member-pics/{$filename}";
 
-        // Upsert into member_pictures via the relationship instead of writing to members.mem_pic
+        // updating the table of member picture 
         $member->picture()->updateOrCreate(
             ['psa_id' => $this->psaId],
             ['mem_pic' => $relativePath]
@@ -159,15 +158,14 @@ new class extends Component {
 
         $this->memPic = $this->picUrlWithVersion($relativePath);
 
-        // Clear pending/preview state now that it's saved
-        $this->newPic         = null;
+        // clearing the var 
+        $this->newPic         = null;          
         $this->previewPicUrl  = null;
         $this->hasPendingPic  = false;
         $this->uploadingPic   = false;
     }
 
-    // Called when the user taps "Cancel" on the preview — discards the
-    // pending upload and rolls back to whatever picture was already saved.
+    // cancel the pending and rollback to prev pic
     public function cancelPic(): void
     {
         $this->newPic        = null;
@@ -187,7 +185,7 @@ new class extends Component {
 
         return $relativePath . '?v=' . $version;
     }
-
+    // mobile formatting
     private function formatMobile(?string $number): string
     {
         $number = trim((string) $number);
@@ -423,15 +421,15 @@ new class extends Component {
                         <div
                             x-show="show"
                             x-cloak
-                            class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+                            class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4"
                             style="display: none;"
                         >
-                            <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-sm max-h-[92vh] overflow-y-auto">
                                 <h3 class="text-sm font-bold text-[#000066] mb-3 text-center">Adjust photo</h3>
 
                                 <div
-                                    class="relative mx-auto overflow-hidden rounded-xl bg-slate-900 select-none touch-none"
-                                    style="width: 280px; height: 280px;"
+                                    x-ref="viewport"
+                                    class="relative mx-auto overflow-hidden rounded-xl bg-slate-900 select-none touch-none w-full max-w-[280px] aspect-square"
                                     @mousedown="startDrag($event)"
                                     @mousemove.prevent="onDrag($event)"
                                     @mouseup="endDrag()"
@@ -447,12 +445,11 @@ new class extends Component {
                                         class="absolute top-1/2 left-1/2 max-w-none pointer-events-none"
                                         :style="imgStyle()"
                                     >
-                                    <!-- circular crop guide -->
+                                    <!-- circular crop guide, sized to the actual rendered viewport -->
                                     <div class="absolute inset-0 pointer-events-none"
-                                         style="background: radial-gradient(circle 140px at center, transparent 139px, rgba(0,0,0,0.55) 140px);">
+                                         :style="guideStyle()">
                                     </div>
-                                    <div class="absolute inset-0 rounded-full m-auto pointer-events-none border-2 border-white/80"
-                                         style="width: 280px; height: 280px; border-radius: 9999px;">
+                                    <div class="absolute inset-0 rounded-full pointer-events-none border-2 border-white/80">
                                     </div>
                                 </div>
 
@@ -465,17 +462,17 @@ new class extends Component {
                                         step="0.01"
                                         x-model.number="zoomPct"
                                         @input="onZoom()"
-                                        class="flex-1 accent-[#000066]"
+                                        class="flex-1 accent-[#000066] h-6"
                                     >
                                     <span class="text-[11px] text-slate-400">+</span>
                                 </div>
 
-                                <div class="flex items-center gap-2 mt-4">
+                                <div class="flex flex-col sm:flex-row items-stretch gap-2 mt-4">
                                     <button
                                         type="button"
                                         @click="confirmCrop()"
                                         :disabled="uploading"
-                                        class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-60"
+                                        class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-60"
                                     >
                                         <span x-show="!uploading">Use photo</span>
                                         <span x-show="uploading">Uploading…</span>
@@ -484,7 +481,7 @@ new class extends Component {
                                         type="button"
                                         @click="cancelCrop()"
                                         :disabled="uploading"
-                                        class="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
+                                        class="flex-1 border border-slate-200 text-slate-600 py-2.5 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
                                     >
                                         Cancel
                                     </button>
@@ -577,9 +574,11 @@ new class extends Component {
         show: false,
         imageSrc: null,
         _img: null,
+        _objectUrl: null,
+        _resizeHandler: null,
         naturalWidth: 0,
         naturalHeight: 0,
-        viewSize: 280,
+        viewSize: 280, // recalculated from the actual rendered viewport — responsive
         minScale: 1,
         maxScale: 4,
         scale: 1,
@@ -591,38 +590,106 @@ new class extends Component {
         lastY: 0,
         uploading: false,
 
+        measureViewport() {
+            if (this.$refs.viewport) {
+                const w = this.$refs.viewport.getBoundingClientRect().width;
+                if (w > 0) {
+                    this.viewSize = w;
+                }
+            }
+        },
+
+        recalcScaleBounds() {
+            if (!this.viewSize || this.viewSize <= 0) {
+                // Viewport hasn't been measured yet (shouldn't normally happen,
+                // but never let scale collapse to 0 and hide the image)
+                this.viewSize = 280;
+            }
+            // Keep the same relative zoom position while adapting to the new viewSize
+            this.minScale = Math.max(this.viewSize / this.naturalWidth, this.viewSize / this.naturalHeight);
+            this.maxScale = this.minScale * 4;
+            this.scale = this.minScale + (this.maxScale - this.minScale) * this.zoomPct;
+            this.clampOffset();
+        },
+
         openCropper(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    this._img = img;
-                    this.naturalWidth = img.width;
-                    this.naturalHeight = img.height;
-                    this.imageSrc = ev.target.result;
+            // Revoke any previous blob URL before creating a new one
+            this.revokeObjectUrl();
 
-                    // minScale = smallest zoom that still fully covers the circular viewport
-                    this.minScale = Math.max(this.viewSize / img.width, this.viewSize / img.height);
-                    this.maxScale = this.minScale * 4;
-                    this.scale = this.minScale;
-                    this.zoomPct = 0;
-                    this.offsetX = 0;
-                    this.offsetY = 0;
-                    this.show = true;
-                };
-                img.src = ev.target.result;
+            const objectUrl = URL.createObjectURL(file);
+
+            const img = new Image();
+            img.onload = () => {
+                this._img = img;
+                this._objectUrl = objectUrl;
+                this.naturalWidth = img.width;
+                this.naturalHeight = img.height;
+                this.imageSrc = objectUrl;
+                this.zoomPct = 0;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.show = true;
+
+                this.$nextTick(() => {
+                    // $nextTick only waits for Alpine's DOM patch, not for the
+                    // browser to actually paint the now-visible modal — on some
+                    // desktop browsers the viewport can still measure 0 at this
+                    // point. Waiting two animation frames guarantees a real paint
+                    // has happened first.
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            this.measureViewport();
+                            this.recalcScaleBounds();
+                        });
+                    });
+
+                    // Re-measure on resize / orientation change so rotating a phone
+                    // (or resizing a browser window) keeps the crop framing accurate
+                    this._resizeHandler = () => {
+                        this.measureViewport();
+                        this.recalcScaleBounds();
+                    };
+                    window.addEventListener('resize', this._resizeHandler);
+                    window.addEventListener('orientationchange', this._resizeHandler);
+                });
             };
-            reader.readAsDataURL(file);
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+            };
+            img.src = objectUrl;
+
             e.target.value = ''; // allow re-selecting the same file later
+        },
+
+        revokeObjectUrl() {
+            if (this._objectUrl) {
+                URL.revokeObjectURL(this._objectUrl);
+                this._objectUrl = null;
+            }
+        },
+
+        removeResizeListener() {
+            if (this._resizeHandler) {
+                window.removeEventListener('resize', this._resizeHandler);
+                window.removeEventListener('orientationchange', this._resizeHandler);
+                this._resizeHandler = null;
+            }
         },
 
         imgStyle() {
             const w = this.naturalWidth * this.scale;
             const h = this.naturalHeight * this.scale;
             return `width: ${w}px; height: ${h}px; transform: translate(-50%, -50%) translate(${this.offsetX}px, ${this.offsetY}px);`;
+        },
+
+        guideStyle() {
+            // Darkened surround with a transparent circular window sized to the
+            // actual (responsive) viewport, not a hardcoded pixel value.
+            const r = this.viewSize / 2 - 1;
+            return `background: radial-gradient(circle ${r}px at center, transparent ${r - 1}px, rgba(0,0,0,0.55) ${r}px);`;
         },
 
         clampOffset() {
@@ -667,6 +734,8 @@ new class extends Component {
             this.show = false;
             this.imageSrc = null;
             this._img = null;
+            this.revokeObjectUrl();
+            this.removeResizeListener();
         },
 
         confirmCrop() {
@@ -709,6 +778,8 @@ new class extends Component {
                         this.show = false;
                         this.imageSrc = null;
                         this._img = null;
+                        this.revokeObjectUrl();
+                        this.removeResizeListener();
                     },
                     () => {
                         this.uploading = false;
