@@ -18,7 +18,7 @@ new class extends Component
                 <span class="w-10 h-1 bg-blue-600 rounded-full"></span>
                     <p class="text-xs font-bold uppercase tracking-widest text-blue-600">
                         Convention Highlights
-                    </p>
+                    </p>                                                                                 
             </div>
 
             <h2 class="font-serif text-4xl lg:text-5xl text-slate-900">
