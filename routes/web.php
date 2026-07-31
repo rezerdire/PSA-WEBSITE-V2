@@ -47,6 +47,7 @@ Route::view('/AnnualConvention2026/Registration', 'pages.Event-Registration.even
 Route::view('/CME/PJA', 'pages.CME.pja')->name('pja');  
 Route::view('/AnnualConvention2026', 'pages.CME.convention')->name('convention');
 Route::view('/CME/Mid-Year-Convention', 'pages.CME.mid-year-convention')->name('mid-year-convention');
+Route::view('/CME/Interesting-Case', 'pages.CME.InterestingCase')->name('Interesting-Case');
 
 // LOGIN REMOVE
 

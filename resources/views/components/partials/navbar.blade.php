@@ -49,6 +49,7 @@ new class extends Component
                class="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/60 py-1 z-50">
             <a href="{{ route('convention') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Annual Convention 2026</a>
             <a href="{{ route('mid-year-convention') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Midyear Convention</a>
+            <a href="{{ route('Interesting-Case') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Interesting Case</a>
 
             <a href="{{ route('pja') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">PJA</a>
           </div>
@@ -108,7 +109,8 @@ new class extends Component
     <div x-show="aboutOpen" x-transition class="pl-4">
       <a wire:navigate href="{{ route('convention') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Annual Convention 2026</a>
       <a wire:navigate href="{{ route('pja') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">PJA</a>
- 
+       <a wire:navigate href="{{ route('Interesting-Case') }}" class="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">Interesting Case</a>
+
     </div>
   </div>
 

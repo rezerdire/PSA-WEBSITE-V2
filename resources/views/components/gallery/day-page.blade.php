@@ -113,10 +113,10 @@ new class extends Component
             <div class="flex items-center gap-3">
                 <span class="w-1 h-8 bg-blue-600 rounded-full"></span>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight uppercase">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight uppercase  cursor-pointer">
                         {{ $event->name }}
                     </h1>
-                    <p class="text-sm text-slate-500 uppercase">{{ $day->label }}</p>
+                    <p class="text-sm text-slate-500 uppercase ">{{ $day->label }} </p>
                 </div>
             </div>
 
