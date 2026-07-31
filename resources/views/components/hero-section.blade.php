@@ -11,7 +11,7 @@ new class extends Component
 <section
   x-data="{
     slide: 0,
-    total: 3,
+    total: 4,
     timer: null,
     next() { this.slide = (this.slide + 1) % this.total },
     prev() { this.slide = (this.slide - 1 + this.total) % this.total },
@@ -36,9 +36,9 @@ new class extends Component
     {{-- Slide stack: all slides occupy the same grid cell, crossfade via opacity only --}}
     <div class="relative grid">
 
-      {{-- SLIDE 0: 58th Annual Convention --}}
+      {{-- SLIDE 2: 58th Annual Convention --}}
       <div
-        x-show="slide === 0"
+        x-show="slide === 2"
         x-transition:enter="transition-opacity ease-out duration-700"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -46,6 +46,7 @@ new class extends Component
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="col-start-1 row-start-1"
+        style="display: none;"
       >
         <div class="grid lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <div>
@@ -78,9 +79,9 @@ new class extends Component
         </div>
       </div>
 
-      {{-- SLIDE 1: SIMWARS event --}}
+      {{-- SLIDE 0: SIMWARS event --}}
       <div
-        x-show="slide === 1"
+        x-show="slide === 0"
         x-transition:enter="transition-opacity ease-out duration-700"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -88,7 +89,6 @@ new class extends Component
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="col-start-1 row-start-1"
-        style="display: none;"
       >
         <div class="grid lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <div>
@@ -118,9 +118,87 @@ new class extends Component
         </div>
       </div>
 
-      {{-- SLIDE 2: Original hero --}}
+      {{-- SLIDE 1: Interesting Case Competition --}}
       <div
-        x-show="slide === 2"
+          x-show="slide === 1"
+          x-transition:enter="transition-opacity ease-out duration-700"
+          x-transition:enter-start="opacity-0"
+          x-transition:enter-end="opacity-100"
+          x-transition:leave="transition-opacity ease-in duration-700"
+          x-transition:leave-start="opacity-100"
+          x-transition:leave-end="opacity-0"
+          class="col-start-1 row-start-1"
+          style="display: none;"
+      >
+          <div class="grid lg:grid-cols-2 gap-10 sm:gap-16 items-center">
+
+              <div>
+                  <span class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+                      <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                      Call for Entries
+                  </span>
+
+                  <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl xl:text-6xl leading-[1.15] sm:leading-[1.08] text-slate-900 mb-4 sm:mb-6">
+                      PSA <em class="text-blue-600 not-italic">Interesting Case</em>
+                      Competition 2026
+                  </h1>
+
+                  <p class="text-slate-500 text-base sm:text-lg leading-relaxed max-w-lg mb-4">
+                      Share your unique and interesting clinical cases, engage with colleagues,
+                      and inspire learning through knowledge, experience, and innovation.
+                  </p>
+
+                  <p class="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg mb-6 sm:mb-10">
+                      We are now accepting case reports for the PSA Interesting Case Competition 2026.
+                      <strong class="text-slate-700">
+                          Deadline of submission: August 28, 2026.
+                      </strong>
+                  </p>
+
+                  <div class="flex flex-wrap gap-3 sm:gap-4">
+                     <a href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white font-semibold text-sm sm:text-base rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200 hover:-translate-y-0.5"
+                  >
+                      Submit Your Entry
+
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path d="M5 12h14"/>
+                          <path d="m12 5 7 7-7 7"/>
+                      </svg>
+                  </a>
+                      <a
+                          href="{{ route('Interesting-Case') }}"
+                          class="px-5 sm:px-6 py-2.5 sm:py-3 bg-white text-slate-700 font-semibold text-sm sm:text-base rounded-xl border border-slate-200 hover:border-blue-300 hover:text-blue-600 transition-all"
+                      >
+                          Learn More
+                      </a>
+                  </div>
+              </div>
+
+              <div class="flex justify-center lg:justify-end">
+                  <img
+                      src="{{ asset('images/InterestingCase.png') }}"
+                      alt="PSA Interesting Case Competition 2026"
+                      class="rounded-2xl shadow-xl shadow-blue-100 max-h-[520px] w-auto object-contain"
+                  >
+              </div>
+
+          </div>
+      </div>
+
+      {{-- SLIDE 3: Original hero --}}
+      <div
+        x-show="slide === 3"
         x-transition:enter="transition-opacity ease-out duration-700"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -181,6 +259,7 @@ new class extends Component
         <button @click="go(0)" :class="slide === 0 ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300'" class="h-2 rounded-full transition-all"></button>
         <button @click="go(1)" :class="slide === 1 ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300'" class="h-2 rounded-full transition-all"></button>
         <button @click="go(2)" :class="slide === 2 ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300'" class="h-2 rounded-full transition-all"></button>
+        <button @click="go(3)" :class="slide === 3 ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300'" class="h-2 rounded-full transition-all"></button>
       </div>
 
       <button @click="next()" aria-label="Next slide" class="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all shrink-0">
