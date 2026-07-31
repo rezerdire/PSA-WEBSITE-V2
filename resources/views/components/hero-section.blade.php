@@ -79,7 +79,7 @@ new class extends Component
         </div>
       </div>
 
-      {{-- SLIDE 0: SIMWARS event --}}
+{{-- SLIDE 0: SIMWARS event --}}
       <div
         x-show="slide === 0"
         x-transition:enter="transition-opacity ease-out duration-700"
@@ -93,27 +93,34 @@ new class extends Component
         <div class="grid lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <div>
             <span class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
-              <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-              Upcoming Event
+              <span class="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
+              Live - Philippines Anesthesia Crisis Competition 2026
             </span>
 
-            <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl xl:text-6xl leading-[1.15] sm:leading-[1.08] text-slate-900 mb-4 sm:mb-6">
-              SIM<em class="text-blue-600 not-italic">WARS</em>
+            <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl xl:text-6xl leading-[1.15] sm:leading-[1.08] text-slate-900 mb-2 sm:mb-3">
+              Anesthesia Sim Wars Trilogy
             </h1>
-
-            <p class="text-slate-500 text-base sm:text-lg leading-relaxed max-w-lg mb-6 sm:mb-10">
-              Join the PSA's simulation-based competition for anesthesiologists. Registration is now open — secure your slot today.
+            <p class="text-blue-600 font-semibold text-lg sm:text-2xl mb-1">
+              Competition, Episode 1
+            </p>
+            <p class="text-slate-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] mb-6 sm:mb-8">
+              Share With The World
             </p>
 
+            <p class="text-slate-500 text-base sm:text-lg leading-relaxed max-w-lg mb-6 sm:mb-8">
+              27 teams. One mission. Join the PSA's simulation-based competition for anesthesiologists as hospitals nationwide compete to advance anesthesia care across the Philippines.
+            </p>
+
+          
             <div class="flex flex-wrap gap-3 sm:gap-4">
-              <a href="{{ route('sim-wars') }}" class="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white font-semibold text-sm sm:text-base rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200 hover:-translate-y-0.5">
+              {{-- <a href="{{ route('sim-wars') }}" class="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white font-semibold text-sm sm:text-base rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200 hover:-translate-y-0.5">
                 Register Now <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </a>
+              </a> --}}
             </div>
           </div>
 
           <div class="flex justify-center lg:justify-end">
-            <img src="{{ asset('images/event-cover-photo/SIMWARS-CP.jpg') }}" alt="SIMWARS Event Poster" class="rounded-2xl shadow-xl shadow-blue-100 max-h-[520px] w-auto object-contain">
+            <img src="{{ asset('images/simwars-competition.png') }}" alt="Anesthesia Sim Wars Trilogy Competition, Episode 1 - Philippines Anesthesia Crisis Competition 2026" class="rounded-2xl shadow-xl shadow-blue-100 max-h-[520px] w-auto object-contain">
           </div>
         </div>
       </div>
