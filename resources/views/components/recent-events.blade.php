@@ -72,8 +72,8 @@ new class extends Component
                alt="PSA Review Program (PSARP)"
                class="w-full h-full object-cover" loading="lazy">
           <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-          <span class="absolute top-3 left-3 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-100 text-slate-600">
-            National
+          <span class="absolute top-3 left-3 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700">
+            ON GOING
           </span>
         </div>
         <div class="p-5 sm:p-6">
