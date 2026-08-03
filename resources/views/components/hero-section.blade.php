@@ -119,8 +119,8 @@ new class extends Component
             </div>
           </div>
 
-          <div class="flex justify-center lg:justify-end">
-`1          </div>
+<div class="flex justify-center lg:justify-end">
+            <img src="{{ asset('images/simwars-competition.png') }}" alt="Anesthesia Sim Wars Trilogy Competition, Episode 1 - Philippines Anesthesia Crisis Competition 2026" class="rounded-2xl shadow-xl shadow-blue-100 max-h-[520px] w-auto object-contain">
         </div>
       </div>
 
