@@ -1,0 +1,11 @@
+STEPS
+***Note do not drop any table in the Database or create a backup before doing these stuff
+
+
+*IF THERE IS A NEW MEMBER IN PSA GET FROM SERVER BY FILTERING AND SAVE AS CSV
+*php artisan members:convert-pictures mem_pics.csv - command for hex to jpeg 
+*the command will create a folder with a name member_pictures with the converted pictures inside
+
+**inserting in the database member_pictures table
+*csv row should have member_id_no,mem_pic 
+*run a command "php artisan members:import-pictures"
