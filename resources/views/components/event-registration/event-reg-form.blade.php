@@ -133,11 +133,11 @@
                 'discountImg'     => [
                     'nullable',
                     Rule::requiredIf(!$this->isPaymentExempt() && $this->discountType === 'senior_disc'),
-                    'image', 'max:5120',
+                    'image', 'max:10240',
                 ],
                 'paymentProof'    => [
                     $this->isPaymentExempt() ? 'nullable' : 'required',
-                    'image', 'max:5120',
+                    'image', 'max:10240',
                 ],
             ];
         }
