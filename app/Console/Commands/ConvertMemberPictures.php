@@ -19,7 +19,8 @@ class ConvertMemberPictures extends Command
      */
     protected $signature = 'members:convert-pictures
         {csv=mem_pic.csv : CSV filename inside public/}
-        {--folder=member-pics : destination folder inside public/}';
+        {--folder=member-pics : destination folder inside public/}
+        {--debug : print raw snippet for every row that fails, instead of just a one-liner}';
 
     protected $description = 'Convert SSMS hex-encoded member photo CSV export into JPG files in public/';
 
@@ -28,6 +29,7 @@ class ConvertMemberPictures extends Command
         $csvPath = public_path($this->argument('csv'));
         $folder  = trim($this->option('folder'), '/');
         $destDir = public_path($folder);
+        $debug   = (bool) $this->option('debug');
 
         if (! File::exists($csvPath)) {
             $this->error("CSV not found at: {$csvPath}");
@@ -71,6 +73,7 @@ class ConvertMemberPictures extends Command
         fputcsv($mappingFile, ['psa_id', 'mem_pic']);
 
         $success = 0;
+        $empty   = 0;
         $failed  = 0;
         $rowNum  = 1;
 
@@ -80,18 +83,49 @@ class ConvertMemberPictures extends Command
             $memberId = trim($row[$idIdx] ?? '');
             $hexRaw   = trim($row[$picIdx] ?? '');
 
-            if ($memberId === '' || $hexRaw === '') {
-                $this->warn("Row {$rowNum}: missing member_id_no or mem_pic, skipping.");
+            if ($memberId === '') {
+                $this->warn("Row {$rowNum}: missing member_id_no, skipping.");
                 $failed++;
+                continue;
+            }
+
+            // No picture on file — SQL Server export sometimes writes the literal word NULL
+            if (strcasecmp($hexRaw, 'NULL') === 0) {
+                $this->line("Row {$rowNum} (member {$memberId}): no picture on file, skipping.");
+                $empty++;
                 continue;
             }
 
             // Strip 0x / 0X prefix
             $hex = preg_replace('/^0x/i', '', $hexRaw);
 
+            // No picture on file (0x with zero bytes, or blank cell) — not an error, just skip quietly
+            if ($hex === '') {
+                $this->line("Row {$rowNum} (member {$memberId}): no picture on file, skipping.");
+                $empty++;
+                continue;
+            }
+
             // Sanity check: must be valid hex, even length
             if (! ctype_xdigit($hex) || strlen($hex) % 2 !== 0) {
                 $this->warn("Row {$rowNum} (member {$memberId}): invalid hex data, skipping.");
+
+                if ($debug) {
+                    $len = strlen($hex);
+                    $head = substr($hex, 0, 40);
+                    $tail = substr($hex, -40);
+                    $this->line("  -> length={$len}, starts=\"{$head}\", ends=\"{$tail}\"");
+
+                    // Flag the exact bad character(s) so you can see if it's a stray "...", newline, or non-hex char
+                    if (! ctype_xdigit($hex)) {
+                        preg_match_all('/[^0-9A-Fa-f]/', $hex, $m, PREG_OFFSET_CAPTURE);
+                        $offsets = array_slice($m[0], 0, 5);
+                        foreach ($offsets as $bad) {
+                            $this->line("  -> non-hex char '{$bad[0]}' at offset {$bad[1]}");
+                        }
+                    }
+                }
+
                 $failed++;
                 continue;
             }
@@ -121,7 +155,7 @@ class ConvertMemberPictures extends Command
         fclose($handle);
         fclose($mappingFile);
 
-        $this->info("Done. Converted: {$success}, Skipped: {$failed}");
+        $this->info("Done. Converted: {$success}, No picture: {$empty}, Failed: {$failed}");
         $this->info("Images saved in: {$destDir}");
         $this->info("Mapping CSV for member_pictures table: {$mappingPath}");
 
