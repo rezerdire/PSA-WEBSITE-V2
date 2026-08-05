@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\File;
 class ConvertMemberPictures extends Command
 {
     /**
-     * php artisan members:convert-pictures
+     * ARTISAN COMMAND: php artisan members:convert-pictures
      *
      * Reads public/mem_pic.csv (columns: member_id_no, mem_pic)
      * where mem_pic is a SQL Server hex-encoded image (0xFFD8FF...),

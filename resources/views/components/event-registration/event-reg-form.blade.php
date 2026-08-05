@@ -122,7 +122,7 @@
                 'middleName'      => ['nullable', 'string', 'max:255'],
                 'membership'      => ['required', Rule::in(['RM', 'LM', 'TM'])],
 
-                'prcNumber'       => ['required', 'digits:7'],
+                'prcNumber'       => ['required', 'digits:5,6,7'],
                 'email'           => ['required', 'email', 'max:255'],
                 'contactNumber'   => ['required', 'regex:/^09\d{9}$/'],
                 'hospitalName'    => ['required', 'string', 'max:255'],
@@ -391,8 +391,8 @@
                     <div class="mb-8">
                         <x-event-registration.section-title title="Contact Details" />
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <x-form.input label="PRC Number" hint="(7 digits)" name="prcNumber" wire:model="prcNumber" pattern="^\d{7}$"
-                                placeholder="1234567" maxlength="7" inputmode="numeric"   pattern-message="PRC number must be exactly 7 digits."/>
+                            <x-form.input label="PRC Number" hint="(5-7 digits)" name="prcNumber" wire:model="prcNumber" pattern="^\d{5,7}$"
+                                placeholder="1234567" minlength="5" maxlength="7" inputmode="numeric"   pattern-message="PRC number must be between 5 and 7 digits."/>
 
                             <x-form.input label="Email Address" type="email" name="email" wire:model="email"
                                 placeholder="you@example.com" />
