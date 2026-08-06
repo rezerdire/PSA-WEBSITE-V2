@@ -122,7 +122,7 @@
                 'middleName'      => ['nullable', 'string', 'max:255'],
                 'membership'      => ['required', Rule::in(['RM', 'LM', 'TM'])],
 
-                'prcNumber'       => ['required', 'digits:5,6,7'],
+                'prcNumber'       => ['required',  'digits_between:5,7'],
                 'email'           => ['required', 'email', 'max:255'],
                 'contactNumber'   => ['required', 'regex:/^09\d{9}$/'],
                 'hospitalName'    => ['required', 'string', 'max:255'],
