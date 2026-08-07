@@ -220,7 +220,7 @@ new class extends Component
                             Philippines Anesthesia Crisis Competition 2026
                         </p>
 
-                        <h1 class="font-display text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             Anesthesia
                             <span class="text-blue-600">Sim Wars</span>
                             Trilogy
@@ -360,7 +360,7 @@ new class extends Component
                             Clinical Knowledge & Innovation
                         </p>
 
-                        <h1 class="font-display text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             PSA
                             <span class="text-blue-600">
                                 Interesting Case
@@ -486,7 +486,7 @@ new class extends Component
                             Philippine Society of Anesthesiologists
                         </p>
 
-                        <h1 class="font-display text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             PSA
                             <span class="text-blue-600">
                                 58<sup class="text-2xl sm:text-3xl">th</sup>
@@ -616,7 +616,7 @@ new class extends Component
                         </div>
 
 
-                        <h1 class="font-display text-4xl font-semibold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
+                        <h1 class="font-display text-4xl font-bold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
 
                             Philippine Society
                             <span class="block text-slate-400">
