@@ -11,7 +11,7 @@ new class extends Component
 <section
     x-data="{
         slide: 0,
-        total: 4,
+        total: 5,
         timer: null,
 
         next() {
@@ -334,9 +334,153 @@ new class extends Component
             </div>
 
 
-            {{-- slide === 1 interesting case --}}
+            {{-- slide 1 Research Forum 2026 --}}
             <div
                 x-show="slide === 1"
+                x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-4"
+                x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-4"
+                class="col-start-1 row-start-1"
+                style="display: none;"
+            >
+
+                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+
+                    <div class="max-w-2xl">
+
+                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+                            Call for Abstracts
+                        </div>
+
+                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
+                            Share Your Discoveries
+                        </p>
+
+                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                            Research
+                            <span class="text-blue-600">Forum</span>
+                            <span class="block text-slate-400">2026</span>
+                        </h1>
+
+                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
+                            Share your discoveries, exchange ideas, and showcase
+                            your work to the community. The call for abstracts for
+                            Research Forum 2026 is now open.
+                        </p>
+
+                        <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+
+                            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    width="19"
+                                    height="19"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
+                                    <path d="M3 9h18"/>
+                                    <path d="M9 21V9"/>
+                                </svg>
+                            </div>
+
+                            <p class="text-sm leading-6 text-slate-600">
+                                We are now accepting abstract submissions for
+                                Research Forum 2026.
+                                <strong class="text-slate-800">
+                                    Deadline: August 20, 2026.
+                                </strong>
+                            </p>
+
+                        </div>
+
+                        <div class="mt-8 flex flex-wrap gap-3">
+
+                            <a
+                                href="https://compose.mail.yahoo.com/?to=psaresearchforum@gmail.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
+                            >
+                                Submit Your Abstract
+
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    width="17"
+                                    height="17"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                            </a>
+                            {{-- guideline button downloadable --}}
+                                    <a
+                        href="{{ asset('Research_Forum_Guidelines.pdf') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-700"
+                    >
+                        <!-- PDF Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-5 w-5">
+                            <path d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
+                        </svg>
+
+                        <span>Download Guidelines</span>
+
+                        <!-- Download Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                        </svg>
+                    </a>
+                        </div>
+
+                    </div>
+
+
+                    <div class="relative flex justify-center lg:justify-end">
+
+                        <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
+
+                        <div class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+
+                            <img
+                                src="{{ asset('images/researchforum2026.jpg') }}"
+                                alt="PSA Research Forum 2026 - Call for Abstracts"
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain"
+                            />
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- slide 2 interesting case --}}
+            <div
+                x-show="slide === 2"
                 x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4"
                 x-transition:enter-end="opacity-100 translate-x-0"
@@ -460,9 +604,9 @@ new class extends Component
             </div>
 
 
-            {{-- slide === 2 annual convention --}}
+            {{-- slide 3 annual convention --}}
             <div
-                x-show="slide === 2"
+                x-show="slide === 3"
                 x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4"
                 x-transition:enter-end="opacity-100 translate-x-0"
@@ -571,9 +715,9 @@ new class extends Component
             </div>
 
 
-            {{-- slide === 3 Default hero section page --}}
+            {{-- slide 4 Default hero section page --}}
             <div
-                x-show="slide === 3"
+                x-show="slide === 4"
                 x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4"
                 x-transition:enter-end="opacity-100 translate-x-0"
@@ -616,7 +760,7 @@ new class extends Component
                         </div>
 
 
-                        <h1 class="font-display text-4xl font-bold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
+                        <h1 class="font-display text-4xl font-semibold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
 
                             Philippine Society
                             <span class="block text-slate-400">
@@ -994,19 +1138,26 @@ new class extends Component
                     @click="go(1)"
                     :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Interesting Case slide"
+                    aria-label="Go to Research Forum slide"
                 ></button>
 
                 <button
                     @click="go(2)"
                     :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Annual Convention slide"
+                    aria-label="Go to Interesting Case slide"
                 ></button>
 
                 <button
                     @click="go(3)"
                     :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300"
+                    aria-label="Go to Annual Convention slide"
+                ></button>
+
+                <button
+                    @click="go(4)"
+                    :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
                     aria-label="Go to PSA main slide"
                 ></button>
