@@ -6,7 +6,6 @@ use App\Models\GalleryDay;
 use App\Models\GalleryEvent;
 use App\Models\GalleryImage;
 
-
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/admin/registrations-export-pdf', [RegistrationPdfController::class, 'export'])
         ->name('admin.registrations.export-pdf');
@@ -76,3 +75,5 @@ Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name(
 
 // Annual Convention 2026
 Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')->name('annual-convention-poster');
+
+Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
