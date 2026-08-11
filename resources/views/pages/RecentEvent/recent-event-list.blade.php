@@ -66,10 +66,6 @@
                     </p>
                 </div>
 
-                <div class="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-400">
-                    <span>{{ count($events) }}</span>
-                    <span>Events</span>
-                </div>
             </div>
 
 
