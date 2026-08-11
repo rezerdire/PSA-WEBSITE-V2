@@ -13,8 +13,8 @@
             'title' => 'SIM Wars Trilogy',
             'image' => 'images/event-cover-photo/SIMWARS-CP.jpg',
             'badge' => 'Upcoming',
-            'date' => 'Aug 9, 2026 - Part 1 (Elimination Round)',
-            'location' => 'Aesculap Academy B. Braun Philippines, Bonifacio Global City',
+            'date' => 'Novv 27, 2026 - Part 2 (Finals)',
+            'location' => 'Marriott Grand Ballroom, Pasay City',
             'route' => 'sim-wars',
         ],
 
