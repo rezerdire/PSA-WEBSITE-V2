@@ -189,150 +189,143 @@ new class extends Component
  {{-- slide start --}}
         <div class="relative grid">
 
-          {{-- slide 0 --}}
+{{-- slide 0 --}}
+<div
+    x-show="slide === 0"
+    x-transition:enter="transition ease-out duration-700"
+    x-transition:enter-start="opacity-0 translate-x-6"
+    x-transition:enter-end="opacity-100 translate-x-0"
+    x-transition:leave="transition ease-in duration-500"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0 -translate-x-6"
+    class="col-start-1 row-start-1"
+    style="display: none;"
+>
+
+    <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-2 lg:gap-16">
+
+        {{-- Decorative background --}}
+        <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-100/50 blur-3xl"></div>
+
+        {{-- =========================
+            LEFT CONTENT
+        ========================== --}}
+        <div class="relative z-10 max-w-2xl">
+
+            {{-- Announcement Badge --}}
             <div
-                x-show="slide === 0"
-                x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4"
-                class="col-start-1 row-start-1"
-                style="display: none;"
+                class="mb-7 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 shadow-sm"
             >
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </span>
 
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+                Results Are In
 
-                    {{-- details/text --}}
-                    <div class="max-w-2xl">
-
-                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-red-600">
-                            <span class="relative flex h-2 w-2">
-                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                                <span class="relative inline-flex h-2 w-2 rounded-full bg-red-600"></span>
-                            </span>
-
-                            Live Competition
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-blue-600">
-                            Philippines Anesthesia Crisis Competition 2026
-                        </p>
-
-                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            Anesthesia
-                            <span class="text-blue-600">Sim Wars</span>
-                            Trilogy
-                        </h1>
-
-                        <div class="mt-4 flex items-center gap-3">
-                            <span class="h-px w-10 bg-blue-500"></span>
-                            <p class="text-lg font-semibold text-slate-500 sm:text-xl">
-                                Competition, Episode 1
-                            </p>
-                        </div>
-
-                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            27 teams. One mission. Join the PSA's simulation-based
-                            competition for anesthesiologists as hospitals nationwide
-                            compete to advance anesthesia care across the Philippines.
-                        </p>
-
-                        {{-- card feature --}}
-                        <div class="mt-8 grid max-w-lg grid-cols-3 gap-3">
-
-                            <div class="rounded-2xl border border-blue-100 bg-white/80 p-4 shadow-sm backdrop-blur">
-                                <div class="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M12 2v20"/>
-                                        <path d="M2 12h20"/>
-                                    </svg>
-                                </div>
-
-                                <p class="text-xs font-semibold text-slate-500">
-                                    Simulation
-                                </p>
-                            </div>
-
-                            <div class="rounded-2xl border border-cyan-100 bg-white/80 p-4 shadow-sm backdrop-blur">
-                                <div class="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M3 12h4l2-8 4 16 2-8h6"/>
-                                    </svg>
-                                </div>
-
-                                <p class="text-xs font-semibold text-slate-500">
-                                    Clinical Skills
-                                </p>
-                            </div>
-
-                            <div class="rounded-2xl border border-blue-100 bg-white/80 p-4 shadow-sm backdrop-blur">
-                                <div class="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                    </svg>
-                                </div>
-
-                                <p class="text-xs font-semibold text-slate-500">
-                                    Teamwork
-                                </p>
-                            </div>
-
-                        </div>
-                        {{-- end card feature --}}
-                    </div>
-
-
-                    {{-- Image right side --}}
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        {{-- Glow design --}}
-                        <div class="absolute inset-10 rounded-full bg-blue-200/40 blur-3xl"></div>
-
-                        <div class="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img
-                                src="{{ asset('images/simwars-competition.png') }}"
-                                alt="Anesthesia Sim Wars Trilogy Competition, Episode 1 - Philippines Anesthesia Crisis Competition 2026"
-                                class="relative max-h-[540px] w-auto rounded-[1.5rem] object-contain"
-                            />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="m5 12 5 5L20 7"/>
+                </svg>
             </div>
 
+            {{-- Eyebrow --}}
+            <div class="mb-4 flex items-center gap-3">
+                <span class="h-px w-8 bg-blue-600"></span>
+
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-sm">
+                    Philippines Anesthesia Crisis Competition 2026
+                </p>
+            </div>
+
+            {{-- Main Heading --}}
+            <h1 class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl xl:text-7xl">
+                Anesthesia
+                <span class="block text-blue-600">
+                    Sim Wars
+                </span>
+
+                <span class="mt-1 block text-slate-900">
+                    Trilogy
+                </span>
+            </h1>
+
+            {{-- Episode --}}
+            <div class="mt-6 flex items-start gap-4">
+                <div class="mt-2 h-10 w-1 shrink-0 rounded-full bg-gradient-to-b from-blue-600 to-cyan-400"></div>
+
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        Episode 01
+                    </p>
+
+                    <p class="mt-1 text-xl font-bold leading-tight text-slate-700 sm:text-2xl">
+                        Elimination Round
+                    </p>
+                </div>
+            </div>
+
+            {{-- Description --}}
+            <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
+                    We are pleased to announce the winning teams of
+                <span class="font-semibold text-slate-700">
+                    Episode 1
+                </span>
+                in the Sim Wars trilogy!
+               <br><br>
+                Held on <span class="font-semibold text-slate-700"> August 9, 2026 at the Aesculap Academy Philippines, </span> Episode 1 showcased incredible teamwork, skill, and clinical excellence. 
+              <br><br> To all participating teams, thank you for bringing your passion, energy, and competitive spirit to the first episode of the trilogy. And to our 10 winning teams—congratulations on an outstanding performance!
+            </p>
+
+        
+
+        </div>
+
+
+        {{-- =========================
+            RIGHT IMAGE
+        ========================== --}}
+        <div class="relative z-10 flex justify-center lg:justify-end">
+
+            {{-- Outer Glow --}}
+            <div class="absolute inset-4 rounded-[3rem] bg-blue-400/20 blur-3xl"></div>
+
+            {{-- Decorative circles --}}
+            <div class="absolute -right-4 -top-6 h-24 w-24 rounded-full border border-blue-200/60"></div>
+            <div class="absolute -bottom-5 -left-5 h-20 w-20 rounded-full border border-cyan-200/60"></div>
+
+            {{-- Image Card --}}
+            <div
+                class="group relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl"
+            >
+
+                {{-- Image --}}
+                <div class="relative overflow-hidden rounded-[1.5rem] bg-slate-100">
+
+                    <img
+                        src="{{ asset('images/simwars/simwarswinner.jpg') }}"
+                        alt="PSA Sim Wars 2026 Trilogy Competition Episode 1 Elimination Round Winners"
+                        class="relative max-h-[560px] w-full object-contain transition duration-700 ease-out group-hover:scale-[1.02]"
+                    />
+
+                    {{-- Image Gradient --}}
+                    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             {{-- slide 1 Research Forum 2026 --}}
             <div
