@@ -29,7 +29,7 @@
         public string $contactNumber   = '';
         public string $hospitalName    = '';
         public string $hospitalAddress = '';
-        public string $country         = '';
+        public string $country         = 'Philippines';
 
         // Discount & Payment
         public string $discountType = 'non_disc';
@@ -408,9 +408,11 @@
                             <x-form.input label="Hospital Address" name="hospitalAddress" wire:model="hospitalAddress"
                                 placeholder="City, Province" />
 
-                            <div class="sm:col-span-3">
-                            <x-form.input label="Country" name="country" wire:model="country" placeholder="Philippines" />
-                            </div>
+                     <div class="sm:col-span-3">
+    <label class="block text-xs font-medium text-gray-500 mb-1">Country</label>
+    <input type="text" value="Philippines" disabled
+        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
+</div>
                             
                         </div>
                     </div>
