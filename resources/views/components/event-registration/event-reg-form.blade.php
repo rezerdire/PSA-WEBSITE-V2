@@ -36,6 +36,11 @@
         public        $discountImg  = null;
         public        $paymentProof = null;
 
+        // NEW: upload-in-progress flags — set/cleared by Alpine from Livewire's
+        // native upload events, and used both to show a loader and to block submit.
+        public bool $paymentUploading  = false;
+        public bool $discountUploading = false;
+
         public bool   $submitted      = false;
         public string $registrationId = '';
 
@@ -46,59 +51,58 @@
         ];
 
         public function verify(): void
-    {
-        $this->validate(
-            ['psaId' => ['required', 'digits:4']],
-            ['psaId.digits' => 'PSA ID must be exactly 4 digits.']
-        );
+        {
+            $this->validate(
+                ['psaId' => ['required', 'digits:4']],
+                ['psaId.digits' => 'PSA ID must be exactly 4 digits.']
+            );
 
-        $this->verifyError    = '';
-        $this->memberVerified = false;
+            $this->verifyError    = '';
+            $this->memberVerified = false;
 
-        $member = Member::find($this->psaId);
+            $member = Member::find($this->psaId);
 
-        if (!$member) {
-            $this->verifyError = 'PSA ID not found. Please double-check your ID number.';
-            return;
+            if (!$member) {
+                $this->verifyError = 'PSA ID not found. Please double-check your ID number.';
+                return;
+            }
+
+            $memType = strtoupper(trim($member->psa_mem_type ?? ''));
+
+            if (!array_key_exists($memType, self::MEM_TYPE_MAP)) {
+                $this->verifyError = 'Your membership type is not eligible for online registration.';
+                return;
+            }
+
+            // Only block if there's a Pending or Approved registration.
+            // Rejected registrations are allowed to resubmit.
+            if (Registration::where('psa_id', $this->psaId)
+                ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
+                ->exists()
+            ) {
+                $this->verifyError = 'This PSA ID has already been registered for this event.';
+                return;
+            }
+
+            $this->firstName      = $member->mem_first_name  ?? '';
+            $this->lastName       = $member->mem_last_name   ?? '';
+            $this->middleName     = $member->mem_middle_name ?? '';
+            $this->membership     = $memType;
+            $this->memberVerified = true;
+
+            // Life Member Payment Excempted Discount Section:
+            // discount option will be = none since it is a life member.
+            if ($this->isPaymentExempt()) {
+                $this->discountType = 'non_disc';
+                $this->discountImg  = null;
+            }
         }
 
-        $memType = strtoupper(trim($member->psa_mem_type ?? ''));
-
-        if (!array_key_exists($memType, self::MEM_TYPE_MAP)) {
-            $this->verifyError = 'Your membership type is not eligible for online registration.';
-            return;
-        }
-
-        // Only block if there's a Pending or Approved registration.
-        // Rejected registrations are allowed to resubmit.
-        if (Registration::where('psa_id', $this->psaId)
-            ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
-            ->exists()
-        ) {
-            $this->verifyError = 'This PSA ID has already been registered for this event.';
-            return;
-        }
-
-        $this->firstName      = $member->mem_first_name  ?? '';
-        $this->lastName       = $member->mem_last_name   ?? '';
-        $this->middleName     = $member->mem_middle_name ?? '';
-        $this->membership     = $memType;
-        $this->memberVerified = true;
-
-
-        // Life Member Payment Excempted Discount Section:
-        // discount option will be = none since it is a life member.
-        if ($this->isPaymentExempt()) {
-            $this->discountType = 'non_disc';
-            $this->discountImg  = null;
-        }
-    }
         // Filter of Life Member
         public function isPaymentExempt(): bool
         {
             return $this->membership === 'LM';
         }
-
 
         public function resetVerification(): void
         {
@@ -110,8 +114,6 @@
             $this->middleName     = '';
             $this->membership     = '';
         }
-
-    
 
         protected function rules(): array
         {
@@ -143,50 +145,56 @@
         }
 
         public function submit(): void
-    {
-        if (!$this->memberVerified) {
-            $this->addError('psaId', 'Please verify your PSA ID before submitting.');
-            return;
-        }
+        {
+            if (!$this->memberVerified) {
+                $this->addError('psaId', 'Please verify your PSA ID before submitting.');
+                return;
+            }
 
-        // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null 
-        if ($this->isPaymentExempt()) {
-            $this->discountType = 'non_disc';
-            $this->discountImg  = null;
-            $this->paymentProof = null;
-        }
+            // NEW: server-side guard — never trust the disabled button alone.
+            // Blocks submission if either upload is still mid-flight when this fires.
+            if ($this->paymentUploading || $this->discountUploading) {
+                $this->addError('paymentProof', 'Please wait for the upload to finish before submitting.');
+                return;
+            }
 
-        $this->validate();
+            // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null 
+            if ($this->isPaymentExempt()) {
+                $this->discountType = 'non_disc';
+                $this->discountImg  = null;
+                $this->paymentProof = null;
+            }
 
-        $member = Member::find($this->psaId);
-        if (!$member) {
-            $this->verifyError    = 'PSA ID could not be re-verified. Please refresh and try again.';
-            $this->memberVerified = false;
-            return;
-        }
+            $this->validate();
 
-        if (
-            strtolower(trim($member->mem_last_name))  !== strtolower(trim($this->lastName)) ||
-            strtolower(trim($member->mem_first_name)) !== strtolower(trim($this->firstName))
-        ) {
-            $this->verifyError    = 'Member data mismatch. Please re-verify your PSA ID.';
-            $this->memberVerified = false;
-            return;
-        }
+            $member = Member::find($this->psaId);
+            if (!$member) {
+                $this->verifyError    = 'PSA ID could not be re-verified. Please refresh and try again.';
+                $this->memberVerified = false;
+                return;
+            }
 
-        // Block only on Pending/Approved — allow resubmission if previously Rejected.
-        $existing = Registration::where('psa_id', $this->psaId)
-            ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
-            ->exists();
+            if (
+                strtolower(trim($member->mem_last_name))  !== strtolower(trim($this->lastName)) ||
+                strtolower(trim($member->mem_first_name)) !== strtolower(trim($this->firstName))
+            ) {
+                $this->verifyError    = 'Member data mismatch. Please re-verify your PSA ID.';
+                $this->memberVerified = false;
+                return;
+            }
 
-        if ($existing) {
-            $this->verifyError    = 'This PSA ID has already been registered.';
-            $this->memberVerified = false;
-            return;
-        }
+            // Block only on Pending/Approved — allow resubmission if previously Rejected.
+            $existing = Registration::where('psa_id', $this->psaId)
+                ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
+                ->exists();
 
+            if ($existing) {
+                $this->verifyError    = 'This PSA ID has already been registered.';
+                $this->memberVerified = false;
+                return;
+            }
 
-        // where the uploaded files will be stored
+            // where the uploaded files will be stored
             $discountPath = null;
             if ($this->discountType === 'senior_disc' && $this->discountImg) {
                 $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
@@ -196,39 +204,38 @@
                 ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads')
                 : null;
 
-        // If a Rejected registration already exists for this PSA ID, update that
-        // same row back to Pending instead of creating a duplicate record.
-        $registration = Registration::updateOrCreate(
-            ['psa_id' => $this->psaId],
-            [
-                'prc_number'       => (int) $this->prcNumber,
-                'last_name'        => $this->lastName,
-                'first_name'       => $this->firstName,
-                'middle_name'      => $this->middleName,
-                'hospital_name'    => $this->hospitalName,
-                'hospital_address' => $this->hospitalAddress,
-                'email'            => $this->email,
-                'contact_number'   => $this->contactNumber,
-                'membership'       => $this->membership,
-                'discount_id'      => $discountPath,
-                'proof_payment'    => $paymentPath,
-                'status'           => Registration::STATUS_PENDING,
-                'country'          => $this->country,
-                'rejection_title'  => null,
-                'rejection_reason' => null,
-            ]
-        );
+            // If a Rejected registration already exists for this PSA ID, update that
+            // same row back to Pending instead of creating a duplicate record.
+            $registration = Registration::updateOrCreate(
+                ['psa_id' => $this->psaId],
+                [
+                    'prc_number'       => (int) $this->prcNumber,
+                    'last_name'        => $this->lastName,
+                    'first_name'       => $this->firstName,
+                    'middle_name'      => $this->middleName,
+                    'hospital_name'    => $this->hospitalName,
+                    'hospital_address' => $this->hospitalAddress,
+                    'email'            => $this->email,
+                    'contact_number'   => $this->contactNumber,
+                    'membership'       => $this->membership,
+                    'discount_id'      => $discountPath,
+                    'proof_payment'    => $paymentPath,
+                    'status'           => Registration::STATUS_PENDING,
+                    'country'          => $this->country,
+                    'rejection_title'  => null,
+                    'rejection_reason' => null,
+                ]
+            );
 
-        // SENDING CONFIRMATION EMAIL
-        Mail::to($this->email)->send(new RegistrationConfirmed($registration));
+            // SENDING CONFIRMATION EMAIL
+            Mail::to($this->email)->send(new RegistrationConfirmed($registration));
 
-        $this->registrationId = (string) $registration->id;
-        $this->submitted      = true;
+            $this->registrationId = (string) $registration->id;
+            $this->submitted      = true;
 
-        // adding this event to the browser's window so that the frontend can scroll to top
+            // adding this event to the browser's window so that the frontend can scroll to top
             $this->dispatch('registration-submitted');
-
-    }
+        }
     };
     ?>
     {{-- FRONTEND --}}
@@ -470,6 +477,17 @@
                                             wireModel="discountImg"
                                             label="Senior Citizen ID"
                                             color="#000066" />
+
+                                        {{-- NEW: uploading indicator for the discount ID field --}}
+                                        <div wire:loading wire:target="discountImg"
+                                            class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Uploading, please wait…
+                                        </div>
+
                                         @error('discountImg') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
@@ -501,6 +519,17 @@
                                 label="Payment Screenshot"
                                 :required="true"
                                 color="#ac071a" />
+
+                            {{-- NEW: uploading indicator for the payment proof field --}}
+                            <div wire:loading wire:target="paymentProof"
+                                class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Uploading, please wait…
+                            </div>
+
                             @error('paymentProof') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                     @endif
@@ -520,12 +549,18 @@
                     @endif
 
                     {{-- Submit --}}
+                    {{-- NEW: wire:target now also covers paymentProof + discountImg, so Submit
+                         stays disabled while either upload is still in flight, not just while
+                         submit() itself is running. --}}
                     <div class="flex justify-end">
-                        <button type="submit" wire:loading.attr="disabled" wire:target="submit"
+                        <button type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="submit,paymentProof,discountImg"
                             class="px-8 py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 
                             bg-[#000066]">
-                            <span wire:loading.remove wire:target="submit">Submit Registration</span>
+                            <span wire:loading.remove wire:target="submit,paymentProof,discountImg">Submit Registration</span>
                             <span wire:loading wire:target="submit">Submitting…</span>
+                            <span wire:loading wire:target="paymentProof,discountImg">Waiting for upload…</span>
                         </button>
                     </div>
 
