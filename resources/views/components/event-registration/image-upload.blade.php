@@ -22,6 +22,7 @@ new class extends Component
         preview: null,
         fileName: null,
         dragging: false,
+        uploading: false,
         handleFile(file) {
             if (!file) return;
             this.fileName = file.name;
@@ -91,8 +92,22 @@ new class extends Component
         </div>
 
         {{-- Preview --}}
-        <div x-show="preview" x-transition class="rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
-            <img :src="preview" :alt="fileName" class="w-full max-h-52 object-contain p-2">
+        <div x-show="preview" x-transition class="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+            <img :src="preview" :alt="fileName" class="w-full max-h-52 object-contain p-2"
+                :class="uploading ? 'opacity-40 blur-[1px]' : ''">
+
+            {{-- NEW: overlay spinner shown over the preview image while the file is uploading to Livewire --}}
+            <div x-show="uploading" x-transition.opacity
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/40">
+                <svg class="animate-spin h-8 w-8" style="color: {{ $color }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span class="text-xs font-semibold px-2 py-1 rounded-md bg-white/90 text-gray-600 shadow-sm">
+                    Uploading…
+                </span>
+            </div>
+
             <div class="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100 bg-white">
                 <div class="flex items-center gap-2 min-w-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-gray-400" fill="currentColor" viewBox="0 0 16 16">
@@ -101,8 +116,8 @@ new class extends Component
                     </svg>
                     <span x-text="fileName" class="text-xs text-gray-500 truncate"></span>
                 </div>
-                <button type="button" @click.stop="clear()"
-                    class="shrink-0 text-xs font-semibold text-red-500 hover:text-red-700 transition">
+                <button type="button" @click.stop="clear()" :disabled="uploading"
+                    class="shrink-0 text-xs font-semibold text-red-500 hover:text-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
                     Remove
                 </button>
             </div>
@@ -125,7 +140,11 @@ new class extends Component
             name="{{ $name }}"
             wire:model="{{ $wireModel }}"
             accept="{{ $accept }}"
-            class="hidden">
+            class="hidden"
+            x-on:livewire-upload-start="uploading = true"
+            x-on:livewire-upload-finish="uploading = false"
+            x-on:livewire-upload-error="uploading = false"
+            x-on:livewire-upload-cancel="uploading = false">
     @else
         <input
             x-ref="livewireInput"
