@@ -103,7 +103,6 @@ new class extends Component {
         6 => ['dantroleneAvailable', 'mhProtocolPresent', 'mhCartAvailable', 'staffTrainingDone'],
     ];
 
-    // ==== Computed grading scale score ====
     public function getRawScoreProperty(): int
     {
         $score = 0;
@@ -145,9 +144,7 @@ new class extends Component {
 
     public function nextStep(): void
     {
-        $rules = $this->rulesForStep($this->step);
-        $this->validate($rules);
-
+        $this->validate($this->rulesForStep($this->step));
         if ($this->step < $this->totalSteps) {
             $this->step++;
         }
@@ -327,172 +324,20 @@ new class extends Component {
 ?>
 
 {{-- FRONTEND --}}
-<div class="min-h-screen bg-slate-50" x-data
+<div x-data
     x-on:registry-submitted.window="$nextTick(() => document.getElementById('registry-success')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
     x-on:validation-failed.window="$nextTick(() => document.getElementById('error-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))">
     @if ($submitted)
-        <div class="max-w-3xl mx-auto px-4 py-10 sm:px-6 lg:px-8" id="registry-success">
-            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
-                <div class="bg-[#000066] px-6 py-8 text-center sm:px-10">
-                    <div
-                        class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/15 ring-8 ring-white/10">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-100">National MH Registry</p>
-                    <h2 class="text-2xl font-bold text-white sm:text-3xl">Report Submitted Successfully</h2>
-                    <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-blue-100">
-                        The MH episode has been recorded in the National Malignant Hyperthermia Registry.
-                    </p>
-                </div>
-
-                <div class="p-6 sm:p-8">
-                    <div class="mb-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Reference Number</p>
-                        <p class="mt-1 text-2xl font-black tracking-wide text-[#000066]">{{ $referenceNo }}</p>
-                    </div>
-
-                    <div class="overflow-hidden rounded-2xl border border-slate-200">
-                        <div class="border-b border-slate-200 bg-slate-50 px-5 py-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Report Summary</h3>
-                        </div>
-                        <div class="divide-y divide-slate-100">
-                            @foreach ([
-                                    ['Reference No.', $referenceNo],
-                                    ['Patient', $patientName],
-                                    ['Hospital', $hospital],
-                                    ['Episode Date', $episodeDate],
-                                    ['Grading Score', $rawScore . ' pts — Rank ' . $gradingRank['rank'] . ' (' . $gradingRank['label'] . ')'],
-                                    ['Final Disposition', $finalDisposition],
-                                ] as [$label, $value])
-                                <div class="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[180px_1fr] sm:gap-4">
-                                    <span
-                                        class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ $label }}</span>
-                                    <span class="text-sm font-semibold text-slate-700">{{ $value }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex justify-center">
-                        <a href="{{ url('/') }}"
-                            class="inline-flex items-center justify-center rounded-xl bg-[#000066] px-7 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#00004d] focus:outline-none focus:ring-4 focus:ring-blue-100">
-                            Back to Home
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <x-mh-registry.success :referenceNo="$referenceNo" :patientName="$patientName" :hospital="$hospital"
+            :episodeDate="$episodeDate" :rawScore="$this->rawScore" :gradingRank="$this->gradingRank"
+            :finalDisposition="$finalDisposition" />
     @else
         <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-            {{-- Page header --}}
-            <div class="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500">
-                <div class="px-6 py-7 sm:px-8 lg:px-10">
-                    <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <div
-                                class="mb-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-blue-100">
-                                <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
-                                National Registry
-                            </div>
-                            <h1 class="text-2xl font-black tracking-tight text-white sm:text-3xl">
-                                Malignant Hyperthermia Episode Report
-                            </h1>
-                            <p class="mt-2 max-w-3xl text-sm leading-6 text-blue-100">
-                                Philippine Society of Anesthesiologists - National Malignant Hyperthermia Committee
-                            </p>
-                        </div>
+            <x-mh-registry.page-header :step="$step" :totalSteps="$totalSteps" />
+            <x-mh-registry.step-indicator :step="$step" :totalSteps="$totalSteps" />
 
-                        <div class="shrink-0 rounded-2xl bg-white/10 px-5 py-4 text-left sm:text-right">
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Progress</p>
-                            <p class="mt-1 text-xl font-black text-white">{{ $step }} <span
-                                    class="text-sm font-medium text-blue-200">/ {{ $totalSteps }}</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Step indicator --}}
-            <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div class="hidden items-center md:flex">
-                    @foreach ([
-                            1 => 'Header',
-                            2 => 'Demographics',
-                            3 => 'Clinical Event',
-                            4 => 'Management',
-                            5 => 'Diagnostics',
-                            6 => 'Facility',
-                        ] as $num => $label)
-                        <div class="flex flex-1 items-center">
-                            <button type="button" wire:click="goToStep({{ $num }})"
-                                class="group flex min-w-0 items-center gap-3 text-left">
-                                <span
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black transition
-                                                                    {{ $step > $num ? 'border-[#000066] bg-[#000066] text-white' : ($step === $num ? 'border-[#000066] bg-blue-50 text-[#000066]' : 'border-slate-200 bg-white text-slate-400') }}">
-                                    @if ($step > $num)
-                                        ✓
-                                    @else
-                                        {{ $num }}
-                                    @endif
-                                </span>
-                                <span class="hidden min-w-0 lg:block">
-                                    <span
-                                        class="block text-[10px] font-bold uppercase tracking-wider {{ $step === $num ? 'text-[#000066]' : 'text-slate-400' }}">Step
-                                        {{ $num }}</span>
-                                    <span
-                                        class="block truncate text-xs font-semibold {{ $step === $num ? 'text-slate-800' : 'text-slate-500' }}">{{ $label }}</span>
-                                </span>
-                            </button>
-                            @if ($num < $totalSteps)
-                                <div class="mx-3 h-px flex-1 {{ $step > $num ? 'bg-[#000066]' : 'bg-slate-200' }}"></div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="flex items-center justify-between md:hidden">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current section</p>
-                        <p class="mt-1 text-sm font-bold text-slate-800">
-                            {{ [
-            1 => 'Episode & Reporting Facility',
-            2 => 'Patient Demographics',
-            3 => 'Clinical Event Data',
-            4 => 'Management',
-            5 => 'Diagnostics & Outcome',
-            6 => 'Facility Readiness',
-        ][$step] }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xl font-black text-[#000066]">{{ $step }}/{{ $totalSteps }}</p>
-                    </div>
-                </div>
-
-                <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                    <div class="h-full rounded-full bg-[#000066] transition-all duration-300"
-                        style="width: {{ (($step - 1) / ($totalSteps - 1)) * 100 }}%"></div>
-                </div>
-            </div>
-
-            {{-- Error summary --}}
             @if ($errors->any())
-                <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5" id="error-summary">
-                    <div class="flex gap-3">
-                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">!
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-red-800">Please review the following fields</p>
-                            <ul class="mt-2 list-disc space-y-1 pl-5">
-                                @foreach ($errors->all() as $error)
-                                    <li class="text-xs leading-5 text-red-700">{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+                <x-mh-registry.error-summary :errors="$errors" />
             @endif
 
             <form wire:submit="submit">
@@ -528,25 +373,17 @@ new class extends Component {
                             <p class="mb-6 text-sm text-slate-500">Provide the patient's demographic and basic physical
                                 information.</p>
                             <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                                <div class="sm:col-span-2"><x-form.input label="Name" name="patientName"
-                                        wire:model="patientName" /></div>
+                                <div class="sm:col-span-2">
+                                    <x-form.input label="Name" name="patientName" wire:model="patientName" />
+                                </div>
                                 <x-form.input label="Birthdate" type="date" name="birthdate" wire:model="birthdate" />
                                 <x-form.input label="Birthplace" name="birthplace" wire:model="birthplace" />
                                 <x-form.input label="Age" name="age" wire:model="age" inputmode="numeric" />
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">Sex <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="sex"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
-                                    @error('sex')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                                </div>
+                                <x-mh-registry.select label="Sex" name="sex" required
+                                    :options="['Male' => 'Male', 'Female' => 'Female']" />
                                 <x-form.input label="Region / Province" name="region" wire:model="region" />
-                                <div class="sm:col-span-2"><x-form.input label="Address" name="address" wire:model="address" />
+                                <div class="sm:col-span-2">
+                                    <x-form.input label="Address" name="address" wire:model="address" />
                                 </div>
                                 <x-form.input label="Contact Number" name="contactNumber" wire:model="contactNumber" />
                                 <x-form.input label="Ethnicity" name="ethnicity" wire:model="ethnicity" />
@@ -572,41 +409,16 @@ new class extends Component {
                                 agents, and presenting signs.</p>
 
                             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">Surgical Urgency <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="surgicalUrgency"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="Elective">Elective</option>
-                                        <option value="Emergency">Emergency</option>
-                                    </select>
-                                </div>
+                                <x-mh-registry.select label="Surgical Urgency" name="surgicalUrgency" required
+                                    :options="['Elective' => 'Elective', 'Emergency' => 'Emergency']" />
                                 <x-form.input label="Surgical Procedure" name="surgicalProcedure"
                                     wire:model="surgicalProcedure" />
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">Type of Anesthesia <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="anesthesiaType"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="GETA">GETA</option>
-                                        <option value="GA-Mask">GA-Mask</option>
-                                        <option value="GA-LMA">GA-LMA</option>
-                                    </select>
-                                </div>
+                                <x-mh-registry.select label="Type of Anesthesia" name="anesthesiaType" required
+                                    :options="['GETA' => 'GETA', 'GA-Mask' => 'GA-Mask', 'GA-LMA' => 'GA-LMA']" />
                                 <x-form.input label="Volatile Anesthetic Used" name="volatileAgent" wire:model="volatileAgent"
                                     placeholder="e.g. Sevoflurane" />
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">Succinylcholine Given? <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="succinylcholine"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
+                                <x-mh-registry.select label="Succinylcholine Given?" name="succinylcholine" required
+                                    :options="['Yes' => 'Yes', 'No' => 'No']" />
                                 <x-form.input label="Tachycardia (bpm)" name="tachycardiaBpm" wire:model="tachycardiaBpm"
                                     inputmode="numeric" />
                             </div>
@@ -614,31 +426,13 @@ new class extends Component {
                             <div class="mt-8">
                                 <label class="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">Triggering
                                     Agents Used</label>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    @foreach (['Sevoflurane', 'Isoflurane', 'Desflurane', 'Halothane', 'Succinylcholine'] as $agent)
-                                        <label
-                                            class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50/50">
-                                            <input type="checkbox" value="{{ $agent }}" wire:model="triggeringAgents"
-                                                class="h-4 w-4 rounded border-slate-300 text-[#000066] focus:ring-[#000066]">
-                                            {{ $agent }}
-                                        </label>
-                                    @endforeach
-                                </div>
+                                <x-mh-registry.checkbox-group name="triggeringAgents" :options="['Sevoflurane', 'Isoflurane', 'Desflurane', 'Halothane', 'Succinylcholine']" />
                             </div>
 
                             <div class="mt-8">
                                 <label class="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">Signs &
                                     Symptoms Presentation</label>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    @foreach (['Tachycardia', 'Hypercapnia', 'Muscle rigidity', 'Hyperthermia', 'Tachypnea', 'Arrhythmia'] as $sign)
-                                        <label
-                                            class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50/50">
-                                            <input type="checkbox" value="{{ $sign }}" wire:model="signsSymptoms"
-                                                class="h-4 w-4 rounded border-slate-300 text-[#000066] focus:ring-[#000066]">
-                                            {{ $sign }}
-                                        </label>
-                                    @endforeach
-                                </div>
+                                <x-mh-registry.checkbox-group name="signsSymptoms" :options="['Tachycardia', 'Hypercapnia', 'Muscle rigidity', 'Hyperthermia', 'Tachypnea', 'Arrhythmia']" />
                             </div>
 
                             <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -668,42 +462,16 @@ new class extends Component {
                                     wire:model="dantroleneTotalDose" placeholder="mg/kg" />
                                 <x-form.input label="Duration of Dantrolene Administration" name="dantroleneDuration"
                                     wire:model="dantroleneDuration" />
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">ICU Admission? <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="icuAdmission"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-bold text-slate-600">Final Disposition <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="finalDisposition"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                        <option value="">Select</option>
-                                        <option value="Improved">Improved</option>
-                                        <option value="Mortality">Mortality</option>
-                                        <option value="Morbidity">Morbidity</option>
-                                    </select>
-                                </div>
+                                <x-mh-registry.select label="ICU Admission?" name="icuAdmission" required
+                                    :options="['Yes' => 'Yes', 'No' => 'No']" />
+                                <x-mh-registry.select label="Final Disposition" name="finalDisposition" required
+                                    :options="['Improved' => 'Improved', 'Mortality' => 'Mortality', 'Morbidity' => 'Morbidity']" />
                             </div>
 
                             <div class="mt-8">
                                 <label class="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">Cooling
                                     Measures Used</label>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    @foreach (['Ice packs', 'Cold IV fluids', 'Cooling blanket', 'Gastric/bladder lavage', 'Surface cooling fans'] as $measure)
-                                        <label
-                                            class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50/50">
-                                            <input type="checkbox" value="{{ $measure }}" wire:model="coolingMeasures"
-                                                class="h-4 w-4 rounded border-slate-300 text-[#000066] focus:ring-[#000066]">
-                                            {{ $measure }}
-                                        </label>
-                                    @endforeach
-                                </div>
+                                <x-mh-registry.checkbox-group name="coolingMeasures" :options="['Ice packs', 'Cold IV fluids', 'Cooling blanket', 'Gastric/bladder lavage', 'Surface cooling fans']" />
                             </div>
                         </div>
                     @endif
@@ -721,16 +489,12 @@ new class extends Component {
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Rigidity <span
                                             class="font-normal text-slate-400">(max 15 pts)</span></h3>
                                     <div class="mt-4 space-y-3">
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="rigidityGeneralized"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Generalized rigidity
-                                                <b>(15)</b></span></label>
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="rigidityMasseter"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Masseter spasm
-                                                <b>(15)</b></span></label>
+                                        <x-mh-registry.weighted-checkbox model="rigidityGeneralized" points="15">
+                                            Generalized rigidity
+                                        </x-mh-registry.weighted-checkbox>
+                                        <x-mh-registry.weighted-checkbox model="rigidityMasseter" points="15">
+                                            Masseter spasm
+                                        </x-mh-registry.weighted-checkbox>
                                     </div>
                                 </div>
 
@@ -739,26 +503,18 @@ new class extends Component {
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Muscle Breakdown <span
                                             class="font-normal text-slate-400">(max 15 pts)</span></h3>
                                     <div class="mt-4 space-y-3">
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="ckElevated"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>CK &gt;20,000 with
-                                                succinylcholine or &gt;10,000 without <b>(15)</b></span></label>
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="colaColoredUrine"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Cola-colored urine
-                                                <b>(10)</b></span></label>
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="myoglobinuria"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Myoglobinuria / serum
-                                                myoglobin <b>(5)</b></span></label>
-                                        <label
-                                            class="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                                type="checkbox" wire:model.live="highPotassium"
-                                                class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>K+ &gt; 6 mEq/L
-                                                <b>(3)</b></span></label>
+                                        <x-mh-registry.weighted-checkbox model="ckElevated" points="15">
+                                            CK &gt;20,000 with succinylcholine or &gt;10,000 without
+                                        </x-mh-registry.weighted-checkbox>
+                                        <x-mh-registry.weighted-checkbox model="colaColoredUrine" points="10">
+                                            Cola-colored urine
+                                        </x-mh-registry.weighted-checkbox>
+                                        <x-mh-registry.weighted-checkbox model="myoglobinuria" points="5">
+                                            Myoglobinuria / serum myoglobin
+                                        </x-mh-registry.weighted-checkbox>
+                                        <x-mh-registry.weighted-checkbox model="highPotassium" points="3">
+                                            K+ &gt; 6 mEq/L
+                                        </x-mh-registry.weighted-checkbox>
                                     </div>
                                 </div>
 
@@ -766,44 +522,44 @@ new class extends Component {
                                     <p class="text-xs font-black uppercase tracking-wider text-[#000066]">Process III</p>
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Respiratory Acidosis <span
                                             class="font-normal text-slate-400">(max 15 pts)</span></h3>
-                                    <label
-                                        class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                            type="checkbox" wire:model.live="respiratoryAcidosis"
-                                            class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>PETCO2 &gt;55 mmHg or PaCO2
-                                            &gt;60 mmHg <b>(15)</b></span></label>
+                                    <div class="mt-4">
+                                        <x-mh-registry.weighted-checkbox model="respiratoryAcidosis" points="15">
+                                            PETCO2 &gt;55 mmHg or PaCO2 &gt;60 mmHg
+                                        </x-mh-registry.weighted-checkbox>
+                                    </div>
                                 </div>
 
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
                                     <p class="text-xs font-black uppercase tracking-wider text-[#000066]">Process IV</p>
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Temperature Increase <span
                                             class="font-normal text-slate-400">(max 15 pts)</span></h3>
-                                    <label
-                                        class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                            type="checkbox" wire:model.live="rapidTempIncrease"
-                                            class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Rapid, inappropriate increase
-                                            (e.g. &gt;38.8°C) <b>(15)</b></span></label>
+                                    <div class="mt-4">
+                                        <x-mh-registry.weighted-checkbox model="rapidTempIncrease" points="15">
+                                            Rapid, inappropriate increase (e.g. &gt;38.8°C)
+                                        </x-mh-registry.weighted-checkbox>
+                                    </div>
                                 </div>
 
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
                                     <p class="text-xs font-black uppercase tracking-wider text-[#000066]">Process V</p>
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Cardiac Involvement <span
                                             class="font-normal text-slate-400">(max 3 pts)</span></h3>
-                                    <label
-                                        class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                            type="checkbox" wire:model.live="cardiacInvolvement"
-                                            class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Unexplained sinus tachycardia,
-                                            VT, or VF <b>(3)</b></span></label>
+                                    <div class="mt-4">
+                                        <x-mh-registry.weighted-checkbox model="cardiacInvolvement" points="3">
+                                            Unexplained sinus tachycardia, VT, or VF
+                                        </x-mh-registry.weighted-checkbox>
+                                    </div>
                                 </div>
 
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
                                     <p class="text-xs font-black uppercase tracking-wider text-[#000066]">Process VI</p>
                                     <h3 class="mt-1 text-sm font-bold text-slate-800">Family History <span
                                             class="font-normal text-slate-400">(max 5 pts)</span></h3>
-                                    <label
-                                        class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><input
-                                            type="checkbox" wire:model.live="familyHistory"
-                                            class="mt-0.5 h-4 w-4 rounded text-[#000066]"> <span>Inherited pattern
-                                            <b>(5)</b></span></label>
+                                    <div class="mt-4">
+                                        <x-mh-registry.weighted-checkbox model="familyHistory" points="5">
+                                            Inherited pattern
+                                        </x-mh-registry.weighted-checkbox>
+                                    </div>
                                 </div>
                             </div>
 
@@ -835,16 +591,8 @@ new class extends Component {
                             <div class="mt-8">
                                 <x-event-registration.section-title title="E. Outcomes" />
                                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-bold text-slate-600">Survived or Demise <span
-                                                class="text-red-500">*</span></label>
-                                        <select wire:model="outcome"
-                                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                            <option value="">Select</option>
-                                            <option value="Survived">Survived</option>
-                                            <option value="Demise">Demise</option>
-                                        </select>
-                                    </div>
+                                    <x-mh-registry.select label="Survived or Demise" name="outcome" required
+                                        :options="['Survived' => 'Survived', 'Demise' => 'Demise']" />
                                     <x-form.input label="Length of Hospital Stay" name="lengthHospitalStay"
                                         wire:model="lengthHospitalStay" placeholder="e.g. 10 days" />
                                     <x-form.input label="Length of ICU Stay" name="lengthIcuStay" wire:model="lengthIcuStay"
@@ -894,14 +642,8 @@ new class extends Component {
                                         ['staffTrainingDone', 'Staff MH Training Conducted'],
                                     ] as [$prop, $label])
                                     <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                                        <label class="mb-2 block text-sm font-bold text-slate-700">{{ $label }} <span
-                                                class="text-red-500">*</span></label>
-                                        <select wire:model="{{ $prop }}"
-                                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50">
-                                            <option value="">Select</option>
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
-                                        </select>
+                                        <x-mh-registry.select :label="$label" :name="$prop" required
+                                            :options="['Yes' => 'Yes', 'No' => 'No']" />
                                     </div>
                                 @endforeach
                             </div>
@@ -910,33 +652,7 @@ new class extends Component {
                 </div>
 
                 {{-- Navigation --}}
-                <div
-                    class="mt-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                    <button type="button" wire:click="prevStep"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 {{ $step === 1 ? 'invisible' : '' }}">
-                        ← <span>Back</span>
-                    </button>
-
-                    <div class="text-center">
-                        <p class="hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:block">
-                            Step {{ $step }} of {{ $totalSteps }}
-                        </p>
-                        <p class="text-xs text-slate-400">Fields marked <span class="text-red-500">*</span> are required</p>
-                    </div>
-
-                    @if ($step < $totalSteps)
-                        <button type="button" wire:click="nextStep"
-                            class="inline-flex items-center gap-2 rounded-xl bg-[#000066] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#00004d] focus:outline-none focus:ring-4 focus:ring-blue-100">
-                            <span>Next</span> →
-                        </button>
-                    @else
-                        <button type="submit" wire:loading.attr="disabled" wire:target="submit"
-                            class="inline-flex items-center gap-2 rounded-xl bg-[#000066] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#00004d] focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50">
-                            <span wire:loading.remove wire:target="submit">Submit Report</span>
-                            <span wire:loading wire:target="submit">Submitting…</span>
-                        </button>
-                    @endif
-                </div>
+                <x-mh-registry.form-nav :step="$step" :totalSteps="$totalSteps" />
             </form>
         </div>
     @endif
