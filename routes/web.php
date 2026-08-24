@@ -77,3 +77,5 @@ Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name(
 Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')->name('annual-convention-poster');
 
 Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
+
+Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-registry');

@@ -10,7 +10,7 @@ new class extends Component
 
 @props([
     'name',
-    'wireModel'  => null,   {{-- e.g. "payment_proof" --}}
+    'wireModel'  => null,   
     'label'      => 'Upload Image',
     'accept'     => '.jpg,.jpeg,.png,.heic',
     'required'   => false,
