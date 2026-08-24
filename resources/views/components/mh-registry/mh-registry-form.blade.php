@@ -177,7 +177,7 @@ new class extends Component {
                 'episodeDate' => ['required', 'date'],
                 'episodeLocation' => ['required', 'string', 'max:255'],
                 'hospital' => ['required', 'string', 'max:255'],
-                'hospitalContact' => ['required', 'string', 'max:50'],
+                'hospitalContact' => ['required', 'numeric', ],
                 'mdName' => ['required', 'string', 'max:255'],
             ],
             2 => [
@@ -188,7 +188,7 @@ new class extends Component {
                 'sex' => ['required', Rule::in(['Male', 'Female'])],
                 'region' => ['required', 'string', 'max:255'],
                 'address' => ['required', 'string', 'max:255'],
-                'contactNumber' => ['nullable', 'string', 'max:20'],
+                'contactNumber' => ['nullable', 'numeric', ],
                 'ethnicity' => ['nullable', 'string', 'max:255'],
                 'height' => ['nullable', 'numeric'],
                 'weight' => ['nullable', 'numeric'],
@@ -356,8 +356,8 @@ new class extends Component {
                                     placeholder="OR, Recovery Room, ICU, etc." />
                                 <x-form.input label="Hospital" name="hospital" wire:model="hospital"
                                     placeholder="Hospital name" />
-                                <x-form.input label="Contact Number of Hospital" name="hospitalContact"
-                                    wire:model="hospitalContact" placeholder="e.g. 09171234567" />
+                                <x-form.input label="Contact Number of Hospital" name="hospitalContact" inputmode="numeric"
+                                    wire:model="hospitalContact"  placeholder="e.g. 09171234567" />
                                 <div class="sm:col-span-2">
                                     <x-form.input label="Name of MD (Reporting Anesthesiologist)" name="mdName"
                                         wire:model="mdName" placeholder="Dr. Juan Dela Cruz" />
@@ -385,7 +385,7 @@ new class extends Component {
                                 <div class="sm:col-span-2">
                                     <x-form.input label="Address" name="address" wire:model="address" />
                                 </div>
-                                <x-form.input label="Contact Number" name="contactNumber" wire:model="contactNumber" />
+                                <x-form.input label="Contact Number" name="contactNumber" wire:model="contactNumber" inputmode="numeric" />
                                 <x-form.input label="Ethnicity" name="ethnicity" wire:model="ethnicity" />
                                 <x-form.input label="Height (cm)" name="height" wire:model="height" inputmode="decimal" />
                                 <x-form.input label="Weight (kg)" name="weight" wire:model="weight" inputmode="decimal" />
@@ -478,7 +478,7 @@ new class extends Component {
 
                     {{-- STEP 5 --}}
                     @if ($step === 5)
-                        <div class="mb-8">
+                        <div cl ass="mb-8">
                             <x-event-registration.section-title title="D. Diagnostics — Clinical Grading Scale" />
                             <p class="mb-6 text-sm text-slate-500">Select the findings that apply. The clinical grading score
                                 updates automatically.</p>
