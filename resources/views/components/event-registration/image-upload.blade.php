@@ -156,4 +156,3 @@ new class extends Component
 
 </div>
 
-{{-- NEW CHANGE HERE: LOADER  T_T --}}
