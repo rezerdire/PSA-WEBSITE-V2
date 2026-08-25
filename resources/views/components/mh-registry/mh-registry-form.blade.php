@@ -1,9 +1,21 @@
 <?php
 
-use App\Models\MhRegistryEntry;
+use App\Models\Hospital;
+use App\Models\Doctor;
+use App\Models\Patient;
+use App\Models\MhEpisode;
+use App\Models\MhClinicalData;
+use App\Models\MhSignSymptom;
+use App\Models\MhTrigger;
+use App\Models\MhManagement;
+use App\Models\MhDiagnostic;
+use App\Models\MhClinicalGrading;
+use App\Models\MhOutcome;
+use App\Models\MhComplication;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 new class extends Component {
     use WithFileUploads;
@@ -61,7 +73,7 @@ new class extends Component {
     public string $dantroleneLoadDose = '';
     public string $dantroleneTotalDose = '';
     public string $dantroleneDuration = '';
-    public array $coolingMeasures = [];
+    public string $coolingMeasures = '';
     public string $icuAdmission = ''; // Yes/No
     public string $finalDisposition = ''; // Improved/Mortality/Morbidity
 
@@ -244,7 +256,7 @@ new class extends Component {
                 'dantroleneLoadDose' => ['nullable', 'string', 'max:255'],
                 'dantroleneTotalDose' => ['nullable', 'string', 'max:255'],
                 'dantroleneDuration' => ['nullable', 'string', 'max:255'],
-                'coolingMeasures' => ['nullable', 'array'],
+                'coolingMeasures' => ['nullable', 'string', 'max:500'],
                 'icuAdmission' => ['required', Rule::in(['Yes', 'No'])],
                 'finalDisposition' => ['required', Rule::in(['Improved', 'Mortality', 'Morbidity'])],
             ],
@@ -274,73 +286,179 @@ new class extends Component {
         }
         $this->validate($allRules);
 
-        $entry = MhRegistryEntry::create([
-            'episode_date' => $this->episodeDate,
-            'episode_location' => $this->episodeLocation,
-            'hospital' => $this->hospital,
-            'hospital_contact' => $this->hospitalContact,
-            'md_name' => trim("{$this->mdFirstName} {$this->mdMiddleName} {$this->mdLastName}"),
+        $episode = DB::transaction(function () {
+            $hospital = Hospital::firstOrCreate(
+                ['hospital_name' => $this->hospital],
+                ['hospital_contact' => $this->hospitalContact]
+            );
 
-            'patient_name' => trim("{$this->patientFirstName} {$this->patientMiddleName} {$this->patientLastName}"),
-            'birthdate' => $this->birthdate ?: null,
-            'birthplace' => $this->birthplace,
-            'age' => $this->age,
-            'sex' => $this->sex,
-            'region' => $this->region,
-            'address' => $this->address,
-            'contact_number' => $this->contactNumber,
-            'ethnicity' => $this->ethnicity,
-            'height' => $this->height ?: null,
-            'weight' => $this->weight ?: null,
-            'bmi' => $this->computeBmi(),
+            $doctor = Doctor::firstOrCreate([
+                'hospital_id' => $hospital->hospital_id,
+                'first_name' => $this->mdFirstName,
+                'last_name' => $this->mdLastName,
+            ], [
+                'middle_name' => $this->mdMiddleName,
+            ]);
 
-            'surgical_urgency' => $this->surgicalUrgency,
-            'surgical_procedure' => $this->surgicalProcedure,
-            'anesthesia_type' => $this->anesthesiaType,
-            'triggering_agents' => $this->triggeringAgents,
-            'volatile_agent' => $this->volatileAgentName,
-            'succinylcholine' => $this->succinylcholine === 'Yes',
-            'signs_symptoms' => $this->signsSymptoms,
-            'tachycardia_bpm' => $this->tachycardiaBpm ?: null,
-            'tachycardia_details' => $this->tachycardiaDetails,
-            'hypercapnia_details' => $this->hypercapniaDetails,
-            'muscle_rigidity_details' => $this->muscleRigidityDetails,
-            'hyperthermia_highest_temp' => $this->hyperthermiaHighestTemp ?: null,
-            'hyperthermia_details' => $this->hyperthermiaDetails,
+            $patient = Patient::create([
+                'first_name' => $this->patientFirstName,
+                'middle_name' => $this->patientMiddleName,
+                'last_name' => $this->patientLastName,
+                'birthdate' => $this->birthdate ?: null,
+                'birthplace' => $this->birthplace,
+                'age' => $this->age,
+                'sex' => $this->sex,
+                'region_or_province' => $this->region,
+                'address' => $this->address,
+                'contact_no' => $this->contactNumber,
+                'ethnicity' => $this->ethnicity,
+                'height' => $this->height ?: null,
+                'weight' => $this->weight ?: null,
+                'bmi' => $this->computeBmi(),
+            ]);
 
-            'time_to_recognition' => $this->timeToRecognition,
-            'dantrolene_time' => $this->dantroleneTime,
-            'dantrolene_load_dose' => $this->dantroleneLoadDose,
-            'dantrolene_total_dose' => $this->dantroleneTotalDose,
-            'dantrolene_duration' => $this->dantroleneDuration,
-            'cooling_measures' => $this->coolingMeasures,
-            'icu_admission' => $this->icuAdmission === 'Yes',
-            'final_disposition' => $this->finalDisposition,
+            $episode = MhEpisode::create([
+                'patient_id' => $patient->patient_id,
+                'hospital_id' => $hospital->hospital_id,
+                'doctor_id' => $doctor->doctor_id,
+                'episode_date' => $this->episodeDate,
+                'episode_location' => $this->episodeLocation,
+            ]);
 
-            'grading_raw_score' => $this->rawScore,
-            'grading_rank' => $this->gradingRank['rank'],
-            'grading_rank_label' => $this->gradingRank['label'],
-            'genetic_testing' => $this->geneticTesting,
-            'muscle_biopsy' => $this->muscleBiopsy,
+            MhClinicalData::create([
+                'episode_id' => $episode->episode_id,
+                'surgical_urgency' => $this->surgicalUrgency,
+                'surgical_procedure' => $this->surgicalProcedure,
+                'anesthesia_type' => $this->anesthesiaType,
+                'volatile_agent_name' => $this->volatileAgentName,
+                'succinylcholine_used' => $this->succinylcholine === 'Yes',
+            ]);
 
-            'outcome' => $this->outcome,
-            'comp_renal_failure' => $this->compRenalFailure,
-            'comp_dic' => $this->compDic,
-            'comp_neurologic' => $this->compNeurologic,
-            'length_hospital_stay' => $this->lengthHospitalStay,
-            'length_icu_stay' => $this->lengthIcuStay,
-            'long_term_sequelae' => $this->longTermSequelae,
+            // One row per triggering agent checkbox.
+            foreach ($this->triggeringAgents as $agent) {
+                MhTrigger::create([
+                    'episode_id' => $episode->episode_id,
+                    'triggering_agent' => $agent,
+                ]);
+            }
 
-            'dantrolene_available' => $this->dantroleneAvailable === 'Yes',
-            'mh_protocol_present' => $this->mhProtocolPresent === 'Yes',
-            'mh_cart_available' => $this->mhCartAvailable === 'Yes',
-            'staff_training_done' => $this->staffTrainingDone === 'Yes',
-        ]);
+            // One row per selected sign/symptom; per-symptom fields are merged
+            // into a single formatted symptom_value string.
+            foreach ($this->buildSymptomRows() as $row) {
+                MhSignSymptom::create([
+                    'episode_id' => $episode->episode_id,
+                    'symptom_name' => $row['name'],
+                    'symptom_value' => $row['value'],
+                ]);
+            }
 
-        $this->referenceNo = 'MH-' . str_pad((string) $entry->id, 5, '0', STR_PAD_LEFT);
+            MhManagement::create([
+                'episode_id' => $episode->episode_id,
+                'recognition_time' => $this->timeToRecognition,
+                'dantrolene_loading_time' => $this->dantroleneTime,
+                'dantrolene_loading_dose' => $this->dantroleneLoadDose,
+                'total_dantrolene_dose' => $this->dantroleneTotalDose,
+                'dantrolene_duration' => $this->dantroleneDuration,
+                // coolingMeasures is a plain string in this SFC (textarea-bound),
+                // so it's assigned directly — no implode needed here.
+                'cooling_measures' => $this->coolingMeasures,
+                'icu_admission' => $this->icuAdmission === 'Yes',
+                'final_disposition' => $this->finalDisposition,
+            ]);
+
+            MhDiagnostic::create([
+                'episode_id' => $episode->episode_id,
+                'genetic_testing' => $this->geneticTesting,
+                'muscle_biopsy' => $this->muscleBiopsy,
+            ]);
+
+            MhClinicalGrading::create([
+                'episode_id' => $episode->episode_id,
+                'rigidity_score' => ($this->rigidityGeneralized || $this->rigidityMasseter) ? 15 : 0,
+                'muscle_breakdown_score' => $this->muscleBreakdownScore(),
+                'respiratory_acidosis_score' => $this->respiratoryAcidosis ? 15 : 0,
+                'temperature_increase_score' => $this->rapidTempIncrease ? 15 : 0,
+                'cardiac_involvement_score' => $this->cardiacInvolvement ? 3 : 0,
+                'family_history_score' => $this->familyHistory ? 5 : 0,
+                'total_score' => $this->rawScore,
+                'rank' => $this->gradingRank['rank'],
+                'interpretation' => $this->gradingRank['label'],
+            ]);
+
+            MhOutcome::create([
+                'episode_id' => $episode->episode_id,
+                'outcome_status' => $this->outcome,
+                'hospital_stay_length' => $this->lengthHospitalStay,
+                'icu_stay_length' => $this->lengthIcuStay,
+                'long_term_sequelae' => $this->longTermSequelae,
+            ]);
+
+            // One row per complication ticked.
+            foreach ($this->buildComplicationRows() as $row) {
+                MhComplication::create([
+                    'episode_id' => $episode->episode_id,
+                    'complication_type' => $row,
+                ]);
+            }
+
+            return $episode;
+        });
+
+        $this->referenceNo = 'MH-' . str_pad((string) $episode->episode_id, 5, '0', STR_PAD_LEFT);
         $this->submitted = true;
 
         $this->dispatch('registry-submitted');
+    }
+
+    /**
+     * Merge each selected symptom's scattered detail fields into one
+     * formatted value string, matching mh_signs_symptoms' one-row-per-symptom shape.
+     */
+    protected function buildSymptomRows(): array
+    {
+        $rows = [];
+
+        if (in_array('Tachycardia', $this->signsSymptoms ?? [])) {
+            $rows[] = [
+                'name' => 'Tachycardia',
+                'value' => trim(($this->tachycardiaBpm ? "{$this->tachycardiaBpm} bpm" : '')
+                    . ($this->tachycardiaDetails ? " — {$this->tachycardiaDetails}" : '')),
+            ];
+        }
+        if (in_array('Hypercapnia', $this->signsSymptoms ?? [])) {
+            $rows[] = ['name' => 'Hypercapnia', 'value' => $this->hypercapniaDetails];
+        }
+        if (in_array('Muscle rigidity', $this->signsSymptoms ?? [])) {
+            $rows[] = ['name' => 'Muscle rigidity', 'value' => $this->muscleRigidityDetails];
+        }
+        if (in_array('Hyperthermia', $this->signsSymptoms ?? [])) {
+            $rows[] = [
+                'name' => 'Hyperthermia',
+                'value' => trim(($this->hyperthermiaHighestTemp ? "{$this->hyperthermiaHighestTemp}°C" : '')
+                    . ($this->hyperthermiaDetails ? " — {$this->hyperthermiaDetails}" : '')),
+            ];
+        }
+
+        return $rows;
+    }
+
+    protected function buildComplicationRows(): array
+    {
+        $rows = [];
+        if ($this->compRenalFailure) $rows[] = 'Renal failure';
+        if ($this->compDic) $rows[] = 'Disseminated Intravascular Coagulopathy';
+        if ($this->compNeurologic) $rows[] = 'Neurologic injury';
+        return $rows;
+    }
+
+    protected function muscleBreakdownScore(): int
+    {
+        $score = 0;
+        if ($this->ckElevated) $score = max($score, 15);
+        if ($this->colaColoredUrine) $score = max($score, 10);
+        if ($this->myoglobinuria) $score = max($score, 5);
+        if ($this->highPotassium) $score = max($score, 3);
+        return $score;
     }
 
     protected function computeBmi(): ?float
@@ -532,8 +650,10 @@ new class extends Component {
                                     Triggering Agents Used
                                 </label>
 
-                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700">
-                                    <input type="checkbox" value="Volatile anesthetic used" wire:model.live="triggeringAgents"
+                                <label
+                                    class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700">
+                                    <input type="checkbox" value="Volatile anesthetic used"
+                                        wire:model.live="triggeringAgents"
                                         class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                     Volatile anesthetic used
                                 </label>
@@ -541,7 +661,8 @@ new class extends Component {
                                 @if (in_array('Volatile anesthetic used', $triggeringAgents ?? []))
                                     <div class="mt-4 border-t border-slate-100 pt-4">
                                         <x-form.input label="Which volatile agent?" name="volatileAgentName"
-                                            wire:model="volatileAgentName" placeholder="e.g. Sevoflurane, Isoflurane, Halothane" />
+                                            wire:model="volatileAgentName"
+                                            placeholder="e.g. Sevoflurane, Isoflurane, Halothane" />
                                     </div>
                                 @endif
                             </div>
@@ -558,7 +679,8 @@ new class extends Component {
                                 </div>
 
                                 @error('signsSymptoms.0')
-                                    <p class="mb-3 text-xs font-semibold text-red-600">Select at least one presenting sign or symptom.</p>
+                                    <p class="mb-3 text-xs font-semibold text-red-600">Select at least one presenting sign
+                                        or symptom.</p>
                                 @enderror
 
                                 <div class="space-y-4">
@@ -566,16 +688,19 @@ new class extends Component {
                                     <div wire:key="symptom-tachycardia"
                                         class="rounded-xl border p-4 transition {{ in_array('Tachycardia', $signsSymptoms ?? []) ? 'border-[#000066]/30 bg-blue-50/40' : 'border-slate-200 bg-white' }}">
                                         <label class="flex cursor-pointer items-center gap-3">
-                                            <input type="checkbox" value="Tachycardia" wire:model.live="signsSymptoms"
+                                            <input type="checkbox" value="Tachycardia"
+                                                wire:model.live="signsSymptoms"
                                                 class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                             <span class="text-sm font-semibold text-slate-700">Tachycardia</span>
                                         </label>
 
                                         @if (in_array('Tachycardia', $signsSymptoms ?? []))
-                                            <div class="mt-4 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
+                                            <div
+                                                class="mt-4 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
                                                 <div class="sm:col-span-1">
                                                     <x-form.input label="Heart Rate (bpm)" name="tachycardiaBpm"
-                                                        wire:model="tachycardiaBpm" inputmode="numeric" placeholder="e.g. 140" />
+                                                        wire:model="tachycardiaBpm" inputmode="numeric"
+                                                        placeholder="e.g. 140" />
                                                 </div>
                                                 <div class="sm:col-span-2">
                                                     <x-form.input label="Details" name="tachycardiaDetails"
@@ -590,7 +715,8 @@ new class extends Component {
                                     <div wire:key="symptom-hypercapnia"
                                         class="rounded-xl border p-4 transition {{ in_array('Hypercapnia', $signsSymptoms ?? []) ? 'border-[#000066]/30 bg-blue-50/40' : 'border-slate-200 bg-white' }}">
                                         <label class="flex cursor-pointer items-center gap-3">
-                                            <input type="checkbox" value="Hypercapnia" wire:model.live="signsSymptoms"
+                                            <input type="checkbox" value="Hypercapnia"
+                                                wire:model.live="signsSymptoms"
                                                 class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                             <span class="text-sm font-semibold text-slate-700">Hypercapnia</span>
                                         </label>
@@ -608,7 +734,8 @@ new class extends Component {
                                     <div wire:key="symptom-muscle-rigidity"
                                         class="rounded-xl border p-4 transition {{ in_array('Muscle rigidity', $signsSymptoms ?? []) ? 'border-[#000066]/30 bg-blue-50/40' : 'border-slate-200 bg-white' }}">
                                         <label class="flex cursor-pointer items-center gap-3">
-                                            <input type="checkbox" value="Muscle rigidity" wire:model.live="signsSymptoms"
+                                            <input type="checkbox" value="Muscle rigidity"
+                                                wire:model.live="signsSymptoms"
                                                 class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                             <span class="text-sm font-semibold text-slate-700">Muscle rigidity</span>
                                         </label>
@@ -626,16 +753,20 @@ new class extends Component {
                                     <div wire:key="symptom-hyperthermia"
                                         class="rounded-xl border p-4 transition {{ in_array('Hyperthermia', $signsSymptoms ?? []) ? 'border-[#000066]/30 bg-blue-50/40' : 'border-slate-200 bg-white' }}">
                                         <label class="flex cursor-pointer items-center gap-3">
-                                            <input type="checkbox" value="Hyperthermia" wire:model.live="signsSymptoms"
+                                            <input type="checkbox" value="Hyperthermia"
+                                                wire:model.live="signsSymptoms"
                                                 class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                             <span class="text-sm font-semibold text-slate-700">Hyperthermia</span>
                                         </label>
 
                                         @if (in_array('Hyperthermia', $signsSymptoms ?? []))
-                                            <div class="mt-4 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
+                                            <div
+                                                class="mt-4 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
                                                 <div class="sm:col-span-1">
-                                                    <x-form.input label="Highest Temp (°C)" name="hyperthermiaHighestTemp"
-                                                        wire:model="hyperthermiaHighestTemp" inputmode="decimal" placeholder="e.g. 39.5" />
+                                                    <x-form.input label="Highest Temp (°C)"
+                                                        name="hyperthermiaHighestTemp"
+                                                        wire:model="hyperthermiaHighestTemp" inputmode="decimal"
+                                                        placeholder="e.g. 39.5" />
                                                 </div>
                                                 <div class="sm:col-span-2">
                                                     <x-form.input label="Details" name="hyperthermiaDetails"
@@ -679,16 +810,12 @@ new class extends Component {
                             </div>
 
                             <div class="mt-8">
-                                <label
-                                    class="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">Cooling
-                                    Measures Used</label>
-                                <x-mh-registry.checkbox-group name="coolingMeasures" :options="[
-                                    'Ice packs',
-                                    'Cold IV fluids',
-                                    'Cooling blanket',
-                                    'Gastric/bladder lavage',
-                                    'Surface cooling fans',
-                                ]" />
+                                <label class="mb-1.5 block text-xs font-bold text-slate-600">
+                                    Cooling Measures Used
+                                </label>
+                                <textarea wire:model="coolingMeasures" rows="3"
+                                    placeholder="e.g. Cold IV fluids, surface cooling blankets, ice-water immersion..."
+                                    class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm transition focus:border-[#000066] focus:outline-none focus:ring-4 focus:ring-blue-50"></textarea>
                             </div>
                         </div>
                     @endif
