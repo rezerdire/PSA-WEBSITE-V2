@@ -159,6 +159,7 @@ new class extends Component {
         $score += $this->familyHistory ? 5 : 0;
 
         return $score;
+        
     }
 
     public function getGradingRankProperty(): array
