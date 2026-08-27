@@ -3,7 +3,7 @@
 <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
     <div class="hidden items-center md:flex">
         @foreach ([
-                1 => 'Header',
+                1 => 'Episode & Reporting Facility',
                 2 => 'Demographics',
                 3 => 'Clinical Event',
                 4 => 'Management',
