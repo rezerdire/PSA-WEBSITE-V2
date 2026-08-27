@@ -10,7 +10,7 @@ new class extends Component
 
 @props([
     'name',
-    'wireModel'  => null,   {{-- e.g. "payment_proof" --}}
+    'wireModel'  => null,   
     'label'      => 'Upload Image',
     'accept'     => '.jpg,.jpeg,.png,.heic',
     'required'   => false,
@@ -157,3 +157,4 @@ new class extends Component
 </div>
 
 {{-- NEW CHANGE HERE: LOADER  T_T --}}
+{{-- testing psa laptop firt push in mh-registration branch --}}
