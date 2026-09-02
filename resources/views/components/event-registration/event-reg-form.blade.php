@@ -1,570 +1,823 @@
 <?php
 
-    use App\Models\Member;
-    use App\Models\Registration;
-    use Livewire\Component;
-    use Livewire\WithFileUploads;
-    use Illuminate\Validation\Rule;
-    use App\Mail\RegistrationConfirmed;
-    use Illuminate\Support\Facades\Mail;
+use App\Models\Member;
+use App\Models\Registration;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Illuminate\Validation\Rule;
+use App\Mail\RegistrationConfirmed;
+use Illuminate\Support\Facades\Mail;
 
-    new class extends Component {
+new class extends Component {
+    use WithFileUploads;
 
-        use WithFileUploads;
+    // PSA Verification
+    public string $psaId = '';
+    public bool $memberVerified = false;
+    public string $verifyError = '';
 
-        // PSA Verification
-        public string $psaId          = '';
-        public bool   $memberVerified = false;
-        public string $verifyError    = '';
+    // Auto-filled from members table
+    public string $firstName = '';
+    public string $lastName = '';
+    public string $middleName = '';
+    public string $membership = '';
 
-        // Auto-filled from members table
-        public string $firstName  = '';
-        public string $lastName   = '';
-        public string $middleName = '';
-        public string $membership = '';
+    // Contact Details
+    public string $prcNumber = '';
+    public string $email = '';
+    public string $contactNumber = '';
+    public string $hospitalName = '';
+    public string $hospitalAddress = '';
+    public string $country = 'Philippines';
 
-        // Contact Details
-        public string $prcNumber       = '';
-        public string $email           = '';
-        public string $contactNumber   = '';
-        public string $hospitalName    = '';
-        public string $hospitalAddress = '';
-        public string $country         = 'Philippines';
+    // Discount & Payment
+    public string $discountType = 'non_disc';
+    public $discountImg = null;
+    public $paymentProof = null;
 
-        // Discount & Payment
-        public string $discountType = 'non_disc';
-        public        $discountImg  = null;
-        public        $paymentProof = null;
+    // upload-in-progress flags — set/cleared by Alpine from Livewire's
+    // native upload events, and used both to show a loader and to block submit.
+    public bool $paymentUploading = false;
+    public bool $discountUploading = false;
 
-        // NEW: upload-in-progress flags — set/cleared by Alpine from Livewire's
-        // native upload events, and used both to show a loader and to block submit.
-        public bool $paymentUploading  = false;
-        public bool $discountUploading = false;
+    // NEW: confirmation-before-submit step
+    public bool $showConfirm = false;
 
-        public bool   $submitted      = false;
-        public string $registrationId = '';
+    public bool $submitted = false;
+    public string $registrationId = '';
 
-        protected const MEM_TYPE_MAP = [
-            'RM' => 'Regular Member',
-            'LM' => 'Life Member',
-            'TM' => 'Trainee Member',
-        ];
+    protected const MEM_TYPE_MAP = [
+        'RM' => 'Regular Member',
+        'LM' => 'Life Member',
+        'TM' => 'Trainee Member',
+    ];
 
-        public function verify(): void
-        {
-            $this->validate(
-                ['psaId' => ['required', 'digits:4']],
-                ['psaId.digits' => 'PSA ID must be exactly 4 digits.']
-            );
+    public function verify(): void
+    {
+        $this->validate(['psaId' => ['required', 'digits:4']], ['psaId.digits' => 'PSA ID must be exactly 4 digits.']);
 
-            $this->verifyError    = '';
-            $this->memberVerified = false;
+        $this->verifyError = '';
+        $this->memberVerified = false;
 
-            $member = Member::find($this->psaId);
+        $member = Member::find($this->psaId);
 
-            if (!$member) {
-                $this->verifyError = 'PSA ID not found. Please double-check your ID number.';
-                return;
-            }
+        if (!$member) {
+            $this->verifyError = 'PSA ID not found. Please double-check your ID number.';
+            return;
+        }
 
-            $memType = strtoupper(trim($member->psa_mem_type ?? ''));
+        $memType = strtoupper(trim($member->psa_mem_type ?? ''));
 
-            if (!array_key_exists($memType, self::MEM_TYPE_MAP)) {
-                $this->verifyError = 'Your membership type is not eligible for online registration.';
-                return;
-            }
+        if (!array_key_exists($memType, self::MEM_TYPE_MAP)) {
+            $this->verifyError = 'Your membership type is not eligible for online registration.';
+            return;
+        }
 
-            // Only block if there's a Pending or Approved registration.
-            // Rejected registrations are allowed to resubmit.
-            if (Registration::where('psa_id', $this->psaId)
+        // Only block if there's a Pending or Approved registration.
+        // Rejected registrations are allowed to resubmit.
+        if (
+            Registration::where('psa_id', $this->psaId)
                 ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
                 ->exists()
-            ) {
-                $this->verifyError = 'This PSA ID has already been registered for this event.';
-                return;
-            }
-
-            $this->firstName      = $member->mem_first_name  ?? '';
-            $this->lastName       = $member->mem_last_name   ?? '';
-            $this->middleName     = $member->mem_middle_name ?? '';
-            $this->membership     = $memType;
-            $this->memberVerified = true;
-
-            // Life Member Payment Excempted Discount Section:
-            // discount option will be = none since it is a life member.
-            if ($this->isPaymentExempt()) {
-                $this->discountType = 'non_disc';
-                $this->discountImg  = null;
-            }
+        ) {
+            $this->verifyError = 'This PSA ID has already been registered for this event.';
+            return;
         }
 
-        // Filter of Life Member
-        public function isPaymentExempt(): bool
-        {
-            return $this->membership === 'LM';
+        $this->firstName = $member->mem_first_name ?? '';
+        $this->lastName = $member->mem_last_name ?? '';
+        $this->middleName = $member->mem_middle_name ?? '';
+        $this->membership = $memType;
+        $this->memberVerified = true;
+
+        // Life Member Payment Excempted Discount Section:
+        // discount option will be = none since it is a life member.
+        if ($this->isPaymentExempt()) {
+            $this->discountType = 'non_disc';
+            $this->discountImg = null;
+        }
+    }
+
+    // Filter of Life Member
+    public function isPaymentExempt(): bool
+    {
+        return $this->membership === 'LM';
+    }
+
+    public function resetVerification(): void
+    {
+        $this->psaId = '';
+        $this->memberVerified = false;
+        $this->verifyError = '';
+        $this->firstName = '';
+        $this->lastName = '';
+        $this->middleName = '';
+        $this->membership = '';
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'psaId' => ['required', 'string', 'size:4'],
+            'firstName' => ['required', 'string', 'max:255'],
+            'lastName' => ['required', 'string', 'max:255'],
+            'middleName' => ['nullable', 'string', 'max:255'],
+            'membership' => ['required', Rule::in(['RM', 'LM', 'TM'])],
+
+            'prcNumber' => ['required', 'digits_between:5,7'],
+            'email' => ['required', 'email', 'max:255'],
+            'contactNumber' => ['required', 'regex:/^09\d{9}$/'],
+            'hospitalName' => ['required', 'string', 'max:255'],
+            'hospitalAddress' => ['required', 'string', 'max:255'],
+            'country' => ['required', 'string', 'max:255'],
+
+            'discountType' => ['required', Rule::in(['senior_disc', 'non_disc'])],
+            'discountImg' => ['nullable', Rule::requiredIf(!$this->isPaymentExempt() && $this->discountType === 'senior_disc'), 'image', 'max:10240'],
+            'paymentProof' => [$this->isPaymentExempt() ? 'nullable' : 'required', 'image', 'max:10240'],
+        ];
+    }
+
+    /**
+     * NEW: Step before the real submit. Runs full validation (and the
+     * same guards submit() used to run up front) and, if everything
+     * passes, opens the "please double-check" confirmation modal
+     * instead of saving anything yet.
+     */
+    public function reviewSubmission(): void
+    {
+        if (!$this->memberVerified) {
+            $this->addError('psaId', 'Please verify your PSA ID before submitting.');
+            return;
         }
 
-        public function resetVerification(): void
-        {
-            $this->psaId          = '';
+        if ($this->paymentUploading || $this->discountUploading) {
+            $this->addError('paymentProof', 'Please wait for the upload to finish before submitting.');
+            return;
+        }
+
+        if ($this->isPaymentExempt()) {
+            $this->discountType = 'non_disc';
+            $this->discountImg = null;
+            $this->paymentProof = null;
+        }
+
+        $this->validate();
+
+        $this->showConfirm = true;
+        $this->dispatch('open-confirm-modal');
+    }
+
+    public function cancelReview(): void
+    {
+        $this->showConfirm = false;
+    }
+
+    public function submit(): void
+    {
+        if (!$this->memberVerified) {
+            $this->addError('psaId', 'Please verify your PSA ID before submitting.');
+            $this->showConfirm = false;
+            return;
+        }
+
+        if ($this->paymentUploading || $this->discountUploading) {
+            $this->addError('paymentProof', 'Please wait for the upload to finish before submitting.');
+            $this->showConfirm = false;
+            return;
+        }
+
+        // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null
+        if ($this->isPaymentExempt()) {
+            $this->discountType = 'non_disc';
+            $this->discountImg = null;
+            $this->paymentProof = null;
+        }
+
+        $this->validate();
+
+        $member = Member::find($this->psaId);
+        if (!$member) {
+            $this->verifyError = 'PSA ID could not be re-verified. Please refresh and try again.';
             $this->memberVerified = false;
-            $this->verifyError    = '';
-            $this->firstName      = '';
-            $this->lastName       = '';
-            $this->middleName     = '';
-            $this->membership     = '';
+            $this->showConfirm = false;
+            return;
         }
 
-        protected function rules(): array
-        {
-            return [
-                'psaId'           => ['required', 'string', 'size:4'],
-                'firstName'       => ['required', 'string', 'max:255'],
-                'lastName'        => ['required', 'string', 'max:255'],
-                'middleName'      => ['nullable', 'string', 'max:255'],
-                'membership'      => ['required', Rule::in(['RM', 'LM', 'TM'])],
-
-                'prcNumber'       => ['required',  'digits_between:5,7'],
-                'email'           => ['required', 'email', 'max:255'],
-                'contactNumber'   => ['required', 'regex:/^09\d{9}$/'],
-                'hospitalName'    => ['required', 'string', 'max:255'],
-                'hospitalAddress' => ['required', 'string', 'max:255'],
-                'country'         => ['required', 'string', 'max:255'],
-
-                'discountType'    => ['required', Rule::in(['senior_disc', 'non_disc'])],
-                'discountImg'     => [
-                    'nullable',
-                    Rule::requiredIf(!$this->isPaymentExempt() && $this->discountType === 'senior_disc'),
-                    'image', 'max:10240',
-                ],
-                'paymentProof'    => [
-                    $this->isPaymentExempt() ? 'nullable' : 'required',
-                    'image', 'max:10240',
-                ],
-            ];
+        if (strtolower(trim($member->mem_last_name)) !== strtolower(trim($this->lastName)) || strtolower(trim($member->mem_first_name)) !== strtolower(trim($this->firstName))) {
+            $this->verifyError = 'Member data mismatch. Please re-verify your PSA ID.';
+            $this->memberVerified = false;
+            $this->showConfirm = false;
+            return;
         }
 
-        public function submit(): void
-        {
-            if (!$this->memberVerified) {
-                $this->addError('psaId', 'Please verify your PSA ID before submitting.');
-                return;
-            }
+        // Block only on Pending/Approved — allow resubmission if previously Rejected.
+        $existing = Registration::where('psa_id', $this->psaId)
+            ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
+            ->exists();
 
-            // NEW: server-side guard — never trust the disabled button alone.
-            // Blocks submission if either upload is still mid-flight when this fires.
-            if ($this->paymentUploading || $this->discountUploading) {
-                $this->addError('paymentProof', 'Please wait for the upload to finish before submitting.');
-                return;
-            }
-
-            // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null 
-            if ($this->isPaymentExempt()) {
-                $this->discountType = 'non_disc';
-                $this->discountImg  = null;
-                $this->paymentProof = null;
-            }
-
-            $this->validate();
-
-            $member = Member::find($this->psaId);
-            if (!$member) {
-                $this->verifyError    = 'PSA ID could not be re-verified. Please refresh and try again.';
-                $this->memberVerified = false;
-                return;
-            }
-
-            if (
-                strtolower(trim($member->mem_last_name))  !== strtolower(trim($this->lastName)) ||
-                strtolower(trim($member->mem_first_name)) !== strtolower(trim($this->firstName))
-            ) {
-                $this->verifyError    = 'Member data mismatch. Please re-verify your PSA ID.';
-                $this->memberVerified = false;
-                return;
-            }
-
-            // Block only on Pending/Approved — allow resubmission if previously Rejected.
-            $existing = Registration::where('psa_id', $this->psaId)
-                ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
-                ->exists();
-
-            if ($existing) {
-                $this->verifyError    = 'This PSA ID has already been registered.';
-                $this->memberVerified = false;
-                return;
-            }
-
-            // where the uploaded files will be stored
-            $discountPath = null;
-            if ($this->discountType === 'senior_disc' && $this->discountImg) {
-                $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
-            }
-
-            $paymentPath = $this->paymentProof
-                ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads')
-                : null;
-
-            // If a Rejected registration already exists for this PSA ID, update that
-            // same row back to Pending instead of creating a duplicate record.
-            $registration = Registration::updateOrCreate(
-                ['psa_id' => $this->psaId],
-                [
-                    'prc_number'       => (int) $this->prcNumber,
-                    'last_name'        => $this->lastName,
-                    'first_name'       => $this->firstName,
-                    'middle_name'      => $this->middleName,
-                    'hospital_name'    => $this->hospitalName,
-                    'hospital_address' => $this->hospitalAddress,
-                    'email'            => $this->email,
-                    'contact_number'   => $this->contactNumber,
-                    'membership'       => $this->membership,
-                    'discount_id'      => $discountPath,
-                    'proof_payment'    => $paymentPath,
-                    'status'           => Registration::STATUS_PENDING,
-                    'country'          => $this->country,
-                    'rejection_title'  => null,
-                    'rejection_reason' => null,
-                ]
-            );
-
-            // SENDING CONFIRMATION EMAIL
-            Mail::to($this->email)->send(new RegistrationConfirmed($registration));
-
-            $this->registrationId = (string) $registration->id;
-            $this->submitted      = true;
-
-            // adding this event to the browser's window so that the frontend can scroll to top
-            $this->dispatch('registration-submitted');
+        if ($existing) {
+            $this->verifyError = 'This PSA ID has already been registered.';
+            $this->memberVerified = false;
+            $this->showConfirm = false;
+            return;
         }
-    };
-    ?>
-    {{-- FRONTEND --}}
-    <div class="p-6 md:p-10" x-data
-        x-on:registration-submitted.window="$nextTick(() => { document.getElementById('registration-success')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
-        x-on:validation-failed.window="$nextTick(() => { document.getElementById('error-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })">
+
+        // where the uploaded files will be stored
+        $discountPath = null;
+        if ($this->discountType === 'senior_disc' && $this->discountImg) {
+            $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
+        }
+
+        $paymentPath = $this->paymentProof ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads') : null;
+
+        // If a Rejected registration already exists for this PSA ID, update that
+        // same row back to Pending instead of creating a duplicate record.
+        $registration = Registration::updateOrCreate(
+            ['psa_id' => $this->psaId],
+            [
+                'prc_number' => (int) $this->prcNumber,
+                'last_name' => $this->lastName,
+                'first_name' => $this->firstName,
+                'middle_name' => $this->middleName,
+                'hospital_name' => $this->hospitalName,
+                'hospital_address' => $this->hospitalAddress,
+                'email' => $this->email,
+                'contact_number' => $this->contactNumber,
+                'membership' => $this->membership,
+                'discount_id' => $discountPath,
+                'proof_payment' => $paymentPath,
+                'status' => Registration::STATUS_PENDING,
+                'country' => $this->country,
+                'rejection_title' => null,
+                'rejection_reason' => null,
+            ],
+        );
+
+        // SENDING CONFIRMATION EMAIL
+        Mail::to($this->email)->send(new RegistrationConfirmed($registration));
+
+        $this->registrationId = (string) $registration->id;
+        $this->submitted = true;
+        $this->showConfirm = false;
+
+        // adding this event to the browser's window so that the frontend can scroll to top
+        $this->dispatch('registration-submitted');
+    }
+};
+?>
+{{-- FRONTEND --}}
+<div class="p-6 md:p-10" x-data
+    x-on:registration-submitted.window="$nextTick(() => { document.getElementById('registration-success')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
+    x-on:validation-failed.window="$nextTick(() => { document.getElementById('error-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })">
     {{-- script that will scroll to the registration success section form every time a user submit a registration --}}
     @if ($submitted)
         <div class="max-w-lg mx-auto py-10" id="registration-success">
 
-                <div class="flex justify-center mb-6">
-                    <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background-color: #e8f5e9;">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" style="color: #2e7d32;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                </div>
-
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold mb-2" style="color: #000066;">Registration Submitted!</h2>
-                    <p class="text-gray-500 text-sm">
-                        Your registration for <span class="font-semibold text-gray-700">PSA Annual Convention 2026</span> has been received and is currently pending review.
-                    </p>
-                </div>
-
-                <div class="rounded-2xl border border-gray-100 overflow-hidden mb-6">
-                    <div class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-white" style="background-color: #000066;">
-                        Registration Summary
-                    </div>
-                    <div class="divide-y divide-gray-50">
-                        @foreach ([
-                            // ['Reference No.',  '#' . str_pad($registrationId, 6, '0', STR_PAD_LEFT)],
-                            ['Full Name',       $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName],
-                            ['PSA ID',          $psaId],
-                            ['Membership',      ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership],
-                            ['Email',           $email],
-                            ['Contact No.',     $contactNumber],
-                            ['Hospital',        $hospitalName],
-                            ['Status',          'Pending Review'],
-                        ] as [$label, $value])
-                            <div class="flex items-start gap-4 px-5 py-3">
-                                <span class="text-xs text-gray-400 w-28 shrink-0 pt-0.5">{{ $label }}</span>
-                                <span class="text-sm font-medium text-gray-700 {{ $label === 'Status' ? 'text-amber-600' : '' }}">
-                                    {{ $value }}
-                                </span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 flex gap-3 mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+            <div class="flex justify-center mb-6">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background-color: #e8f5e9;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" style="color: #2e7d32;" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    <p class="text-xs text-blue-700 leading-relaxed">
-                        {{-- Please take note of your <strong>Reference No.</strong> above.  --}}
-                        The PSA secretariat will review your submission and update your registration status. You may follow up using your PSA ID <strong>{{ $psaId }}</strong>.
-                    </p>
                 </div>
-
-                <div class="flex justify-center">
-                    <a href="{{ url('/') }}"
-                        class="px-8 py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
-                        style="background-color: #000066;">
-                        Back to Home
-                    </a>
-                </div>
-
             </div>
 
-        @else
-
-            <h2 class="text-xl font-bold mb-1" style="color: #000066;">Registration Form</h2>
-            <p class="text-gray-400 text-sm mb-8">All fields are required unless stated otherwise.</p>
-
-            {{-- PSA ID Verification --}}
-            <div class="mb-8">
-                <x-event-registration.section-title title="Step 1 - Verify PSA ID" />
-
-                @if (!$memberVerified)
-                    <div class="flex gap-3 items-start">
-                        <div class="flex-1">
-                            <input
-                                type="text"
-                                wire:model="psaId"
-                                wire:keydown.enter="verify"
-                                placeholder="Enter your 4-digit PSA ID"
-                                maxlength="4"
-                                inputmode="numeric"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
-                            @error('psaId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                            @if ($verifyError)
-                                <p class="text-xs text-red-500 mt-1">{{ $verifyError }}</p>
-                            @endif
-                        </div>
-                        <button type="button" wire:click="verify" wire:loading.attr="disabled" wire:target="verify"
-                            class="shrink-0 px-5 py-3 rounded-xl text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50 bg-[#000066]">
-                            <span wire:loading.remove wire:target="verify">Verify</span>
-                            <span wire:loading wire:target="verify">Checking…</span>
-                        </button>
-                    </div>
-                @else
-                    <div class="flex items-center justify-between gap-4 bg-green-50 border border-blue-100 rounded-xl px-5 py-4">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-green-800">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-bold text-gray-800 truncate">
-                                    {{ $firstName }} {{ $middleName }} {{ $lastName }}
-                                </p>
-                                <p class="text-xs text-gray-500">
-                                    PSA ID: <span class="font-mono font-semibold">{{ $psaId }}</span>
-                                    &nbsp;·&nbsp;
-                                    {{ ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership }}
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" wire:click="resetVerification"
-                            class="shrink-0 text-xs font-semibold text-blue-700 hover:text-blue-900 transition">
-                            Change
-                        </button>
-                    </div>
-                @endif
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold mb-2" style="color: #000066;">Registration Submitted!</h2>
+                <p class="text-gray-500 text-sm">
+                    Your registration for <span class="font-semibold text-gray-700">PSA Annual Convention 2026</span>
+                    has been received and is currently pending review.
+                </p>
             </div>
+
+            <div class="rounded-2xl border border-gray-100 overflow-hidden mb-6">
+                <div class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-white"
+                    style="background-color: #000066;">
+                    Registration Summary
+                </div>
+                <div class="divide-y divide-gray-50">
+                    @foreach ([['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName], ['PSA ID', $psaId], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership], ['Email', $email], ['Contact No.', $contactNumber], ['Hospital', $hospitalName], ['Status', 'Pending Review']] as [$label, $value])
+                        <div class="flex items-start gap-4 px-5 py-3">
+                            <span class="text-xs text-gray-400 w-28 shrink-0 pt-0.5">{{ $label }}</span>
+                            <span
+                                class="text-sm font-medium text-gray-700 {{ $label === 'Status' ? 'text-amber-600' : '' }}">
+                                {{ $value }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 flex gap-3 mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+                </svg>
+                <p class="text-xs text-blue-700 leading-relaxed">
+                    The PSA secretariat will review your submission and update your registration status. You may follow
+                    up using your PSA ID <strong>{{ $psaId }}</strong>.
+                </p>
+            </div>
+
+            <div class="flex justify-center">
+                <a href="{{ url('/') }}"
+                    class="px-8 py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
+                    style="background-color: #000066;">
+                    Back to Home
+                </a>
+            </div>
+
+        </div>
+    @else
+        <h2 class="text-xl font-bold mb-1" style="color: #000066;">Registration Form</h2>
+        <p class="text-gray-400 text-sm mb-8">All fields are required unless stated otherwise.</p>
+
+        {{-- PSA ID Verification --}}
+        <div class="mb-8">
+            <x-event-registration.section-title title="Step 1 - Verify PSA ID" />
 
             @if (!$memberVerified)
-                <div class="rounded-xl border border-yellow-100 bg-yellow-50 px-5 py-4 flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                    </svg>
-                    <p class="text-xs text-yellow-800">Verify your PSA ID above to unlock the registration form.</p>
+                <div class="flex gap-3 items-start">
+                    <div class="flex-1">
+                        <input type="text" wire:model="psaId" wire:keydown.enter="verify"
+                            placeholder="Enter your 4-digit PSA ID" maxlength="4" inputmode="numeric"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                        @error('psaId')
+                            <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
+                        @if ($verifyError)
+                            <p class="text-xs text-red-500 mt-1">{{ $verifyError }}</p>
+                        @endif
+                    </div>
+                    <button type="button" wire:click="verify" wire:loading.attr="disabled" wire:target="verify"
+                        class="shrink-0 px-5 py-3 rounded-xl text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50 bg-[#000066]">
+                        <span wire:loading.remove wire:target="verify">Verify</span>
+                        <span wire:loading wire:target="verify">Checking…</span>
+                    </button>
                 </div>
             @else
-
-                <form wire:submit="submit">
-
-                    {{-- Member Information --}}
-                    <div class="mb-8">
-                        <x-event-registration.section-title title="Member Information" />
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-4">
-                            <div class="sm:col-span-1">
-                                <x-form.readonly-field label="PSA ID No." :value="$psaId"  mono />
-                            </div>
-                            <div class="sm:col-span-2">
-                                <x-form.readonly-field label="First Name" :value="$firstName" />
-                            </div>
-                            <div class="sm:col-span-2">
-                                <x-form.readonly-field label="Last Name" :value="$lastName" />
-                            </div>
-                            <div class="sm:col-span-1">
-                                <x-form.readonly-field label="Middle Name" :value="$middleName" />
-                            </div>
+                <div
+                    class="flex items-center justify-between gap-4 bg-green-50 border border-blue-100 rounded-xl px-5 py-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-green-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-gray-800 truncate">
+                                {{ $firstName }} {{ $middleName }} {{ $lastName }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                PSA ID: <span class="font-mono font-semibold">{{ $psaId }}</span>
+                                &nbsp;·&nbsp;
+                                {{ ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership }}
+                            </p>
                         </div>
                     </div>
+                    <button type="button" wire:click="resetVerification"
+                        class="shrink-0 text-xs font-semibold text-blue-700 hover:text-blue-900 transition">
+                        Change
+                    </button>
+                </div>
+            @endif
+        </div>
 
-                    {{-- Contact Details --}}
-                    <div class="mb-8">
-                        <x-event-registration.section-title title="Contact Details" />
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <x-form.input label="PRC Number" hint="(5-7 digits)" name="prcNumber" wire:model="prcNumber" pattern="^\d{5,7}$"
-                                placeholder="1234567" minlength="5" maxlength="7" inputmode="numeric"   pattern-message="PRC number must be between 5 and 7 digits."/>
+        @if (!$memberVerified)
+            <div class="rounded-xl border border-yellow-100 bg-yellow-50 px-5 py-4 flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-500 shrink-0" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <p class="text-xs text-yellow-800">Verify your PSA ID above to unlock the registration form.</p>
+            </div>
+        @else
+            {{-- NEW: submit is now handled by reviewSubmission(), which validates
+                     then opens the confirmation modal. The actual save only happens
+                     when the user confirms inside that modal. --}}
+            <form wire:submit.prevent="reviewSubmission">
 
-                            <x-form.input label="Email Address" type="email" name="email" wire:model="email"
-                                placeholder="you@example.com" />
-                                
-                            <x-form.input label="Contact Number" name="contactNumber" pattern="^09\d{9}$" pattern-message="Please enter a valid PH mobile number (e.g. 09123456789)."
-                                placeholder="09XXXXXXXXX" inputmode="numeric" maxlength="11" />
-
-                            <div class="sm:col-span-2">
-                                <x-form.input label="Hospital / Institution Name" name="hospitalName" wire:model="hospitalName"
-                                    placeholder="Name of Hospital" />
-                            </div>
-
-                            <x-form.input label="Hospital Address" name="hospitalAddress" wire:model="hospitalAddress"
-                                placeholder="City, Province" />
-
-                     <div class="sm:col-span-3">
-    <label class="block text-xs font-medium text-gray-500 mb-1">Country</label>
-    <input type="text" value="Philippines" disabled
-        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
-</div>
-                            
+                {{-- Member Information --}}
+                <div class="mb-8">
+                    <x-event-registration.section-title title="Member Information" />
+                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                        <div class="sm:col-span-1">
+                            <x-form.readonly-field label="PSA ID No." :value="$psaId" mono />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-form.readonly-field label="First Name" :value="$firstName" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <x-form.readonly-field label="Last Name" :value="$lastName" />
+                        </div>
+                        <div class="sm:col-span-1">
+                            <x-form.readonly-field label="Middle Name" :value="$middleName" />
                         </div>
                     </div>
+                </div>
 
-                    {{-- Membership & Discount --}}
-                    <div class="mb-8">
-                        <x-event-registration.section-title title="Membership & Discount" />
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {{-- Contact Details --}}
+                <div class="mb-8">
+                    <x-event-registration.section-title title="Contact Details" />
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <x-form.input label="PRC Number" hint="(5-7 digits)" name="prcNumber" wire:model="prcNumber"
+                            pattern="^\d{5,7}$" placeholder="1234567" minlength="5" maxlength="7"
+                            inputmode="numeric" pattern-message="PRC number must be between 5 and 7 digits." />
 
+                        <x-form.input label="Email Address" type="email" name="email" wire:model="email"
+                            placeholder="you@example.com" />
+
+                        <x-form.input label="Contact Number" name="contactNumber" pattern="^09\d{9}$"
+                            pattern-message="Please enter a valid PH mobile number (e.g. 09123456789)."
+                            placeholder="09XXXXXXXXX" inputmode="numeric" maxlength="11" />
+
+                        <div class="sm:col-span-2">
+                            <x-form.input label="Hospital / Institution Name" name="hospitalName"
+                                wire:model="hospitalName" placeholder="Name of Hospital" />
+                        </div>
+
+                        <x-form.input label="Hospital Address" name="hospitalAddress" wire:model="hospitalAddress"
+                            placeholder="City, Province" />
+
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Country</label>
+                            <input type="text" value="Philippines" disabled
+                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
+                        </div>
+
+                    </div>
+                </div>
+
+                {{-- Membership & Discount --}}
+                <div class="mb-8">
+                    <x-event-registration.section-title title="Membership & Discount" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-3">Membership Type</label>
+                            <div class="space-y-2">
+                                @foreach ([['RM', 'Regular Member'], ['LM', 'Life Member'], ['TM', 'Trainee Member']] as [$code, $label])
+                                    <x-form.radio-option :value="$code" :label="$label" :active="$membership === $code"
+                                        :disabled="true" color="blue" />
+                                @endforeach
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">* Auto-filled from your PSA membership record</p>
+                        </div>
+                        @if ($this->isPaymentExempt())
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-3">Membership Type</label>
+                                <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
                                 <div class="space-y-2">
-                                    @foreach ([['RM', 'Regular Member'], ['LM', 'Life Member'], ['TM', 'Trainee Member']] as [$code, $label])
-                                        <x-form.radio-option
-                                            :value="$code"
-                                            :label="$label"
-                                            :active="$membership === $code"
-                                            :disabled="true"
-                                            color="blue" />
+                                    @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
+                                        <x-form.radio-option :value="$value" :label="$label" :active="$discountType === $value"
+                                            :disabled="true" color="blue" />
                                     @endforeach
                                 </div>
-                                <p class="text-xs text-gray-400 mt-2">* Auto-filled from your PSA membership record</p>
+                                <p class="text-xs text-gray-400 mt-2">* Not applicable — Life Members are exempt from
+                                    the registration fee</p>
                             </div>
-                            {{-- for life member: same static/disabled pattern as Membership Type above --}}
-                            @if ($this->isPaymentExempt())
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
-                                    <div class="space-y-2">
-                                        @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
-                                            <x-form.radio-option
-                                                :value="$value"
-                                                :label="$label"
-                                                :active="$discountType === $value"
-                                                :disabled="true"
-                                                color="blue" />
-                                        @endforeach
-                                    </div>
-                                    <p class="text-xs text-gray-400 mt-2">* Not applicable — Life Members are exempt from the registration fee</p>
+                        @else
+                            <div x-data="{ disc: @entangle('discountType') }">
+                                <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
+                                <div class="space-y-2 mb-4">
+                                    @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
+                                        <x-form.radio-option :value="$value" :label="$label" model="disc"
+                                            color="red" />
+                                    @endforeach
                                 </div>
-                            @else
-                                <div x-data="{ disc: @entangle('discountType') }">
-                                    <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
-                                    <div class="space-y-2 mb-4">
-                                        @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
-                                            <x-form.radio-option
-                                                :value="$value"
-                                                :label="$label"
-                                                model="disc"
-                                                color="red" />
-                                        @endforeach
-                                    </div>
-                                    <div x-show="disc === 'senior_disc'" x-transition>
-                                        <x-event-registration.image-upload
-                                            name="discount_img"
-                                            wireModel="discountImg"
-                                            label="Senior Citizen ID"
-                                            color="#000066" />
+                                <div x-show="disc === 'senior_disc'" x-transition>
+                                    <x-event-registration.image-upload name="discount_img" wireModel="discountImg"
+                                        label="Senior Citizen ID" color="#000066" />
 
-                                        {{-- NEW: uploading indicator for the discount ID field --}}
-                                        <div wire:loading wire:target="discountImg"
-                                            class="flex items-center gap-2 text-xs text-gray-500 mt-2">
-                                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                            </svg>
-                                            Uploading, please wait…
-                                        </div>
-
-                                        @error('discountImg') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                                    <div wire:loading wire:target="discountImg"
+                                        class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        Uploading, please wait…
                                     </div>
+
+                                    @error('discountImg')
+                                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
-                            @endif
+                            </div>
+                        @endif
 
+                    </div>
+                </div>
+
+                {{-- Proof of Payment --}}
+                @if ($this->isPaymentExempt())
+                    <div class="mb-6">
+                        <x-event-registration.section-title title="Proof of Payment" />
+                        <div class="rounded-xl border border-green-100 bg-green-50 px-5 py-4 flex gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-600 shrink-0 mt-0.5"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <p class="text-md text-green-700 leading-relaxed">
+                                As a <strong>Life Member</strong>, you are exempt from the registration fee. No proof of
+                                payment is needed,
+                                You can submit the form once you fill up all the details above.</p>
                         </div>
                     </div>
+                @else
+                    <div class="mb-6">
+                        <x-event-registration.section-title title="Proof of Payment" />
+                        <x-event-registration.image-upload name="payment_proof" wireModel="paymentProof"
+                            label="Payment Screenshot" :required="true" color="#ac071a" />
 
-                    {{-- Proof of Payment --}}
-                    {{-- life member exempted message --}}
-                    @if ($this->isPaymentExempt())
-                        <div class="mb-6">
-                            <x-event-registration.section-title title="Proof of Payment" />
-                            <div class="rounded-xl border border-green-100 bg-green-50 px-5 py-4 flex gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <p class="text-md text-green-700 leading-relaxed">
-                                    As a <strong>Life Member</strong>, you are exempt from the registration fee. No proof of payment is needed, 
-                                    You can submit the form once you fill up all the details above.</p>
-                            </div>
+                        <div wire:loading wire:target="paymentProof"
+                            class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Uploading, please wait…
                         </div>
-                    @else
-                        <div class="mb-6">
-                            <x-event-registration.section-title title="Proof of Payment" />
-                            <x-event-registration.image-upload
-                                name="payment_proof"
-                                wireModel="paymentProof"
-                                label="Payment Screenshot"
-                                :required="true"
-                                color="#ac071a" />
 
-                            {{-- NEW: uploading indicator for the payment proof field --}}
-                            <div wire:loading wire:target="paymentProof"
-                                class="flex items-center gap-2 text-xs text-gray-500 mt-2">
-                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
-                                Uploading, please wait…
-                            </div>
+                        @error('paymentProof')
+                            <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
 
-                            @error('paymentProof') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    @endif
+                {{-- Error Summary (all validation errors, shown right before Submit) --}}
+                @if ($errors->any())
+                    <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 mb-6" id="error-summary">
+                        <p class="text-sm font-bold text-red-700 mb-2">
+                            Please check the following fields before submitting:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li class="text-xs text-red-600">{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-                    {{-- Error Summary (all validation errors, shown right before Submit) --}}
-                    @if ($errors->any())
-                        <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 mb-6" id="error-summary">
-                            <p class="text-sm font-bold text-red-700 mb-2">
-                                Please check the following fields before submitting:
-                            </p>
-                            <ul class="list-disc list-inside space-y-1">
-                                @foreach ($errors->all() as $error)
-                                    <li class="text-xs text-red-600">{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    {{-- Submit --}}
-                    {{-- NEW: wire:target now also covers paymentProof + discountImg, so Submit
-                         stays disabled while either upload is still in flight, not just while
-                         submit() itself is running. --}}
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            wire:loading.attr="disabled"
-                            wire:target="submit,paymentProof,discountImg"
-                            class="px-8 py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 
+                    {{-- submit  --}}
+                <div class="flex justify-end">
+                    <button type="submit" wire:loading.attr="disabled"
+                        wire:target="reviewSubmission,paymentProof,discountImg"
+                        class="px-8 py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 
                             bg-[#000066]">
-                            <span wire:loading.remove wire:target="submit,paymentProof,discountImg">Submit Registration</span>
-                            <span wire:loading wire:target="submit">Submitting…</span>
-                            <span wire:loading wire:target="paymentProof,discountImg">Waiting for upload…</span>
-                        </button>
-                    </div>
+                        <span wire:loading.remove wire:target="reviewSubmission,paymentProof,discountImg">Submit
+                            Registration</span>
+                        <span wire:loading wire:target="reviewSubmission">Checking…</span>
+                        <span wire:loading wire:target="paymentProof,discountImg">Waiting for upload…</span>
+                    </button>
+                </div>
 
-                </form>
+            </form>
+
+
+            {{-- mobile confirmation modal --}}
+            @if ($showConfirm)
+
+                <div class="fixed inset-0 z-[9999] bg-black/70 sm:flex sm:items-center sm:justify-center sm:p-4"
+                    wire:key="confirm-registration-backdrop">
+
+                    <div
+                        class="flex h-[100dvh] w-full flex-col bg-white
+                   sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl
+                   sm:rounded-3xl sm:shadow-2xl">
+
+            {{-- Header --}}
+
+                        <div class="shrink-0 px-4 py-4 sm:px-7 sm:py-6" style="background-color:#000066;">
+
+                            <div class="flex items-start gap-3">
+
+                                {{-- Warning icon --}}
+                                <div
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 sm:h-12 sm:w-12">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white sm:h-6 sm:w-6"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                    </svg>
+                                </div>
+
+                                <div class="min-w-0 flex-1">
+
+                                    <p
+                                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-200 sm:text-[10px]">
+                                        Final Review
+                                    </p>
+
+                                    <h3 class="mt-0.5 text-base font-bold leading-tight text-white sm:text-xl">
+                                        Please Double-Check Your Information
+                                    </h3>
+
+                                    <p class="mt-1 text-[11px] leading-relaxed text-blue-100 sm:text-sm">
+                                        Review your information carefully before submitting.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {{-- body --}}
+                        <div class="min-h-0 flex-1 overflow-y-auto">
+
+                            {{-- Important warning --}}
+                            <div class="px-4 pt-4 sm:px-7 sm:pt-5">
+
+                                <div
+                                    class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:rounded-2xl sm:p-5">
+
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="mt-0.5 h-6 w-6 shrink-0 text-red-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                    </svg>
+
+                                    <div class="min-w-0">
+
+                                        <p class="text-base font-extrabold leading-tight text-red-900 sm:text-lg">
+                                            Important: This action cannot be undone.
+                                        </p>
+
+                                        <p class="mt-2 text-sm leading-relaxed text-red-800 sm:text-base">
+                                            Once submitted, your registration will be sent directly to the
+                                            <strong class="font-bold">PSA Secretariat</strong>
+                                            for review. Please enter a correct information for your
+                                            <strong class="font-bold">PRC CPD Units</strong>.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            {{-- reg details --}}
+                            <div class="px-4 py-4 sm:px-7 sm:py-5">
+
+                                <div class="mb-3">
+
+                                    <h4 class="text-sm font-bold text-gray-900 sm:text-base">
+                                        Registration Details
+                                    </h4>
+
+                                    <p class="mt-0.5 text-[10px] text-gray-400 sm:text-xs">
+                                        Please verify that all information is correct.
+                                    </p>
+
+                                </div>
+
+
+                                {{-- Details --}}
+                                <div class="overflow-hidden rounded-xl border border-gray-200 sm:rounded-2xl">
+
+                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount', ['senior_disc' => 'Senior Citizen / PWD', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
+                                        <div
+                                            class="border-b border-gray-100 px-3.5 py-3 last:border-0
+                                       sm:grid sm:grid-cols-[145px_1fr] sm:items-start sm:gap-4 sm:px-5 sm:py-3.5">
+
+                                            {{-- Label --}}
+                                            <dt
+                                                class="text-[10px] font-medium uppercase tracking-wide text-gray-400 sm:text-xs sm:normal-case sm:tracking-normal">
+                                                {{ $label }}
+                                            </dt>
+
+                                            {{-- Value --}}
+                                            <dd
+                                                class="mt-1 min-w-0 break-words text-left text-xs font-semibold text-gray-800 sm:mt-0 sm:text-right sm:text-sm {{ $extraClass }}">
+
+                                                @if ($label === 'Discount ID' || $label === 'Proof of Payment')
+                                                    @if (str_contains($value, 'Uploaded'))
+                                                        <span
+                                                            class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-700 sm:text-xs">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor" stroke-width="2.5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M5 13l4 4L19 7" />
+                                                            </svg>
+
+                                                            Uploaded
+                                                        </span>
+                                                    @elseif (str_contains($value, 'Not required'))
+                                                        <span
+                                                            class="inline-flex max-w-full rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700 sm:text-xs">
+                                                            Not required
+                                                        </span>
+                                                    @else
+                                                        <span
+                                                            class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-600 sm:text-xs">
+                                                            {{ $value }}
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    {{ $value !== '' && $value !== null ? $value : '—' }}
+                                                @endif
+
+                                            </dd>
+
+                                        </div>
+                                    @endforeach
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- footer --}}
+                        <div class="shrink-0 border-t border-gray-100 bg-white px-4 py-3 sm:px-7 sm:py-4">
+
+                            {{-- Mobile reminder --}}
+                            <p class="mb-2.5 text-center text-[10px] leading-relaxed text-gray-400 sm:hidden">
+                                Need to make a correction?
+                                <span class="font-semibold text-gray-600">
+                                    Go back and edit your information.
+                                </span>
+                            </p>
+
+
+                            <div class="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
+
+                                {{-- Confirm --}}
+                                <button type="button" wire:click="submit" wire:loading.attr="disabled"
+                                    wire:target="submit"
+                                    class="order-1 w-full rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:order-2 sm:w-auto sm:px-5"
+                                    style="background-color:#000066;">
+
+                                    <span wire:loading.remove wire:target="submit"
+                                        class="flex items-center justify-center gap-2">
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+
+                                        Confirm & Submit
+
+                                    </span>
+
+
+                                    <span wire:loading wire:target="submit"
+                                        class="flex items-center justify-center gap-2">
+
+                                        <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 8 12 8v4z"></path>
+                                        </svg>
+
+                                        Submitting…
+
+                                    </span>
+
+                                </button>
+
+
+                                {{-- Edit --}}
+                                <button type="button" wire:click="cancelReview"
+                                    class="order-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition active:scale-[0.98] hover:bg-gray-50 sm:order-1 sm:w-auto sm:px-5">
+
+                                    <span class="flex items-center justify-center gap-2">
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.232 5.232l3.536 3.536M9 11l-6 6v3h3l6-6m-3-3l6-6a2.121 2.121 0 013 3l-6 6" />
+                                        </svg>
+
+                                        Go Back & Edit
+
+                                    </span>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
             @endif
         @endif
-    </div>
+    @endif
+</div>
