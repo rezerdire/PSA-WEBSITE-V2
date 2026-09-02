@@ -13,6 +13,11 @@ new class extends Component
 
 @section('content')
     <x-hero-section />
+    <x-dynamic-section
+    title="TNT ELIMINATION ROUND WINNERS"
+    description="31 Teams are Advancing to the Tagisan ng Talino 2026 Final Round"
+    youtube="3OjwYzisS1I"
+/>
     <x-video-section />
     <x-mission-vision-section />
     <x-convention-highlight />
