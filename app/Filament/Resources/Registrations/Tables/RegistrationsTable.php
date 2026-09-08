@@ -30,7 +30,7 @@ class RegistrationsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            
+
             ->recordAction('view_record')
             ->recordUrl(null)
             ->columns([
@@ -74,7 +74,7 @@ class RegistrationsTable
                         'NM' => 'danger',
                         default => 'gray',
                         }),
-                    
+
 
                 TextColumn::make('member.mem_email_address')
                     ->label('Email (PSA Record)')
@@ -239,11 +239,11 @@ class RegistrationsTable
 
 
                 Action::make('view_record')
-                    
+
                     ->label('View')
                     ->icon('heroicon-o-eye')
                     ->extraAttributes(['class' => 'hidden'])
-                    ->modalHeading(fn (Registration $r) => '' . $r->full_name) 
+                    ->modalHeading(fn (Registration $r) => '' . $r->full_name)
                     ->modalWidth('3xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
@@ -252,13 +252,13 @@ class RegistrationsTable
                         Section::make('Personal Information')
                             ->columns(2)
                             ->schema([
-                          
+
                                 TextEntry::make('psa_id')
                                     ->label('PSA ID')
                                     ->badge()
                                     ->color('primary')
                                     ->fontFamily('mono'),
-                        
+
                                 TextEntry::make('status')
                                     ->label('Status')
                                     ->badge()
@@ -293,7 +293,7 @@ class RegistrationsTable
                                     }),
 
 
-                                                
+
                                 TextEntry::make('prc_number')
                                 ->label('PRC Number')
                                 ->badge()
@@ -308,7 +308,7 @@ class RegistrationsTable
                                 ->icon('heroicon-m-building-office-2')
                                 ->html()
                                 ->formatStateUsing(fn ($state, $record) => nl2br(e($state) . ($record->hospital_address ? " | " . e($record->hospital_address) : ''))),
-                                
+
                                 TextEntry::make('contact_number')
                                     ->label('Contact Number')
                                     ->icon('heroicon-m-phone'),
@@ -479,14 +479,18 @@ class RegistrationsTable
                                 ->required(fn (Get $get) => $get('write_message'))
                                 ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link']),
                         ])
-                        // bulk actions logic with ternary operator if the user wants to write message/title it will store to var if not 
-                        // it will return null 
+                        // bulk actions logic with ternary operator if the user wants to write message/title it will store to var if not
+                        // it will return null
                         ->action(fn ($records, array $data) => $records->each->update([
                             'status'           => Registration::STATUS_REJECTED,
                             'rejection_title'  => $data['write_message'] ? ($data['rejection_title']  ?? null) : null,
                             'rejection_reason' => $data['write_message'] ? ($data['rejection_reason'] ?? null) : null,
                         ])),
+
                     // action for selecting multiple data
+                    // upd: now dispatches a browser event carrying the URL instead of
+                    // redirecting the browser, so JS can fetch the PDF and only close
+                    // the loading modal once the file has actually finished generating.
                     BulkAction::make('export_selected_pdf')
                         ->label('Export Selected to PDF')
                         ->icon('heroicon-o-document-arrow-down')
@@ -494,20 +498,20 @@ class RegistrationsTable
                         ->requiresConfirmation()
                         ->modalHeading('Export Selected Registrations')
                         ->modalDescription('This will generate a PDF with one page per selected registration, including their proof of payment.')
-                        ->modalSubmitAction(fn ($action) => $action->extraAttributes([
-                            'x-on:click' => "\$dispatch('open-pdf-overlay')", // upd: spinner for the export pdf
-                        ]))
-                        ->action(function ($records) {
+                        ->modalSubmitActionLabel('Generate PDF')
+                        ->action(function ($records, $livewire) {
                             $ids = $records->pluck('id')->sort()->values();
                             $url = route('admin.registrations.export-pdf', [
                                 'ids' => $ids->implode(','),
                             ]);
-                            return redirect()->away($url);
+
+                            $livewire->dispatch('download-pdf', url: $url);
                         }),
 
                 ]),
 
-                // PDF Convertion   
+                // PDF Convertion
+                // upd: same dispatch approach as above instead of redirect()->away()
                 Action::make('export_pdf_range')
                     ->label('Export PDF')
                     ->icon('heroicon-o-document-arrow-down')
@@ -515,10 +519,6 @@ class RegistrationsTable
                     ->modalHeading('Export Registrations to PDF')
                     ->modalDescription('Enter a reference number range to export those registrations as a PDF, one record per page.')
                     ->modalSubmitActionLabel('Generate PDF')
-                    // upd: spinner for the export pdf
-                    ->modalSubmitAction(fn ($action) => $action->extraAttributes([
-                        'x-on:click' => "\$dispatch('open-pdf-overlay')",
-                    ]))
                     ->schema([
                         Grid::make(2)->schema([
                             TextInput::make('ref_from')
@@ -540,15 +540,16 @@ class RegistrationsTable
                     ])
                     // if the user create a mistake of inputting in the max input into ref_from it will still works in a reverse order
                     // the code automatically swaps the values so the range still works.
-                    ->action(function (array $data) {
-                        $from = min((int) $data['ref_from'], (int) $data['ref_to']); //convertion string to int 
+                    ->action(function (array $data, $livewire) {
+                        $from = min((int) $data['ref_from'], (int) $data['ref_to']); //convertion string to int
                         $to   = max((int) $data['ref_from'], (int) $data['ref_to']);
 
                         $url = route('admin.registrations.export-pdf', [
                             'from' => $from,
                             'to'   => $to,
-                        ]);  //redirect to laraveldompdf
-                        return redirect()->away($url);
+                        ]);
+
+                        $livewire->dispatch('download-pdf', url: $url);
                     }),
             ]);
     }

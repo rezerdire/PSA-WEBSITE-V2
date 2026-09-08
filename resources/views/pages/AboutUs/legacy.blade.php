@@ -74,7 +74,7 @@ new class extends Component {
                     ['year' => 2025, 'chapter' => 'SOUTHERN TAGALOG'],
                 ],
             ],
-            ['key' => 'psa-hymn', 'youtube' => 'DLeUtxeIp9w'],
+            ['key' => 'psa-hymn', 'youtube' => 'FznncU_j2Rk'],
         ]" />
 
 
