@@ -494,7 +494,9 @@ class RegistrationsTable
                         ->requiresConfirmation()
                         ->modalHeading('Export Selected Registrations')
                         ->modalDescription('This will generate a PDF with one page per selected registration, including their proof of payment.')
-                        ->modalSubmitActionLabel('Generate PDF')
+                        ->modalSubmitAction(fn ($action) => $action->extraAttributes([
+                            'x-on:click' => "\$dispatch('open-pdf-overlay')", // upd: spinner for the export pdf
+                        ]))
                         ->action(function ($records) {
                             $ids = $records->pluck('id')->sort()->values();
                             $url = route('admin.registrations.export-pdf', [
@@ -513,6 +515,10 @@ class RegistrationsTable
                     ->modalHeading('Export Registrations to PDF')
                     ->modalDescription('Enter a reference number range to export those registrations as a PDF, one record per page.')
                     ->modalSubmitActionLabel('Generate PDF')
+                    // upd: spinner for the export pdf
+                    ->modalSubmitAction(fn ($action) => $action->extraAttributes([
+                        'x-on:click' => "\$dispatch('open-pdf-overlay')",
+                    ]))
                     ->schema([
                         Grid::make(2)->schema([
                             TextInput::make('ref_from')
