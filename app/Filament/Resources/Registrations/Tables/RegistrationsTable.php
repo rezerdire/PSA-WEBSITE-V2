@@ -553,3 +553,4 @@ class RegistrationsTable
             ]);
     }
 }
+// try to redeploy
