@@ -94,8 +94,15 @@ class Member extends Model
         return $this->hasOne(Registration::class, 'psa_id', 'member_id_no');
     }
 
-    public function picture()
+        public function picture()
     {
         return $this->hasOne(MemberPicture::class, 'psa_id', 'member_id_no');
+    }
+
+
+    // qr filament integration
+        public function qr(): HasOne
+    {
+        return $this->hasOne(MemberQr::class, 'member_id_no', 'member_id_no');
     }
 }
