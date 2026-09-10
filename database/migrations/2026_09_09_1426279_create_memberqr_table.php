@@ -6,13 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('member-qrs', function (Blueprint $table) {
-                 $table->id();
+        Schema::create('members_qr', function (Blueprint $table) {
+            $table->id();
             $table->string('member_id_no');
             $table->string('qr_path');
             $table->string('qr_hash', 64);
@@ -26,11 +23,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('member-qrs');
+        Schema::dropIfExists('members_qr');
     }
 };
