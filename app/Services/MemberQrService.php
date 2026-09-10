@@ -175,7 +175,7 @@ class MemberQrService
             // measure widest line
             $maxLineWidth = 0;
             foreach ($lines as $line) {
-                $box = imagettfbbox($fontSize, 0, $this->fontPath, $line);
+                $box = imagettfbbox($fontSize, 0, $this->fontPath(), $line);
                 $maxLineWidth = max($maxLineWidth, abs($box[2] - $box[0]));
             }
 
@@ -190,13 +190,13 @@ class MemberQrService
 
         foreach ($lines as $i => $line) {
             $y = $startY + ($i * $lineHeight);
-            $canvas->text($line, (int) ($canvasWidth / 2), $y, function ($font) use ($fontSize, $color) {
-                $font->file($this->fontPath);
-                $font->size($fontSize);
-                $font->color($color);
-                $font->align('center');
-                $font->valign('middle');
-            });
+           $canvas->text($line, (int) ($canvasWidth / 2), $y, function ($font) use ($fontSize, $color) {
+            $font->file($this->fontPath());   // was: $this->fontPath
+            $font->size($fontSize);
+            $font->color($color);
+            $font->align('center');
+            $font->valign('middle');
+        });
         }
     }
 
@@ -216,7 +216,7 @@ class MemberQrService
         $fontSize = $maxFontSize;
 
         while ($fontSize >= $minFontSize) {
-            $box = imagettfbbox($fontSize, 0, $this->fontPath, $text);
+            $box = imagettfbbox($fontSize, 0, $this->fontPath(), $text);   
             $textWidth = abs($box[2] - $box[0]);
 
             if ($textWidth <= $areaWidth) {
@@ -227,7 +227,7 @@ class MemberQrService
         }
 
         $canvas->text($text, (int) ($canvasWidth / 2), $y, function ($font) use ($fontSize, $color) {
-            $font->file($this->fontPath);
+            $font->file($this->fontPath());
             $font->size($fontSize);
             $font->color($color);
             $font->align('center');
