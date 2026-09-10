@@ -38,6 +38,15 @@ return [
         'throw'      => false,
         ],
 
+        'members_qr' => [
+        'driver'     => 'local',
+        'root'       => public_path('members-qr'),
+        'url'        => env('APP_URL').'/members-qr',
+        'visibility' => 'public',
+        'throw'      => false,
+        'report'     => false,
+    ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
