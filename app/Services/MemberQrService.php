@@ -16,7 +16,20 @@ use Intervention\Image\ImageManager;
 class MemberQrService
 {
     protected string $disk = 'members_qr';
-    protected string $fontPath = 'C:/Windows/Fonts/arialbd.ttf';
+
+
+    protected function fontPath(): string
+    {
+        $path = public_path('fonts/Roboto-Bold.ttf');
+
+        if (!file_exists($path)) {
+            throw new \RuntimeException("Font file missing: {$path}");
+        }
+
+        return $path;
+    }
+
+
 
     public function generate(Member $member, bool $force = false): MemberQr
     {
@@ -85,7 +98,7 @@ class MemberQrService
 
         // --- 5. PSA ID NO (fixed size, white, footer) ---
         $canvas->text("PSA ID NO: {$member->member_id_no}", (int) ($width / 2), 970, function ($font) {
-            $font->file($this->fontPath);
+            $font->file($this->fontPath());
             $font->size(22);
             $font->color('#ffffff');
             $font->align('center');
@@ -139,7 +152,7 @@ class MemberQrService
 
             foreach ($words as $word) {
                 $test = $current !== '' ? "{$current} {$word}" : $word;
-                $box = imagettfbbox($fontSize, 0, $this->fontPath, $test);
+                $box = imagettfbbox($fontSize, 0, $this->fontPath(), $test);
                 $testWidth = abs($box[2] - $box[0]);
 
                 if ($testWidth <= $areaWidth) {
