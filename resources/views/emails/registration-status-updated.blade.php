@@ -22,7 +22,6 @@
             . ($registration->middle_name ? ' ' . $registration->middle_name : '')
             . ' ' . $registration->last_name;
         $rows = [
-            ['Reference No.', '#' . str_pad($registration->id, 6, '0', STR_PAD_LEFT)],
             ['Full Name',     $fullName],
             ['PSA ID',        $registration->psa_id],
             ['Membership',    $memMap[$registration->membership] ?? $registration->membership],
@@ -76,7 +75,7 @@
                         <td align="center" style="text-align:center;padding-bottom: 28px;">
                             <p style="margin:0 auto;font-size:13px;color:#9ca3af;max-width:400px;line-height:1.6;text-align:center;">
                                 @if ($isApproved)
-                                    Great news, {{ $registration->first_name }}! Your registration for
+                                    Great news, <strong style="color:#374151;">{{ $registration->first_name }}</strong> Your registration for
                                     <strong style="color:#374151;">PSA Annual Convention 2026</strong>
                                     has been approved. We look forward to seeing you at the convention.
                                 @else

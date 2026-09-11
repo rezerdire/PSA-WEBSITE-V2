@@ -28,9 +28,19 @@ class RegistrationStatusUpdated extends Mailable
         $qr = $this->getQr();
         $hasQrFile = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
 
+        // Embed the QR/ID card image directly as a base64 data URI so it
+        // renders in the recipient's inbox regardless of where the app is
+        // hosted (local, staging, production) — no external URL needed.
+        $idCardUrl = null;
+        if ($hasQrFile) {
+            $binary = Storage::disk('members_qr')->get($qr->qr_path);
+            $idCardUrl = 'data:image/png;base64,' . base64_encode($binary);
+        }
+
         $mail = $this->subject($subject)->view('emails.registration-status-updated', [
             'registration' => $this->registration,
-            'hasIdCard' => $hasQrFile,
+            'hasIdCard'    => $hasQrFile,
+            'idCardUrl'    => $idCardUrl,
         ]);
 
         if ($hasQrFile) {
