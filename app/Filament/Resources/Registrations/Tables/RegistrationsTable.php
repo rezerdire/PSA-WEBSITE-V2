@@ -1,6 +1,12 @@
 <?php
 
 namespace App\Filament\Resources\Registrations\Tables;
+use App\Services\MemberQrService;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RegistrationStatusUpdated;
+use App\Models\MemberQr;
+use Illuminate\Support\Facades\Storage;
+use Filament\Support\Enums\FontWeight;
 
 use App\Models\Member;
 use App\Models\Registration;
@@ -394,14 +400,104 @@ class RegistrationsTable
 
                 Action::make('approve')
                     ->label('Approve')
+                    ->modalWidth('7xl')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Registration $r) => $r->isPending())
                     ->requiresConfirmation()
-                    ->action(function (Registration $r): void {
+                    ->modalHeading('Approve Registration')
+                    ->modalDescription('This action will approve the registration and QR ID will be sent. Review the details below before confirming.')
+                    ->modalSubmitActionLabel('Approve & Send Email')
+                    ->infolist([
+                        Section::make('Email Preview')
+                            ->columns(2)
+                            ->schema([
+
+                                TextEntry::make('preview_to')
+                                    ->label('To')
+                                    ->state(fn (Registration $r) => $r->email ?? 'No email on file')
+                                    ->columnSpanFull()
+                                    ->weight(FontWeight::Bold)
+                                    ->size('md'),
+
+                                TextEntry::make('preview_subject')
+                                    ->label('Subject')
+                                    ->state('Your PSA Convention Registration has been Approved')
+                                    ->weight(FontWeight::Bold)
+                                    ->size('md')
+                                    ->columnSpanFull(),
+
+                                TextEntry::make('preview_body')
+                                    ->label('Email Body')
+                                    ->html()
+                                    ->state(function (Registration $r) {
+                                        $member = Member::find($r->psa_id);
+                                        $qr = $member ? MemberQr::where('member_id_no', $member->member_id_no)->first() : null;
+                                        $hasIdCard = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
+
+                                        // Preview against a virtual "Approved" state, regardless
+                                        // of the record's current actual status, since it's
+                                        // still Pending at preview time.
+                                        $r->status = Registration::STATUS_APPROVED;
+
+                                        // idCardUrl intentionally left null here — real email
+                                        // clients strip data: URIs and use the CID version instead,
+                                        // so this matches exactly what recipients will actually see.
+                                        $html = view('emails.registration-status-updated', [
+                                            'registration' => $r,
+                                            'hasIdCard'    => $hasIdCard,
+                                            'idCardUrl'    => null,
+                                        ])->render();
+
+                                        $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<iframe srcdoc="' . $escaped . '" style="width:100%;height:650px;border:1px solid #e5e7eb;border-radius:8px;"></iframe>'
+                                        );
+                                    }),
+
+                                TextEntry::make('preview_qr_check')
+                                    ->label('QR / ID Card Being Attached')
+                                    ->html()
+                                    ->state(function (Registration $r) {
+                                        $member = Member::find($r->psa_id);
+                                        $qr = $member ? MemberQr::where('member_id_no', $member->member_id_no)->first() : null;
+                                        $hasIdCard = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
+
+                                        if (! $hasIdCard) {
+                                            return new \Illuminate\Support\HtmlString(
+                                                '<div style="height:650px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;">
+                                                    <p class="text-center text-gray-400">No QR/ID card generated yet for this member.</p>
+                                                </div>'
+                                            );
+                                        }
+
+                                        $dataUri = 'data:image/png;base64,' . base64_encode(Storage::disk('members_qr')->get($qr->qr_path));
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<div style="height:650px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;overflow:auto;">
+                                                <img src="' . $dataUri . '" alt="PSA ID Card Preview" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;" />
+                                            </div>'
+                                        );
+                                    }),
+                            ]),
+                    ])
+                   ->action(function (Registration $r): void {
                         $r->update(['status' => Registration::STATUS_APPROVED]);
+
+                        $member = Member::find($r->psa_id);
+
+                        if ($member) {
+                            app(MemberQrService::class)->generate($member);
+                        }
+
+                        if ($r->email) {
+                            Mail::to($r->email)->send(new RegistrationStatusUpdated($r));
+                        }
+
                         Notification::make()->title('Registration approved.')->success()->send();
                     }),
+
 
                 Action::make('reject')
                     ->label('Reject')
@@ -452,8 +548,26 @@ class RegistrationsTable
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->action(fn ($records) => $records->each->update(['status' => Registration::STATUS_APPROVED])),
+                        ->modalHeading('Approve Selected Registrations')
+                        ->modalDescription(fn ($records) => 'This will approve ' . $records->count() . ' registration(s) and email each member their ID card. This cannot be undone.')
+                        ->modalSubmitActionLabel('Approve & Send All')
+                        ->action(function ($records) {
+                            $service = app(MemberQrService::class);
 
+                            $records->each(function (Registration $r) use ($service) {
+                                $r->update(['status' => Registration::STATUS_APPROVED]);
+
+                                $member = Member::find($r->psa_id);
+
+                                if ($member) {
+                                    $service->generate($member);
+                                }
+
+                                if ($r->email) {
+                                    Mail::to($r->email)->send(new RegistrationStatusUpdated($r));
+                                }
+                            });
+                        }),
                     BulkAction::make('reject_selected')
                         ->label('Reject Selected')
                         ->icon('heroicon-o-x-circle')
@@ -554,4 +668,3 @@ class RegistrationsTable
             ]);
     }
 }
-// try to redeploy
