@@ -2,10 +2,14 @@
 
 namespace App\Mail;
 
+use App\Models\Member;
+use App\Models\MemberQr;
 use App\Models\Registration;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class RegistrationStatusUpdated extends Mailable
 {
@@ -21,6 +25,37 @@ class RegistrationStatusUpdated extends Mailable
             default => 'PSA Convention Registration Update',
         };
 
-        return $this->subject($subject)->markdown('emails.registration-status-updated');
+        $qr = $this->getQr();
+        $hasQrFile = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
+
+        $mail = $this->subject($subject)->view('emails.registration-status-updated', [
+            'registration' => $this->registration,
+            'hasIdCard' => $hasQrFile,
+        ]);
+
+        if ($hasQrFile) {
+            $mail->attach(
+                Attachment::fromStorageDisk('members_qr', $qr->qr_path)
+                    ->as("PSA_ID_{$this->registration->psa_id}.png")
+                    ->withMime('image/png')
+            );
+        }
+
+        return $mail;
+    }
+
+    protected function getQr(): ?MemberQr
+    {
+        if ($this->registration->status !== Registration::STATUS_APPROVED) {
+            return null;
+        }
+
+        $member = Member::find($this->registration->psa_id);
+
+        if (! $member) {
+            return null;
+        }
+
+        return MemberQr::where('member_id_no', $member->member_id_no)->first();
     }
 }

@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Filament\Resources\Registrations\Tables;
+use App\Services\MemberQrService;
+use App\Mail\MemberQrGenerated;
+use Illuminate\Support\Facades\Mail;
 
 use App\Models\Member;
 use App\Models\Registration;
@@ -392,17 +395,60 @@ class RegistrationsTable
                     ])
                     ->action(fn () => null),
 
-                Action::make('approve')
-                    ->label('Approve')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->visible(fn (Registration $r) => $r->isPending())
-                    ->requiresConfirmation()
-                    ->action(function (Registration $r): void {
-                        $r->update(['status' => Registration::STATUS_APPROVED]);
-                        Notification::make()->title('Registration approved.')->success()->send();
+Action::make('approve')
+    ->label('Approve')
+     ->modalWidth('2xl')
+    ->icon('heroicon-o-check-circle')
+    ->color('success')
+    ->visible(fn (Registration $r) => $r->isPending())
+    ->requiresConfirmation()
+    ->modalHeading('Approve Registration & Send ID Card')
+    ->modalDescription('This will approve the registration and email the member their ID card. Review the details below before confirming.')
+    ->modalSubmitActionLabel('Approve & Send Email')
+    ->infolist([
+        Section::make('Email Preview')
+            ->schema([
+                TextEntry::make('preview_to')
+                    ->label('To')
+                    ->state(fn (Registration $r) => Member::find($r->psa_id)?->mem_email_address ?? 'No email on file'),
+
+                TextEntry::make('preview_subject')
+                    ->label('Subject')
+                    ->state('Your PSA Membership ID Card'),
+
+                ImageEntry::make('preview_id_card')
+                    ->label('ID Card Preview')
+                    ->columnSpanFull()
+                    ->height(400)
+                    ->visible(fn (Registration $r) => Member::find($r->psa_id)?->qr !== null)
+                    ->getStateUsing(function (Registration $r) {
+                        $member = Member::find($r->psa_id);
+                        return $member?->qr
+                            ? app(MemberQrService::class)->url($member->qr)
+                            : null;
                     }),
 
+                TextEntry::make('preview_id_card_pending')
+                    ->label('ID Card')
+                    ->visible(fn (Registration $r) => Member::find($r->psa_id)?->qr === null)
+                    ->state('GENERATE A QR CODE BEFORE SENDING.'),
+            ]),
+    ])
+    ->action(function (Registration $r): void {
+        $r->update(['status' => Registration::STATUS_APPROVED]);
+
+        $member = Member::find($r->psa_id);
+
+        if ($member) {
+            app(MemberQrService::class)->generate($member);
+
+            if ($member->mem_email_address) {
+                Mail::to($member->mem_email_address)->send(new MemberQrGenerated($member, $r));
+            }
+        }
+
+        Notification::make()->title('Registration approved.')->success()->send();
+    }),
                 Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
@@ -446,14 +492,31 @@ class RegistrationsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+BulkAction::make('approve_selected')
+    ->label('Approve Selected')
+    ->icon('heroicon-o-check-circle')
+    ->color('success')
+    ->requiresConfirmation()
+    ->modalHeading('Approve Selected Registrations')
+    ->modalDescription(fn ($records) => 'This will approve ' . $records->count() . ' registration(s) and email each member their ID card. This cannot be undone.')
+    ->modalSubmitActionLabel('Approve & Send All')
+    ->action(function ($records) {
+        $service = app(MemberQrService::class);
 
-                    BulkAction::make('approve_selected')
-                        ->label('Approve Selected')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->action(fn ($records) => $records->each->update(['status' => Registration::STATUS_APPROVED])),
+        $records->each(function (Registration $r) use ($service) {
+            $r->update(['status' => Registration::STATUS_APPROVED]);
 
+            $member = Member::find($r->psa_id);
+
+            if ($member) {
+                $service->generate($member);
+
+                if ($member->mem_email_address) {
+                    Mail::to($member->mem_email_address)->send(new MemberQrGenerated($member, $r));
+                }
+            }
+        });
+    }),
                     BulkAction::make('reject_selected')
                         ->label('Reject Selected')
                         ->icon('heroicon-o-x-circle')

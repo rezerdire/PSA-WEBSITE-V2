@@ -31,10 +31,6 @@
             ['Hospital',      $registration->hospital_name],
             ['Status',        $registration->status],
         ];
-
-        // Consistent type scale used throughout this email:
-        // 11px = eyebrow/labels, 12px = small body / info box, 13px = body / table values,
-        // 14px = card sub-heading, 22px = main heading
     @endphp
 
     <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 16px;">
@@ -125,6 +121,35 @@
                         </td>
                     </tr>
 
+                    {{-- ID Card (only when approved and a card exists) --}}
+                    @if ($isApproved && ($hasIdCard ?? false))
+                        <tr>
+                            <td style="padding-bottom: 16px;">
+                                <table width="100%" cellpadding="0" cellspacing="0"
+                                       style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;">
+                                    <tr>
+                                        <td style="padding:14px 18px;font-size:12px;color:#15803d;line-height:1.7;">
+                                            📎 Your membership ID card is attached to this email as a downloadable image file.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    @elseif ($isApproved)
+                        <tr>
+                            <td style="padding-bottom: 16px;">
+                                <table width="100%" cellpadding="0" cellspacing="0"
+                                       style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;">
+                                    <tr>
+                                        <td style="padding:14px 18px;font-size:12px;color:#c2410c;line-height:1.7;">
+                                            Your ID card has not been generated yet. It will be emailed to you separately once it becomes available.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    @endif
+
                     {{-- Rejection Title + Reason Card (only shown if admin wrote a custom message) --}}
                     @if (!$isApproved && ($registration->rejection_title || $registration->rejection_reason))
                         <tr>
@@ -156,27 +181,24 @@
                     @endif
 
                     {{-- Info Box --}}
-                    <tr>
-                        <td style="padding-bottom: 28px;">
-                            <table width="100%" cellpadding="0" cellspacing="0"
-                                   style="background:{{ $boxBg }};border:1px solid {{ $boxBorder }};border-radius:12px;">
-                                <tr>
-                                    <td style="padding:14px 18px;font-size:12px;color:{{ $boxText }};line-height:1.7;">
-                                        @if ($isApproved)
-                                            Please keep your <strong>Reference No.</strong> above for your records.
-                                            We'll see you at the convention venue — further details will be shared
-                                            closer to the event date.
-                                        @else
+                                  {{-- Info Box (rejection case only) --}}
+                    @if (!$isApproved)
+                        <tr>
+                            <td style="padding-bottom: 28px;">
+                                <table width="100%" cellpadding="0" cellspacing="0"
+                                       style="background:{{ $boxBg }};border:1px solid {{ $boxBorder }};border-radius:12px;">
+                                    <tr>
+                                        <td style="padding:14px 18px;font-size:12px;color:{{ $boxText }};line-height:1.7;">
                                             You're welcome to update your details and resubmit your registration
                                             using the same PSA ID. If you have questions about this decision,
                                             please reach out to the PSA secretariat and reference your PSA ID
                                             <strong>{{ $registration->psa_id }}</strong>.
-                                        @endif
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    @endif
 
                     {{-- Footer --}}
                     <tr>
