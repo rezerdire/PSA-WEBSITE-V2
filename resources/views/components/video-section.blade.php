@@ -5,13 +5,14 @@ use Livewire\Component;
 new class extends Component
 {
     public string $videoUrl = 'video/simwarsvideo.mp4';
-    public ?string $mobileVideoUrl = null; // optional separate portrait file
+    public ?string $mobileVideoUrl = null;
     public ?string $poster = null;
     public string $title = 'Sim Wars';
+    public bool $forcePortrait = false; // true = always portrait, even on desktop
 };
 ?>
 
-<section id="sim-wars" class="py-24 bg-slate-50">
+<section class="py-24 bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="text-center mb-16">
@@ -25,10 +26,10 @@ new class extends Component
                 {{ $title }}
             </h2>
         </div>
-
-        <div class="max-w-md sm:max-w-2xl lg:max-w-4xl mx-auto">
+        
+<div class="{{ $forcePortrait ? 'max-w-sm' : 'max-w-md sm:max-w-2xl lg:max-w-7xl' }} mx-auto">
             <div class="border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300">
-                <div class="relative rounded-2xl overflow-hidden bg-black aspect-[9/16] sm:aspect-video">
+                <div class="relative rounded-2xl overflow-hidden bg-black {{ $forcePortrait ? 'aspect-[9/16]' : 'aspect-[9/16] sm:aspect-video' }}">
                     <video
                         class="w-full h-full object-contain"
                         controls

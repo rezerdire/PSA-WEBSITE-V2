@@ -13,7 +13,7 @@ new class extends Component
 
 @section('content')
     <x-hero-section />
-   <livewire:video-section videoUrl="video/Elimination Round Winners.mp4" title="TNT ELIMINATION ROUND WINNERS" />
+   <livewire:video-section videoUrl="video/Elimination Round Winners.mp4" title="TNT ELIMINATION ROUND WINNERS" :forcePortrait="true"/>
 
 
    <livewire:video-section videoUrl="video/simwarsvideo.mp4" title="Sim Wars" />
