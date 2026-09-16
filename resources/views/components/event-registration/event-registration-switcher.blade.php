@@ -56,7 +56,16 @@
             <livewire:event-registration.event-reg-form :key="'event-reg-form-' . $mode" />
         </x-event-registration.form-layout>
     @else
+
+        <livewire:event-registration.bank-details
+            :bank-name="'BPI'"
+            :account-number="'4433-1136-03'"
+            :account-name="'Philippine Society of Anesthesiologists, Inc.'"
+            :logo="'bpilogo.png'"
+            :fees="['Non-Member Fee' => 9500, ]"
+        />
         <x-event-registration.form-layout>
+            
             <livewire:event-registration.event-registration-guest :key="'event-reg-form-guest-' . $mode" />
         </x-event-registration.form-layout>
     @endif
