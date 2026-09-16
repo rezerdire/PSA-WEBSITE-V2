@@ -47,6 +47,8 @@
         @endunless
 
         {{-- Conditional Form --}}
+            {{-- <x-event-registration.bank-details /> --}}
+
     @if ($mode === 'member')
             <livewire:event-registration.psa-checker :key="'psa-checker-' . $mode" />
 
@@ -61,5 +63,3 @@
 
     </div>
 
-
-    {{-- switcheru HAHHAHA --}}

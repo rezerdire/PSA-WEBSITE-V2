@@ -4,6 +4,7 @@ use App\Models\Member;
 use App\Models\Registration;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\On;
 use Illuminate\Validation\Rule;
 use App\Mail\RegistrationConfirmed;
 use Illuminate\Support\Facades\Mail;
@@ -40,7 +41,7 @@ new class extends Component {
     public bool $paymentUploading = false;
     public bool $discountUploading = false;
 
-    // NEW: confirmation-before-submit step
+    // confirmation-before-submit step
     public bool $showConfirm = false;
 
     public bool $submitted = false;
@@ -51,6 +52,39 @@ new class extends Component {
         'LM' => 'Life Member',
         'TM' => 'Trainee Member',
     ];
+
+    // registration fee per membership type (PHP)
+    protected const MEM_FEE_MAP = [
+        'RM' => 8000,
+        'LM' => 0,
+        'TM' => 6500,
+    ];
+
+    // registration window shown in the indicator banner
+    protected const REG_PERIOD_START = 'September 1, 2026';
+    protected const REG_PERIOD_END = 'November 9, 2026';
+
+    // Senior Citizen / PWD discount rate
+    protected const SENIOR_DISCOUNT_RATE = 0.25;
+
+    // bank details for manual payment
+    protected const BANK_NAME = 'BPI';
+    protected const BANK_ACCOUNT_NUMBER = '4433-1136-03';
+    protected const BANK_ACCOUNT_NAME = 'Philippine Society of Anesthesiologists, Inc.';
+
+    /**
+     * Fired when the user clicks a row in the PSA ID Checker component.
+     * Auto-fills the PSA ID field and immediately runs the same
+     * verify() flow as if they'd typed it in and clicked "Verify".
+     */
+    #[On('psa-id-selected')]
+    public function onPsaIdSelected(string $psaId): void
+    {
+        $this->psaId = $psaId;
+        $this->resetErrorBag('psaId');
+        $this->verify();
+        $this->dispatch('scroll-to-verify');
+    }
 
     public function verify(): void
     {
@@ -104,6 +138,62 @@ new class extends Component {
         return $this->membership === 'LM';
     }
 
+    // fee for the currently verified membership type, formatted for display (no discount applied)
+    public function getFeeLabel(?string $membership = null): string
+    {
+        $membership = $membership ?? $this->membership;
+        $fee = self::MEM_FEE_MAP[$membership] ?? null;
+
+        if ($fee === null) {
+            return '—';
+        }
+
+        return $fee === 0 ? 'FREE' : 'PHP ' . number_format($fee, 0) . '.00';
+    }
+
+    // raw amount actually due, after the Senior Citizen/PWD discount (if applicable)
+    public function getAmountDue(): ?float
+    {
+        $fee = self::MEM_FEE_MAP[$this->membership] ?? null;
+
+        if ($fee === null) {
+            return null;
+        }
+
+        if ($fee > 0 && $this->discountType === 'senior_disc') {
+            $fee = $fee - ($fee * self::SENIOR_DISCOUNT_RATE);
+        }
+
+        return $fee;
+    }
+
+    // formatted amount actually due — this is what should be paid/shown as "Amount to pay"
+    public function getAmountDueLabel(): string
+    {
+        $fee = $this->getAmountDue();
+
+        if ($fee === null) {
+            return '—';
+        }
+
+        return $fee == 0 ? 'FREE' : 'PHP ' . number_format($fee, 0) . '.00';
+    }
+
+    /**
+     * Guards against a mismatched discount state. If the discount type is
+     * anything other than 'senior_disc' (including 'none'/empty/tampered),
+     * we force it back to 'non_disc' and drop any uploaded discount image.
+     * Since getAmountDue()/getAmountDueLabel() key off $discountType, the
+     * amount due automatically reverts to the full membership fee.
+     */
+    public function normalizeDiscount(): void
+    {
+        if ($this->discountType !== 'senior_disc') {
+            $this->discountType = 'non_disc';
+            $this->discountImg = null;
+        }
+    }
+
     public function resetVerification(): void
     {
         $this->psaId = '';
@@ -138,7 +228,7 @@ new class extends Component {
     }
 
     /**
-     * NEW: Step before the real submit. Runs full validation (and the
+     * Step before the real submit. Runs full validation (and the
      * same guards submit() used to run up front) and, if everything
      * passes, opens the "please double-check" confirmation modal
      * instead of saving anything yet.
@@ -160,6 +250,8 @@ new class extends Component {
             $this->discountImg = null;
             $this->paymentProof = null;
         }
+
+        $this->normalizeDiscount();
 
         $this->validate();
 
@@ -192,6 +284,8 @@ new class extends Component {
             $this->discountImg = null;
             $this->paymentProof = null;
         }
+
+        $this->normalizeDiscount();
 
         $this->validate();
 
@@ -268,8 +362,8 @@ new class extends Component {
 {{-- FRONTEND --}}
 <div class="p-6 md:p-10" x-data
     x-on:registration-submitted.window="$nextTick(() => { document.getElementById('registration-success')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
-    x-on:validation-failed.window="$nextTick(() => { document.getElementById('error-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })">
-    {{-- script that will scroll to the registration success section form every time a user submit a registration --}}
+    x-on:validation-failed.window="$nextTick(() => { document.getElementById('error-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
+    x-on:scroll-to-verify.window="$nextTick(() => { document.getElementById('step1-verify')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })">
     @if ($submitted)
         <div class="max-w-lg mx-auto py-10" id="registration-success">
 
@@ -296,7 +390,7 @@ new class extends Component {
                     Registration Summary
                 </div>
                 <div class="divide-y divide-gray-50">
-                    @foreach ([['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName], ['PSA ID', $psaId], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership], ['Email', $email], ['Contact No.', $contactNumber], ['Hospital', $hospitalName], ['Status', 'Pending Review']] as [$label, $value])
+                    @foreach ([['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName], ['PSA ID', $psaId], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership], ['Registration Fee', $this->getFeeLabel()], ['Discount', ['senior_disc' => 'Senior Citizen/PWD', 'non_disc' => 'None'][$discountType] ?? $discountType], ['Amount Paid', $this->getAmountDueLabel()], ['Email', $email], ['Contact No.', $contactNumber], ['Hospital', $hospitalName], ['Status', 'Pending Review']] as [$label, $value])
                         <div class="flex items-start gap-4 px-5 py-3">
                             <span class="text-xs text-gray-400 w-28 shrink-0 pt-0.5">{{ $label }}</span>
                             <span
@@ -331,10 +425,10 @@ new class extends Component {
         </div>
     @else
         <h2 class="text-xl font-bold mb-1" style="color: #000066;">Registration Form</h2>
-        <p class="text-gray-400 text-sm mb-8">All fields are required unless stated otherwise.</p>
+        <p class="text-gray-400 text-sm mb-6">All fields are required unless stated otherwise.</p>
 
         {{-- PSA ID Verification --}}
-        <div class="mb-8">
+        <div class="mb-8" id="step1-verify">
             <x-event-registration.section-title title="Step 1 - Verify PSA ID" />
 
             @if (!$memberVerified)
@@ -377,10 +471,29 @@ new class extends Component {
                             </p>
                         </div>
                     </div>
-                    <button type="button" wire:click="resetVerification"
-                        class="shrink-0 text-xs font-semibold text-blue-700 hover:text-blue-900 transition">
-                        Change
-                    </button>
+                    <div class="shrink-0 flex items-center gap-3">
+
+                        <button type="button" wire:click="resetVerification"
+                            class="text-xs font-semibold text-blue-700 hover:text-blue-900 transition">
+                            Change
+                        </button>
+                    </div>
+                </div>
+                <div class="sm:hidden mt-2 flex items-center gap-2">
+                    <span class="text-xs text-gray-500">Registration Fee:</span>
+                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold
+                        {{ $this->isPaymentExempt() ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' }}">
+                        {{ $this->getFeeLabel() }}
+                    </span>
+                </div>
+
+                <div class="rounded-xl border border-blue-100 bg-blue-50/60 px-5 py-3 mt-3 flex items-center justify-between gap-3">
+                    <p class="text-sm text-blue-800 leading-relaxed">
+                        Pre-Registration open <strong>{{ self::REG_PERIOD_START }}</strong> – <strong>{{ self::REG_PERIOD_END }}</strong>
+                    </p>
+                    <span class="shrink-0 text-sm font-bold {{ $this->isPaymentExempt() ? 'text-green-700' : 'text-[#000066]' }}">
+                        {{ $this->getFeeLabel() }}
+                    </span>
                 </div>
             @endif
         </div>
@@ -395,9 +508,6 @@ new class extends Component {
                 <p class="text-xs text-yellow-800">Verify your PSA ID above to unlock the registration form.</p>
             </div>
         @else
-            {{-- NEW: submit is now handled by reviewSubmission(), which validates
-                     then opens the confirmation modal. The actual save only happens
-                     when the user confirms inside that modal. --}}
             <form wire:submit.prevent="reviewSubmission">
 
                 {{-- Member Information --}}
@@ -460,7 +570,7 @@ new class extends Component {
                             <label class="block text-xs font-medium text-gray-500 mb-3">Membership Type</label>
                             <div class="space-y-2">
                                 @foreach ([['RM', 'Regular Member'], ['LM', 'Life Member'], ['TM', 'Trainee Member']] as [$code, $label])
-                                    <x-form.radio-option :value="$code" :label="$label" :active="$membership === $code"
+                                    <x-form.radio-option :value="$code" :label="$label . ' — ' . $this->getFeeLabel($code)" :active="$membership === $code"
                                         :disabled="true" color="blue" />
                                 @endforeach
                             </div>
@@ -482,7 +592,7 @@ new class extends Component {
                             <div x-data="{ disc: @entangle('discountType') }">
                                 <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
                                 <div class="space-y-2 mb-4">
-                                    @foreach ([['senior_disc', 'Senior Citizen/PWD'], ['non_disc', 'None']] as [$value, $label])
+                                    @foreach ([['senior_disc', 'Senior Citizen/PWD (25% off)'], ['non_disc', 'None']] as [$value, $label])
                                         <x-form.radio-option :value="$value" :label="$label" model="disc"
                                             color="red" />
                                     @endforeach
@@ -531,6 +641,48 @@ new class extends Component {
                 @else
                     <div class="mb-6">
                         <x-event-registration.section-title title="Proof of Payment" />
+<div class="rounded-xl border border-red-300 bg-red-50 px-5 py-4 mb-3">
+
+    <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-bold uppercase tracking-wide" style="color: #cc0000;">Bank Details</span>
+        <span class="h-px flex-1" style="background-color: #f3c2c2;"></span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <div>
+            <p class="text-[10px] text-red-400 font-medium uppercase tracking-wide mb-1">Bank</p>
+            <img src="{{ asset('bpilogo.png') }}" alt="BPI" class="w-10 h-10 object-contain">
+        </div>
+        <div>
+            <p class="text-[10px] text-red-400 font-medium uppercase tracking-wide">Account Number</p>
+            <p class="font-mono font-semibold text-gray-800">{{ self::BANK_ACCOUNT_NUMBER ?: '—' }}</p>
+        </div>
+        <div>
+            <p class="text-[10px] text-red-400 font-medium uppercase tracking-wide">Account Name</p>
+            <p class="font-semibold text-gray-800">{{ self::BANK_ACCOUNT_NAME ?: '—' }}</p>
+        </div>
+    </div>
+</div>        
+ {{-- amount-due reminder — instant client-side calc, reflects senior discount if selected --}}
+                        <div class="rounded-xl border border-gray-100 bg-blue-50/60 px-5 py-3 mb-3"
+                             x-data="{
+                                disc: @entangle('discountType'),
+                                baseFee: {{ self::MEM_FEE_MAP[$membership] ?? 0 }},
+                                rate: {{ self::SENIOR_DISCOUNT_RATE }},
+                                get amountDue() {
+                                    const fee = this.disc === 'senior_disc' ? this.baseFee - (this.baseFee * this.rate) : this.baseFee;
+                                    return fee === 0 ? 'FREE' : 'PHP ' + fee.toLocaleString('en-US') + '.00';
+                                }
+                             }">
+                            <div class="flex items-center justify-between">
+                                <span class="text-md text-blue-800"><strong>Total Amount</strong></span>
+                                <span class="text-md font-bold text-[#000066]" x-text="amountDue"></span>
+                            </div>
+                            <p class="text-md text-blue-700 mt-1" x-show="disc === 'senior_disc'" x-cloak>
+                                with 25% Senior Citizen/PWD discount.
+                            </p>
+                        </div>
+ 
                         <x-event-registration.image-upload name="payment_proof" wireModel="paymentProof"
                             label="Payment Screenshot" :required="true" color="#ac071a" />
 
@@ -552,7 +704,7 @@ new class extends Component {
                     </div>
                 @endif
 
-                {{-- Error Summary (all validation errors, shown right before Submit) --}}
+                {{-- Error Summary --}}
                 @if ($errors->any())
                     <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 mb-6" id="error-summary">
                         <p class="text-sm font-bold text-red-700 mb-2">
@@ -566,7 +718,6 @@ new class extends Component {
                     </div>
                 @endif
 
-                    {{-- submit  --}}
                 <div class="flex justify-end">
                     <button type="submit" wire:loading.attr="disabled"
                         wire:target="reviewSubmission,paymentProof,discountImg"
@@ -581,7 +732,6 @@ new class extends Component {
 
             </form>
 
-
             {{-- mobile confirmation modal --}}
             @if ($showConfirm)
 
@@ -593,13 +743,10 @@ new class extends Component {
                    sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl
                    sm:rounded-3xl sm:shadow-2xl">
 
-            {{-- Header --}}
-
                         <div class="shrink-0 px-4 py-4 sm:px-7 sm:py-6" style="background-color:#000066;">
 
                             <div class="flex items-start gap-3">
 
-                                {{-- Warning icon --}}
                                 <div
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 sm:h-12 sm:w-12">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white sm:h-6 sm:w-6"
@@ -630,10 +777,8 @@ new class extends Component {
 
                         </div>
 
-                        {{-- body --}}
                         <div class="min-h-0 flex-1 overflow-y-auto">
 
-                            {{-- Important warning --}}
                             <div class="px-4 pt-4 sm:px-7 sm:pt-5">
 
                                 <div
@@ -665,8 +810,6 @@ new class extends Component {
 
                             </div>
 
-
-                            {{-- reg details --}}
                             <div class="px-4 py-4 sm:px-7 sm:py-5">
 
                                 <div class="mb-3">
@@ -681,22 +824,18 @@ new class extends Component {
 
                                 </div>
 
-
-                                {{-- Details --}}
                                 <div class="overflow-hidden rounded-xl border border-gray-200 sm:rounded-2xl">
 
-                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount', ['senior_disc' => 'Senior Citizen / PWD', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
+                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''],  ['Discount', ['senior_disc' => 'Senior Citizen / PWD (25% off)', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Amount to Pay', $this->getAmountDueLabel(), 'font-bold'], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
                                         <div
                                             class="border-b border-gray-100 px-3.5 py-3 last:border-0
                                        sm:grid sm:grid-cols-[145px_1fr] sm:items-start sm:gap-4 sm:px-5 sm:py-3.5">
 
-                                            {{-- Label --}}
                                             <dt
                                                 class="text-[10px] font-medium uppercase tracking-wide text-gray-400 sm:text-xs sm:normal-case sm:tracking-normal">
                                                 {{ $label }}
                                             </dt>
 
-                                            {{-- Value --}}
                                             <dd
                                                 class="mt-1 min-w-0 break-words text-left text-xs font-semibold text-gray-800 sm:mt-0 sm:text-right sm:text-sm {{ $extraClass }}">
 
@@ -739,11 +878,8 @@ new class extends Component {
 
                         </div>
 
-
-                        {{-- footer --}}
                         <div class="shrink-0 border-t border-gray-100 bg-white px-4 py-3 sm:px-7 sm:py-4">
 
-                            {{-- Mobile reminder --}}
                             <p class="mb-2.5 text-center text-[10px] leading-relaxed text-gray-400 sm:hidden">
                                 Need to make a correction?
                                 <span class="font-semibold text-gray-600">
@@ -751,10 +887,8 @@ new class extends Component {
                                 </span>
                             </p>
 
-
                             <div class="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
 
-                                {{-- Confirm --}}
                                 <button type="button" wire:click="submit" wire:loading.attr="disabled"
                                     wire:target="submit"
                                     class="order-1 w-full rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:order-2 sm:w-auto sm:px-5"
@@ -771,7 +905,6 @@ new class extends Component {
                                         Confirm & Submit
 
                                     </span>
-
 
                                     <span wire:loading wire:target="submit"
                                         class="flex items-center justify-center gap-2">
@@ -791,8 +924,6 @@ new class extends Component {
 
                                 </button>
 
-
-                                {{-- Edit --}}
                                 <button type="button" wire:click="cancelReview"
                                     class="order-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition active:scale-[0.98] hover:bg-gray-50 sm:order-1 sm:w-auto sm:px-5">
 
