@@ -55,8 +55,4 @@ new class extends Component {
             @endforeach
         @endif
     </div>
-
-
-
-
 </div>
