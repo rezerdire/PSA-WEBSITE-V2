@@ -65,7 +65,7 @@ new class extends Component {
     protected const REG_PERIOD_END = 'November 9, 2026';
 
     // Senior Citizen / PWD discount rate
-    protected const SENIOR_DISCOUNT_RATE = 0.25;
+    protected const SENIOR_DISCOUNT_RATE = 0.20;
 
     // bank details for manual payment
     protected const BANK_NAME = 'BPI';
@@ -592,7 +592,7 @@ new class extends Component {
                             <div x-data="{ disc: @entangle('discountType') }">
                                 <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
                                 <div class="space-y-2 mb-4">
-                                    @foreach ([['senior_disc', 'Senior Citizen/PWD (25% off)'], ['non_disc', 'None']] as [$value, $label])
+                                    @foreach ([['senior_disc', 'Senior Citizen/PWD (20% off)'], ['non_disc', 'None']] as [$value, $label])
                                         <x-form.radio-option :value="$value" :label="$label" model="disc"
                                             color="red" />
                                     @endforeach
@@ -679,7 +679,7 @@ new class extends Component {
                                 <span class="text-md font-bold text-[#000066]" x-text="amountDue"></span>
                             </div>
                             <p class="text-md text-blue-700 mt-1" x-show="disc === 'senior_disc'" x-cloak>
-                                with 25% Senior Citizen/PWD discount.
+                                with 20% Senior Citizen/PWD discount.
                             </p>
                         </div>
  
@@ -826,7 +826,7 @@ new class extends Component {
 
                                 <div class="overflow-hidden rounded-xl border border-gray-200 sm:rounded-2xl">
 
-                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''],  ['Discount', ['senior_disc' => 'Senior Citizen / PWD (25% off)', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Amount to Pay', $this->getAmountDueLabel(), 'font-bold'], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
+                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''],  ['Discount', ['senior_disc' => 'Senior Citizen / PWD (20% off)', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Amount to Pay', $this->getAmountDueLabel(), 'font-bold'], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
                                         <div
                                             class="border-b border-gray-100 px-3.5 py-3 last:border-0
                                        sm:grid sm:grid-cols-[145px_1fr] sm:items-start sm:gap-4 sm:px-5 sm:py-3.5">
