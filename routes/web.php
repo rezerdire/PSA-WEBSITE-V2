@@ -79,3 +79,21 @@ Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')
 Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
 
 Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-registry');
+
+
+
+// account login
+Route::middleware('guest')->group(function () {
+
+Route::view('/Login', 'pages.account.account')->name('login');
+Route::view('/Activate-Account', 'pages.account.activate')->name('activate-account');
+});
+ 
+
+
+
+// Route::middleware('auth')->group(function () {
+//     Route::get('/change-password', ChangePassword::class)->name('change-password');
+//     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+// });
+ 

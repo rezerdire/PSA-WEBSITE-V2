@@ -1,4 +1,3 @@
-```php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -12,22 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('accounts', function (Blueprint $table) {
+            Schema::create('accounts', function (Blueprint $table) {
             $table->id('account_id');
 
-            // FK to members table
             $table->string('member_id_no');
 
-            // What they type in at login
             $table->string('psa_id', 50)->unique();
 
-            // Null until first password is set
             $table->string('password', 255)->nullable();
 
             $table->timestamp('email_verified_at')->nullable();
             $table->string('remember_token', 100)->nullable();
 
-            // Unique URL/token for password reset flow
             $table->string('reset_token', 255)->nullable();
             $table->timestamp('reset_token_expires_at')->nullable();
 
@@ -37,7 +32,6 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable();
 
-            // Foreign key to members.member_id_no
             $table->foreign('member_id_no')
                 ->references('member_id_no')
                 ->on('members')
@@ -54,4 +48,3 @@ return new class extends Migration
         Schema::dropIfExists('accounts');
     }
 };
-

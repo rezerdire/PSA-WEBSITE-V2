@@ -1,4 +1,3 @@
-
 <?php
 
 use Livewire\Component;
@@ -33,11 +32,19 @@ new class extends Component
             ->orderBy('mem_email_address')
             ->get(['member_id_no', 'mem_last_name', 'mem_first_name', 'mem_middle_name', 'mem_email_address']);
     }
+
+    // called when a result row is clicked — broadcasts the PSA ID to any
+    // listening component (e.g. the registration form) via a browser event 
+    public function selectMember(string $psaId): void
+    {
+        $this->dispatch('psa-id-selected', psaId: $psaId);
+    }
 };
 ?>
 
 {{-- alpine close default --}}
-<div class="bg-white rounded-2xl shadow-md overflow-hidden mb-6" x-data="{ open: false, tab: 'lastName' }">
+<div class="bg-white rounded-2xl shadow-md overflow-hidden mb-6" x-data="{ open: false, tab: 'lastName' }"
+    x-on:psa-id-selected.window="open = false">
     {{-- line header --}}
 <div class="h-1.5 bg-gradient-to-r from-[#000066] to-[#0000aa]"></div>
     <div class="p-6">
@@ -94,9 +101,14 @@ new class extends Component
 
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                        Results
-                    </label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            Results
+                        </label>
+                        @if(!$this->results->isEmpty())
+                            <span class="text-[10px] text-gray-400">Tap a result to select</span>
+                        @endif
+                    </div>
                     @if(strlen(trim($lastName)) < 2)
                         <div class="border border-dashed border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-400 text-center">
                             Results will appear here
@@ -110,7 +122,9 @@ new class extends Component
                     @else
                         <ul class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
                             @foreach($this->results as $member)
-                                <li class="px-3 py-2.5 flex items-center justify-between gap-2">
+                                <li wire:click="selectMember('{{ $member->member_id_no }}')"
+                                    wire:key="lastname-result-{{ $member->member_id_no }}"
+                                    class="px-3 py-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#f4f4fb] active:bg-[#e8e8f7] transition">
                                     <span class="text-sm text-gray-700 truncate">
                                         {{ $member->mem_last_name }}, {{ $member->mem_first_name }} {{ $member->mem_middle_name }}
                                     </span>
@@ -144,9 +158,14 @@ new class extends Component
 
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                        Results
-                    </label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            Results
+                        </label>
+                        @if(!$this->emailResults->isEmpty())
+                            <span class="text-[10px] text-gray-400">Tap a result to select</span>
+                        @endif
+                    </div>
                     @if(strlen(trim($email)) < 3)
                         <div class="border border-dashed border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-400 text-center">
                             Results will appear here
@@ -160,7 +179,9 @@ new class extends Component
                     @else
                         <ul class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
                             @foreach($this->emailResults as $member)
-                                <li class="px-3 py-2.5 flex flex-col gap-0.5">
+                                <li wire:click="selectMember('{{ $member->member_id_no }}')"
+                                    wire:key="email-result-{{ $member->member_id_no }}"
+                                    class="px-3 py-2.5 flex flex-col gap-0.5 cursor-pointer hover:bg-[#f4f4fb] active:bg-[#e8e8f7] transition">
                                     <div class="flex items-center justify-between gap-2">
                                         <span class="text-sm text-gray-700 truncate">
                                             FULL NAME: {{ $member->mem_last_name }}, {{ $member->mem_first_name }} {{ $member->mem_middle_name }}
@@ -180,4 +201,6 @@ new class extends Component
 
         </div>
     </div>
+
 </div>
+

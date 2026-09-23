@@ -2,47 +2,41 @@
 
 use Livewire\Component;
 
-new class extends Component
-{
+new class extends Component {
     //
 };
 ?>
 
-<section
-    x-data="{
-        slide: 0,
-        total: 5,
-        timer: null,
+<section x-data="{
+    slide: 0,
+    total: 5,
+    timer: null,
 
-        next() {
-            this.slide = (this.slide + 1) % this.total
-        },
+    next() {
+        this.slide = (this.slide + 1) % this.total
+    },
 
-        prev() {
-            this.slide = (this.slide - 1 + this.total) % this.total
-        },
+    prev() {
+        this.slide = (this.slide - 1 + this.total) % this.total
+    },
 
-        go(i) {
-            this.slide = i
-        },
+    go(i) {
+        this.slide = i
+    },
 
-        start() {
-            this.stop()
-            this.timer = setInterval(() => this.next(), 10000)
-        },
+    start() {
+        this.stop()
+        this.timer = setInterval(() => this.next(), 10000)
+    },
 
-        stop() {
-            if (this.timer) {
-                clearInterval(this.timer)
-                this.timer = null
-            }
+    stop() {
+        if (this.timer) {
+            clearInterval(this.timer)
+            this.timer = null
         }
-    }"
-    x-init="start()"
-    @mouseenter="stop()"
-    @mouseleave="start()"
-    class="relative min-h-screen overflow-hidden bg-white pt-16"
->
+    }
+}" x-init="start()" @mouseenter="stop()" @mouseleave="start()"
+    class="relative min-h-screen overflow-hidden bg-white pt-16">
 
     {{-- med bg --}}
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
@@ -59,40 +53,32 @@ new class extends Component
         <div class="absolute top-[35%] left-[8%] h-3 w-3 rounded-full bg-cyan-400/30"></div>
         <div class="absolute bottom-[25%] right-[7%] h-5 w-5 rounded-full bg-blue-300/30"></div>
 
-   {{-- line art from my BFF --}}
-        <svg
-            class="absolute left-0 top-0 h-full w-full opacity-[0.07]"
-            viewBox="0 0 1440 900"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-        >
+        {{-- line art from my BFF --}}
+        <svg class="absolute left-0 top-0 h-full w-full opacity-[0.07]" viewBox="0 0 1440 900" fill="none"
+            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 
             {{-- Medical cross --}}
             <g stroke="#2563EB" stroke-width="3">
-                <rect x="105" y="130" width="80" height="30" rx="8"/>
-                <rect x="130" y="105" width="30" height="80" rx="8"/>
+                <rect x="105" y="130" width="80" height="30" rx="8" />
+                <rect x="130" y="105" width="30" height="80" rx="8" />
             </g>
 
             {{-- Stethoscope --}}
             <g stroke="#2563EB" stroke-width="3">
-                <path
-                    d="M120 290
+                <path d="M120 290
                        C120 350 150 390 205 390
-                       C260 390 290 350 290 290"
-                />
-                <path d="M120 290V250"/>
-                <path d="M290 290V250"/>
-                <circle cx="120" cy="240" r="14"/>
-                <circle cx="290" cy="240" r="14"/>
-                <path d="M205 390V425"/>
-                <circle cx="205" cy="450" r="25"/>
-                <path d="M205 425V450"/>
+                       C260 390 290 350 290 290" />
+                <path d="M120 290V250" />
+                <path d="M290 290V250" />
+                <circle cx="120" cy="240" r="14" />
+                <circle cx="290" cy="240" r="14" />
+                <path d="M205 390V425" />
+                <circle cx="205" cy="450" r="25" />
+                <path d="M205 425V450" />
             </g>
 
             {{-- ECG --}}
-            <path
-                d="
+            <path d="
                     M0 690
                     H160
                     L190 690
@@ -120,231 +106,356 @@ new class extends Component
                     L1330 755
                     L1360 690
                     H1440
-                "
-                stroke="#2563EB"
-                stroke-width="3"
-            />
+                " stroke="#2563EB" stroke-width="3" />
 
             {{-- DNA / molecule style medical decoration --}}
             <g stroke="#06B6D4" stroke-width="2">
-                <path d="M1120 100 C1180 140 1180 210 1120 250"/>
-                <path d="M1200 100 C1140 140 1140 210 1200 250"/>
+                <path d="M1120 100 C1180 140 1180 210 1120 250" />
+                <path d="M1200 100 C1140 140 1140 210 1200 250" />
 
-                <line x1="1140" y1="125" x2="1180" y2="125"/>
-                <line x1="1135" y1="155" x2="1185" y2="155"/>
-                <line x1="1135" y1="190" x2="1185" y2="190"/>
-                <line x1="1140" y1="225" x2="1180" y2="225"/>
+                <line x1="1140" y1="125" x2="1180" y2="125" />
+                <line x1="1135" y1="155" x2="1185" y2="155" />
+                <line x1="1135" y1="190" x2="1185" y2="190" />
+                <line x1="1140" y1="225" x2="1180" y2="225" />
             </g>
 
             {{-- Medical pulse circles --}}
             <g stroke="#2563EB" stroke-width="2">
-                <circle cx="1280" cy="350" r="60"/>
-                <circle cx="1280" cy="350" r="42"/>
-                <circle cx="1280" cy="350" r="18"/>
+                <circle cx="1280" cy="350" r="60" />
+                <circle cx="1280" cy="350" r="42" />
+                <circle cx="1280" cy="350" r="18" />
             </g>
 
             {{-- Small medical plus signs --}}
             <g stroke="#06B6D4" stroke-width="3">
-                <path d="M430 170h35M447.5 152.5v35"/>
-                <path d="M960 280h35M977.5 262.5v35"/>
-                <path d="M1330 540h35M1347.5 522.5v35"/>
+                <path d="M430 170h35M447.5 152.5v35" />
+                <path d="M960 280h35M977.5 262.5v35" />
+                <path d="M1330 540h35M1347.5 522.5v35" />
             </g>
 
         </svg>
 
         {{-- Dot grid --}}
-        <svg
-            class="absolute inset-0 h-full w-full opacity-[0.035]"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg class="absolute inset-0 h-full w-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <pattern
-                    id="medical-grid"
-                    width="32"
-                    height="32"
-                    patternUnits="userSpaceOnUse"
-                >
-                    <circle
-                        cx="2"
-                        cy="2"
-                        r="1.5"
-                        fill="#2563EB"
-                    />
+                <pattern id="medical-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1.5" fill="#2563EB" />
                 </pattern>
             </defs>
 
-            <rect
-                width="100%"
-                height="100%"
-                fill="url(#medical-grid)"
-            />
+            <rect width="100%" height="100%" fill="url(#medical-grid)" />
         </svg>
 
     </div>
 
 
-{{-- hero section --}}
+    {{-- hero section --}}
     <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
 
- {{-- slide start --}}
+        {{-- slide start --}}
         <div class="relative grid">
+            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-500"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0" class="col-start-1 row-start-1" style="display: none;">
+                <div class="grid items-center gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 xl:gap-16">
 
-{{-- slide 0 --}}
-<div
-    x-show="slide === 0"
-    x-transition:enter="transition ease-out duration-700"
-    x-transition:enter-start="opacity-0 translate-x-6"
-    x-transition:enter-end="opacity-100 translate-x-0"
-    x-transition:leave="transition ease-in duration-500"
-    x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0 -translate-x-6"
-    class="col-start-1 row-start-1"
-    style="display: none;"
->
+    
+                    <div class="max-w-2xl">
 
-    <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-2 lg:gap-16">
+                        {{-- Announcement Label --}}
+                        <div
+                            class="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] text-blue-700">
+                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+                            The Finalists Are In!
+                        </div>
 
-        {{-- Decorative background --}}
-        <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-100/50 blur-3xl"></div>
+                        {{-- Event Name --}}
+                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-base">
+                            PSA Tagisan ng Talino 2026
+                        </p>
 
-        {{-- =========================
-            LEFT CONTENT
-        ========================== --}}
-        <div class="relative z-10 max-w-2xl">
+                        {{-- Main Heading --}}
+                        <h1
+                            class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                            The Finalists
+                            <span class="block text-blue-600">
+                                Are In!
+                            </span>
+                        </h1>
 
-            {{-- Announcement Badge --}}
-            <div
-                class="mb-7 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 shadow-sm"
-            >
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                </span>
+                        {{-- Short Highlight --}}
+                        <div class="mt-6 border-l-4 border-blue-600 pl-5">
+                            <p class="text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
+                                Final Round
+                            </p>
 
-                Results Are In
+                            <p class="mt-1 text-xl font-bold text-slate-800 sm:text-2xl">
+                                31 Institutions. One Champion.
+                            </p>
+                        </div>
 
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="m5 12 5 5L20 7"/>
-                </svg>
-            </div>
+                        {{-- Announcement --}}
+                        <div class="mt-6 space-y-4 text-base leading-7 text-slate-600 sm:text-lg">
 
-            {{-- Eyebrow --}}
-            <div class="mb-4 flex items-center gap-3">
-                <span class="h-px w-8 bg-blue-600"></span>
+                            <p>
+                                Congratulations to the
+                                <strong class="font-bold text-slate-900">
+                                    31 institutions
+                                </strong>
+                                who have earned their spot in the
+                                <strong class="font-bold text-blue-600">
+                                    PSA Tagisan ng Talino 2026 Final Round!
+                                </strong>
+                            </p>
 
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-sm">
-                    Philippines Anesthesia Crisis Competition 2026
-                </p>
-            </div>
+                            <p>
+                                Your hard work, teamwork, and knowledge have brought you to the final stage.
+                                Now, the ultimate challenge awaits!
+                            </p>
 
-            {{-- Main Heading --}}
-            <h1 class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl xl:text-7xl">
-                Anesthesia
-                <span class="block text-blue-600">
-                    Sim Wars
-                </span>
+                        </div>
+                        <div class="mt-7">
 
-                <span class="mt-1 block text-slate-900">
-                    Trilogy
-                </span>
-            </h1>
+                            <p class="text-base font-semibold leading-7 text-slate-700 sm:text-lg">
+                                Who will claim the title of
+                                <span class="font-bold text-blue-600">
+                                    PSA Tagisan ng Talino 2026 Champion?
+                                </span>
 
-            {{-- Episode --}}
-            <div class="mt-6 flex items-start gap-4">
-                <div class="mt-2 h-10 w-1 shrink-0 rounded-full bg-gradient-to-b from-blue-600 to-cyan-400"></div>
+                            </p>
 
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                        Episode 01
-                    </p>
-
-                    <p class="mt-1 text-xl font-bold leading-tight text-slate-700 sm:text-2xl">
-                        Elimination Round
-                    </p>
-                </div>
-            </div>
-
-            {{-- Description --}}
-            <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                    We are pleased to announce the winning teams of
-                <span class="font-semibold text-slate-700">
-                    Episode 1
-                </span>
-                in the Sim Wars trilogy!
-               <br><br>
-                Held on <span class="font-semibold text-slate-700"> August 9, 2026 at the Aesculap Academy Philippines, </span> Episode 1 showcased incredible teamwork, skill, and clinical excellence. 
-              <br><br> To all participating teams, thank you for bringing your passion, energy, and competitive spirit to the first episode of the trilogy. And to our 10 winning teams—congratulations on an outstanding performance!
-            </p>
-
+                        </div>
         
+                        <div class="mt-5 grid gap-3 sm:grid-cols-2">
 
-        </div>
+                            {{-- Date --}}
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="flex items-start gap-3">
+
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                            Finals
+                                        </p>
+
+                                        <p class=" text-sm font-bold text-slate-800 sm:text-base">
+                                            October 24, 2026
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {{-- Venue --}}
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="flex items-start gap-3">
+
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                            Venue
+                                        </p>
+
+                                        <p class="text-sm font-bold  text-slate-800 sm:text-base">
+                                            Crowne Plaza Manila Galleria
+                                        </p>
+
+                                        <p class="mt-0.5 text-xs text-slate-500">
+                                            Ortigas Center, Quezon City
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+            
 
 
-        {{-- =========================
-            RIGHT IMAGE
-        ========================== --}}
-        <div class="relative z-10 flex justify-center lg:justify-end">
+                    </div>
 
-            {{-- Outer Glow --}}
-            <div class="absolute inset-4 rounded-[3rem] bg-blue-400/20 blur-3xl"></div>
 
-            {{-- Decorative circles --}}
-            <div class="absolute -right-4 -top-6 h-24 w-24 rounded-full border border-blue-200/60"></div>
-            <div class="absolute -bottom-5 -left-5 h-20 w-20 rounded-full border border-cyan-200/60"></div>
+                    <div class="flex items-center justify-center lg:justify-end">
 
-            {{-- Image Card --}}
-            <div
-                class="group relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl"
-            >
-
-                {{-- Image --}}
-                <div class="relative overflow-hidden rounded-[1.5rem] bg-slate-100">
-
-                    <img
-                        src="{{ asset('images/simwars/simwarswinner.jpg') }}"
-                        alt="PSA Sim Wars 2026 Trilogy Competition Episode 1 Elimination Round Winners"
-                        class="relative max-h-[560px] w-full object-contain transition duration-700 ease-out group-hover:scale-[1.02]"
-                    />
-
-                    {{-- Image Gradient --}}
-                    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+                        <div class="group w-full max-w-2xl  overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl">
+                            <img src="{{ asset('images/tnt/tnt-2026-elimination-round-winner.png') }}"
+                                alt="PSA Tagisan ng Talino 2026 Finalists"
+                                class="mx-auto max-h-[680px] w-full rounded-[2rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]">
+                        </div>
+                    </div>
 
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-            {{-- slide 1 Research Forum 2026 --}}
-            <div
-                x-show="slide === 1"
-                x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4"
-                class="col-start-1 row-start-1"
-                style="display: none;"
-            >
+
+
+            {{-- slide 1 --}}
+            <div x-show="slide === 1" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-6" x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-6" class="col-start-1 row-start-1"
+                style="display: none;">
+
+                <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-2 lg:gap-16">
+
+                    {{-- Decorative background --}}
+                    <div
+                        class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl">
+                    </div>
+                    <div
+                        class="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-100/50 blur-3xl">
+                    </div>
+
+                    {{-- =========================
+                        LEFT CONTENT
+                    ========================== --}}
+                    <div class="relative z-10 max-w-2xl">
+
+                        {{-- Announcement Badge --}}
+                        <div
+                            class="mb-7 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 shadow-sm">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span
+                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                            </span>
+
+                            Results Are In
+
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m5 12 5 5L20 7" />
+                            </svg>
+                        </div>
+
+                        {{-- Eyebrow --}}
+                        <div class="mb-4 flex items-center gap-3">
+                            <span class="h-px w-8 bg-blue-600"></span>
+
+                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-sm">
+                                Philippines Anesthesia Crisis Competition 2026
+                            </p>
+                        </div>
+
+                        {{-- Main Heading --}}
+                        <h1
+                            class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl xl:text-7xl">
+                            Anesthesia
+                            <span class="block text-blue-600">
+                                Sim Wars
+                            </span>
+
+                            <span class="mt-1 block text-slate-900">
+                                Trilogy
+                            </span>
+                        </h1>
+
+                        {{-- Episode --}}
+                        <div class="mt-6 flex items-start gap-4">
+                            <div
+                                class="mt-2 h-10 w-1 shrink-0 rounded-full bg-gradient-to-b from-blue-600 to-cyan-400">
+                            </div>
+
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                                    Episode 01
+                                </p>
+
+                                <p class="mt-1 text-xl font-bold leading-tight text-slate-700 sm:text-2xl">
+                                    Elimination Round
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Description --}}
+                        <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
+                            We are pleased to announce the winning teams of
+                            <span class="font-semibold text-slate-700">
+                                Episode 1
+                            </span>
+                            in the Sim Wars trilogy!
+                            <br><br>
+                            Held on <span class="font-semibold text-slate-700"> August 9, 2026 at the Aesculap Academy
+                                Philippines, </span> Episode 1 showcased incredible teamwork, skill, and clinical
+                            excellence.
+                            <br><br> To all participating teams, thank you for bringing your passion, energy, and
+                            competitive spirit to the first episode of the trilogy. And to our 10 winning
+                            teams—congratulations on an outstanding performance!
+                        </p>
+
+
+
+                    </div>
+
+
+                    {{-- =========================
+                        RIGHT IMAGE
+                    ========================== --}}
+                    <div class="relative z-10 flex justify-center lg:justify-end">
+
+                        {{-- Outer Glow --}}
+                        <div class="absolute inset-4 rounded-[3rem] bg-blue-400/20 blur-3xl"></div>
+
+                        {{-- Decorative circles --}}
+                        <div class="absolute -right-4 -top-6 h-24 w-24 rounded-full border border-blue-200/60"></div>
+                        <div class="absolute -bottom-5 -left-5 h-20 w-20 rounded-full border border-cyan-200/60"></div>
+
+                        {{-- Image Card --}}
+                        <div
+                            class="group relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl">
+
+                            {{-- Image --}}
+                            <div class="relative overflow-hidden rounded-[1.5rem] bg-slate-100">
+
+                                <img src="{{ asset('images/simwars/simwarswinner.jpg') }}"
+                                    alt="PSA Sim Wars 2026 Trilogy Competition Episode 1 Elimination Round Winners"
+                                    class="relative max-h-[560px] w-full object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
+
+                                {{-- Image Gradient --}}
+                                <div
+                                    class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- slide 2 Research Forum 2026 --}}
+            <div x-show="slide === 2" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
+                style="display: none;">
 
                 <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
 
                     <div class="max-w-2xl">
 
-                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                        <div
+                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
                             <span class="h-2 w-2 rounded-full bg-blue-600"></span>
                             Call for Abstracts
                         </div>
@@ -353,7 +464,8 @@ new class extends Component
                             Share Your Discoveries
                         </p>
 
-                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1
+                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             Research
                             <span class="text-blue-600">Forum</span>
                             <span class="block text-slate-400">2026</span>
@@ -367,19 +479,14 @@ new class extends Component
 
                         <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
 
-                            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="19"
-                                    height="19"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                    <path d="M3 9h18"/>
-                                    <path d="M9 21V9"/>
+                            <div
+                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <path d="M3 9h18" />
+                                    <path d="M9 21V9" />
                                 </svg>
                             </div>
 
@@ -395,56 +502,38 @@ new class extends Component
 
                         <div class="mt-8 flex flex-wrap gap-3">
 
-                            <a
-                                href="https://compose.mail.yahoo.com/?to=psaresearchforum@gmail.com"
-                                target="_blank"
+                            <a href="https://compose.mail.yahoo.com/?to=psaresearchforum@gmail.com" target="_blank"
                                 rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
-                            >
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
                                 Submit Your Abstract
 
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="17"
-                                    height="17"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M5 12h14"/>
-                                    <path d="m12 5 7 7-7 7"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14" />
+                                    <path d="m12 5 7 7-7 7" />
                                 </svg>
                             </a>
                             {{-- guideline button downloadable --}}
-                                    <a
-                        href="{{ asset('Research_Forum_Guidelines.pdf') }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                        class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-700"
-                    >
-                        <!-- PDF Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            class="h-5 w-5">
-                            <path d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
-                        </svg>
+                            <a href="{{ asset('Research_Forum_Guidelines.pdf') }}" target="_blank"
+                                rel="noopener noreferrer" download
+                                class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-700">
+                                <!-- PDF Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="h-5 w-5">
+                                    <path
+                                        d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
+                                </svg>
 
-                        <span>Download Guidelines</span>
+                                <span>Download Guidelines</span>
 
-                        <!-- Download Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                            stroke="currentColor"
-                            class="h-4 w-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-                        </svg>
-                    </a>
+                                <!-- Download Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                                </svg>
+                            </a>
                         </div>
 
                     </div>
@@ -454,13 +543,12 @@ new class extends Component
 
                         <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
 
-                        <div class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                        <div
+                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
-                            <img
-                                src="{{ asset('images/researchforum2026.jpg') }}"
+                            <img src="{{ asset('images/researchforum2026.jpg') }}"
                                 alt="PSA Research Forum 2026 - Call for Abstracts"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain"
-                            />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
 
                         </div>
 
@@ -471,24 +559,19 @@ new class extends Component
             </div>
 
 
-            {{-- slide 2 interesting case --}}
-            <div
-                x-show="slide === 2"
-                x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4"
-                class="col-start-1 row-start-1"
-                style="display: none;"
-            >
+            {{-- slide 3 interesting case --}}
+            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
+                style="display: none;">
 
                 <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
 
                     <div class="max-w-2xl">
 
-                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                        <div
+                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
                             <span class="h-2 w-2 rounded-full bg-blue-600"></span>
                             Call for Entries
                         </div>
@@ -497,7 +580,8 @@ new class extends Component
                             Clinical Knowledge & Innovation
                         </p>
 
-                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1
+                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             PSA
                             <span class="text-blue-600">
                                 Interesting Case
@@ -514,19 +598,14 @@ new class extends Component
 
                         <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
 
-                            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="19"
-                                    height="19"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                    <path d="M3 9h18"/>
-                                    <path d="M9 21V9"/>
+                            <div
+                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <path d="M3 9h18" />
+                                    <path d="M9 21V9" />
                                 </svg>
                             </div>
 
@@ -542,32 +621,21 @@ new class extends Component
 
                         <div class="mt-8 flex flex-wrap gap-3">
 
-                            <a
-                                href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com"
-                                target="_blank"
+                            <a href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com" target="_blank"
                                 rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
-                            >
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
                                 Submit Your Entry
 
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="17"
-                                    height="17"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M5 12h14"/>
-                                    <path d="m12 5 7 7-7 7"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14" />
+                                    <path d="m12 5 7 7-7 7" />
                                 </svg>
                             </a>
 
-                            <a
-                                href="{{ route('Interesting-Case') }}"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600"
-                            >
+                            <a href="{{ route('Interesting-Case') }}"
+                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600">
                                 Learn More
                             </a>
 
@@ -580,13 +648,12 @@ new class extends Component
 
                         <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
 
-                        <div class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                        <div
+                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
-                            <img
-                                src="{{ asset('images/InterestingCase.png') }}"
+                            <img src="{{ asset('images/InterestingCase.png') }}"
                                 alt="PSA Interesting Case Competition 2026"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain"
-                            />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
 
                         </div>
 
@@ -597,24 +664,19 @@ new class extends Component
             </div>
 
 
-            {{-- slide 3 annual convention --}}
-            <div
-                x-show="slide === 3"
-                x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4"
-                class="col-start-1 row-start-1"
-                style="display: none;"
-            >
+            {{-- slide 4 annual convention --}}
+            <div x-show="slide === 4" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
+                style="display: none;">
 
                 <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
 
                     <div class="max-w-2xl">
 
-                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                        <div
+                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
                             <span class="h-2 w-2 rounded-full bg-blue-600"></span>
                             Upcoming Event
                         </div>
@@ -623,7 +685,8 @@ new class extends Component
                             Philippine Society of Anesthesiologists
                         </p>
 
-                        <h1 class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                        <h1
+                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                             PSA
                             <span class="text-blue-600">
                                 58<sup class="text-2xl sm:text-3xl">th</sup>
@@ -632,17 +695,12 @@ new class extends Component
                         </h1>
 
                         <div class="mt-5 flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M3 12h4l2-8 4 16 2-8h6"/>
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12h4l2-8 4 16 2-8h6" />
                                 </svg>
                             </div>
 
@@ -662,23 +720,15 @@ new class extends Component
 
                         <div class="mt-8">
 
-                            <a
-                                href="{{ route('annual-convention-poster') }}"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
-                            >
+                            <a href="{{ route('annual-convention-poster') }}"
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
                                 Check the Registration Rates
 
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="17"
-                                    height="17"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M5 12h14"/>
-                                    <path d="m12 5 7 7-7 7"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14" />
+                                    <path d="m12 5 7 7-7 7" />
                                 </svg>
                             </a>
 
@@ -691,13 +741,12 @@ new class extends Component
 
                         <div class="absolute inset-10 rounded-full bg-blue-100/70 blur-3xl"></div>
 
-                        <div class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                        <div
+                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
-                            <img
-                                src="{{ asset('annual-convention/annualposter.png') }}"
+                            <img src="{{ asset('annual-convention/annualposter.png') }}"
                                 alt="PSA 58th Annual Convention Poster"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain"
-                            />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
 
                         </div>
 
@@ -709,17 +758,11 @@ new class extends Component
 
 
             {{-- slide 4 Default hero section page --}}
-            <div
-                x-show="slide === 4"
-                x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4"
-                x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4"
-                class="col-start-1 row-start-1"
-                style="display: none;"
-            >
+            <div x-show="slide === 5" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
+                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
+                style="display: none;">
 
                 <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
 
@@ -727,21 +770,16 @@ new class extends Component
                     <div class="max-w-2xl">
 
                         {{-- Medical badge --}}
-                        <div class="mb-7 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
+                        <div
+                            class="mb-7 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
 
                             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
 
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M12 2v20"/>
-                                    <path d="M2 12h20"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v20" />
+                                    <path d="M2 12h20" />
                                 </svg>
 
                             </span>
@@ -753,7 +791,8 @@ new class extends Component
                         </div>
 
 
-                        <h1 class="font-display text-4xl font-semibold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
+                        <h1
+                            class="font-display text-4xl font-semibold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
 
                             Philippine Society
                             <span class="block text-slate-400">
@@ -777,35 +816,25 @@ new class extends Component
                         {{-- Buttons --}}
                         <div class="mt-8 flex flex-wrap gap-3">
 
-                            <a
-                                href="{{ asset('Membership Form.pdf') }}"
-                                download
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
-                            >
+                            <a href="{{ asset('Membership Form.pdf') }}" download
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
                                 Download Membership Form
 
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    width="19"
-                                    height="19"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>
-                                    <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
-                                    <path d="M12 18v-6"/>
-                                    <path d="m9 15 3 3 3-3"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                    <path d="M12 18v-6" />
+                                    <path d="m9 15 3 3 3-3" />
                                 </svg>
 
                             </a>
 
 
-                            <a
-                                href="#recent-events"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-all hover:border-blue-300 hover:text-blue-600"
-                            >
+                            <a href="#recent-events"
+                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-all hover:border-blue-300 hover:text-blue-600">
                                 Explore Our Events
                             </a>
 
@@ -813,41 +842,48 @@ new class extends Component
 
 
                         {{-- stats --}}
-                        <div class="mt-10 grid grid-cols-3 gap-3 border-t border-slate-200/70 pt-7 sm:mt-14 sm:gap-5 sm:pt-8">
+                        <div
+                            class="mt-10 grid grid-cols-3 gap-3 border-t border-slate-200/70 pt-7 sm:mt-14 sm:gap-5 sm:pt-8">
 
-                            <div class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
+                            <div
+                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
 
                                 <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
                                     70+
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
+                                <p
+                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
                                     Years of Service
                                 </p>
 
                             </div>
 
 
-                            <div class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
+                            <div
+                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
 
                                 <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
                                     6,000+
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
+                                <p
+                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
                                     Members Nationwide
                                 </p>
 
                             </div>
 
 
-                            <div class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
+                            <div
+                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
 
                                 <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
                                     32
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
+                                <p
+                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
                                     Regional Chapters
                                 </p>
 
@@ -862,7 +898,9 @@ new class extends Component
                     <div class="relative hidden min-h-[500px] items-center justify-center lg:flex">
 
                         {{-- circle design --}}
-                        <div class="absolute h-[430px] w-[430px] rounded-full bg-gradient-to-br from-blue-100 to-cyan-50"></div>
+                        <div
+                            class="absolute h-[430px] w-[430px] rounded-full bg-gradient-to-br from-blue-100 to-cyan-50">
+                        </div>
 
                         {{-- ring in the middle --}}
                         <div class="absolute h-[500px] w-[500px] rounded-full border border-blue-100"></div>
@@ -872,27 +910,23 @@ new class extends Component
 
 
                         {{-- card (only for default hero section) --}}
-                        <div class="relative z-10 w-[360px] rounded-[2rem] border border-white bg-white/90 p-7 shadow-2xl shadow-blue-200/60 backdrop-blur">
+                        <div
+                            class="relative z-10 w-[360px] rounded-[2rem] border border-white bg-white/90 p-7 shadow-2xl shadow-blue-200/60 backdrop-blur">
 
                             {{-- Header --}}
                             <div class="flex items-center justify-between">
 
                                 <div class="flex items-center gap-3">
 
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                                      {{-- icon guard --}}
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            width="25"
-                                            height="25"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                            <path d="M12 8v6"/>
-                                            <path d="M9 11h6"/>
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
+                                        {{-- icon guard --}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                            <path d="M12 8v6" />
+                                            <path d="M9 11h6" />
                                         </svg>
 
                                     </div>
@@ -921,7 +955,8 @@ new class extends Component
                                     Clinical Excellence
                                 </p>
 
-                                <svg viewBox="0 0 500 120" class="h-24 w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg viewBox="0 0 500 120" class="h-24 w-full" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
                                     <path d=" M0 60
                                             H90
                                             L110 60
@@ -938,12 +973,8 @@ new class extends Component
                                             L460 20
                                             L480 100
                                             L500 60
-                                        "
-                                        stroke="#2563EB"
-                                        stroke-width="4"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
+                                        " stroke="#2563EB" stroke-width="4" stroke-linecap="round"
+                                        stroke-linejoin="round" />
 
                                 </svg>
 
@@ -954,18 +985,13 @@ new class extends Component
                             <div class="mt-5 grid grid-cols-3 gap-3">
 
                                 <div class="rounded-xl bg-blue-50 p-3 text-center">
-                                    <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M12 2v20"/>
-                                            <path d="M2 12h20"/>
+                                    <div
+                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2v20" />
+                                            <path d="M2 12h20" />
                                         </svg>
                                     </div>
 
@@ -976,17 +1002,12 @@ new class extends Component
 
 
                                 <div class="rounded-xl bg-cyan-50 p-3 text-center">
-                                    <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-cyan-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M3 12h4l2-8 4 16 2-8h6"/>
+                                    <div
+                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-cyan-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 12h4l2-8 4 16 2-8h6" />
                                         </svg>
                                     </div>
 
@@ -997,20 +1018,15 @@ new class extends Component
 
 
                                 <div class="rounded-xl bg-blue-50 p-3 text-center">
-                                    <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                            <circle cx="9" cy="7" r="4"/>
-                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    <div
+                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                         </svg>
                                     </div>
 
@@ -1025,22 +1041,18 @@ new class extends Component
 
 
                         {{-- Floating medical badge --}}
-                        <div class="absolute right-0 top-10 z-20 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-xl backdrop-blur">
+                        <div
+                            class="absolute right-0 top-10 z-20 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-xl backdrop-blur">
 
                             <div class="flex items-center gap-3">
 
-                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                <div
+                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
 
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M20 6 9 17l-5-5"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 6 9 17l-5-5" />
                                     </svg>
 
                                 </div>
@@ -1061,22 +1073,17 @@ new class extends Component
 
 
                         {{-- Floating stethoscope badge --}}
-                        <div class="absolute bottom-12 left-0 z-20 flex h-16 w-16 items-center justify-center rounded-2xl border border-white bg-white/90 text-blue-600 shadow-xl backdrop-blur">
+                        <div
+                            class="absolute bottom-12 left-0 z-20 flex h-16 w-16 items-center justify-center rounded-2xl border border-white bg-white/90 text-blue-600 shadow-xl backdrop-blur">
 
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                width="28"
-                                height="28"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.6"
-                                stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M6 3v5a6 6 0 0 0 12 0V3"/>
-                                <path d="M6 8H3"/>
-                                <path d="M18 8h3"/>
-                                <path d="M12 14v3"/>
-                                <circle cx="12" cy="20" r="3"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 3v5a6 6 0 0 0 12 0V3" />
+                                <path d="M6 8H3" />
+                                <path d="M18 8h3" />
+                                <path d="M12 14v3" />
+                                <circle cx="12" cy="20" r="3" />
                             </svg>
 
                         </div>
@@ -1096,22 +1103,13 @@ new class extends Component
         <div class="mt-10 flex items-center justify-center gap-5 sm:mt-14">
 
             {{-- Previous --}}
-            <button
-                @click="prev()"
-                aria-label="Previous slide"
-                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md"
-            >
+            <button @click="prev()" aria-label="Previous slide"
+                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md">
 
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
-                    <path d="m15 18-6-6 6-6"/>
+                    <path d="m15 18-6-6 6-6" />
                 </svg>
 
             </button>
@@ -1120,61 +1118,35 @@ new class extends Component
             {{-- Indicators --}}
             <div class="flex items-center gap-2">
 
-                <button
-                    @click="go(0)"
-                    :class="slide === 0 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Sim Wars slide"
-                ></button>
+                <button @click="go(0)" :class="slide === 0 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to Sim Wars slide"></button>
 
-                <button
-                    @click="go(1)"
-                    :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Research Forum slide"
-                ></button>
+                    aria-label="Go to Research Forum slide"></button>
 
-                <button
-                    @click="go(2)"
-                    :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Interesting Case slide"
-                ></button>
+                    aria-label="Go to Interesting Case slide"></button>
 
-                <button
-                    @click="go(3)"
-                    :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Annual Convention slide"
-                ></button>
+                    aria-label="Go to Annual Convention slide"></button>
 
-                <button
-                    @click="go(4)"
-                    :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to PSA main slide"
-                ></button>
+                <button @click="go(4)" :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to PSA main slide"></button>
 
             </div>
 
 
             {{-- Next --}}
-            <button
-                @click="next()"
-                aria-label="Next slide"
-                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md"
-            >
+            <button @click="next()" aria-label="Next slide"
+                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md">
 
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
-                    <path d="m9 18 6-6-6-6"/>
+                    <path d="m9 18 6-6-6-6" />
                 </svg>
 
             </button>

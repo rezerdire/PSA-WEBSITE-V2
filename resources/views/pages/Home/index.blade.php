@@ -13,12 +13,10 @@ new class extends Component
 
 @section('content')
     <x-hero-section />
-    <x-dynamic-section
-    title="TNT ELIMINATION ROUND WINNERS"
-    description="31 Teams are Advancing to the Tagisan ng Talino 2026 Final Round"
-    youtube="3OjwYzisS1I"
-/>
-    <x-video-section />
+   <livewire:video-section videoUrl="video/Elimination Round Winners.mp4" title="TNT ELIMINATION ROUND WINNERS" :forcePortrait="true"/>
+
+
+   <livewire:video-section videoUrl="video/simwarsvideo.mp4" title="Sim Wars" />
     <x-mission-vision-section />
     <x-convention-highlight />
     <x-recent-events />
