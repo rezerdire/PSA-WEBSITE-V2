@@ -18,18 +18,21 @@ new class extends Component {
     #[Computed]
     public function results()
     {
+        // condition statement: 2 or more text to be able to search/find the last name
         if (strlen(trim($this->lastName)) < 2) {
             return collect();
         }
 
+        // retrieving part
         return Member::where('mem_last_name', 'like', '%' . trim($this->lastName) . '%')
             ->orderBy('mem_last_name')
             ->get(['member_id_no', 'mem_last_name', 'mem_first_name', 'mem_middle_name', 'mem_email_address']);
     }
 
-    #[Computed]
+    #[Computed] //dynamic readonly value, good for cache for a single request
     public function selectedMember()
     {
+        // member selection storing the the string var the data based on member_id_no
         return $this->selectedMemberId ? Member::where('member_id_no', $this->selectedMemberId)->first() : null;
     }
 
@@ -41,10 +44,13 @@ new class extends Component {
 
     private function maskEmail(?string $email): string
     {
+        // validation before censoring the email address, if email was empty it will return a value of blank
         if (empty($email) || !str_contains($email, '@')) {
             return '';
         }
-
+        /** explode similar to trim  this part is basically the censoring part
+            *it will censor the 3 characters of the email as asterisk 
+        **/
         [$local, $domain] = explode('@', $email, 2);
         $visible = substr($local, -max(1, intdiv(strlen($local), 2)));
 
@@ -52,10 +58,8 @@ new class extends Component {
     }
 
     /**
-     * Shared eligibility check used by both selectMember() and confirmEmail(),
-     * replacing the previously duplicated "already has account / no email" checks.
-     * Returns the Member on success, or null after setting a validation error.
-     */
+     * finding existing member from Member table
+    **/
     private function findEligibleMember(string $memberId): ?Member
     {
         $member = Member::where('member_id_no', $memberId)->first();
@@ -64,12 +68,12 @@ new class extends Component {
             $this->addError('selectedMemberId', 'Member account could not be found.');
             return null;
         }
-
+        // to avoid duplication
         if (Account::where('member_id_no', $member->member_id_no)->exists()) {
             $this->addError('selectedMemberId', 'This member already has an activated account.');
             return null;
         }
-
+        // if email doesn't exist in the database
         if (empty($member->mem_email_address)) {
             $this->addError('selectedMemberId', 'No email address is registered for this member. Please contact PSA Secretariat.');
             return null;
@@ -78,24 +82,28 @@ new class extends Component {
         return $member;
     }
 
+
     public function selectMember(string $memberId): void
     {
-        $this->resetErrorBag();
+        $this->resetErrorBag(); //error validation message
 
+        // no output if the member doesnt exist if the member exist it will call the function for eligible member
         if (!($member = $this->findEligibleMember($memberId))) {
             return;
         }
 
-        $this->selectedMemberId = $member->member_id_no;
-        $this->showEmailConfirm = true;
+        $this->selectedMemberId = $member->member_id_no; //storing member id 
+        $this->showEmailConfirm = true; // ui confirmation message will pop 
     }
 
+    //of course if its cancel it will hide those stuff
     public function cancelConfirm(): void
     {
-        $this->showEmailConfirm = false;
+        $this->showEmailConfirm = false; 
         $this->selectedMemberId = null;
         $this->resetErrorBag();
     }
+
 
     public function confirmEmail(): void
     {
@@ -105,21 +113,23 @@ new class extends Component {
             return;
         }
 
-        $temporaryPassword = Str::random(12);
+        $temporaryPassword = Str::random(12); //storing a random 12 characters
 
         // Create the account first. If email sending fails, the account still
         // exists and the user can use "forgot password" later, but we surface
         // a clear error so they know to contact support.
+
+        // storing data in acc table 
         $account = Account::create([
             'member_id_no' => $member->member_id_no,
             'psa_id' => $member->member_id_no,
-            'password' => Hash::make($temporaryPassword),
+            'password' => Hash::make($temporaryPassword), //encryption password
             'must_change_password' => true,
             'is_active' => true,
         ]);
 
         try {
-            Mail::to($member->mem_email_address)->send(new TemporaryPasswordMail($member, $temporaryPassword));
+            Mail::to($member->mem_email_address)->send(new TemporaryPasswordMail($member, $temporaryPassword)); //will send a password on email
         } catch (\Throwable $e) {
             Log::error('Failed to send temporary password email', [
                 'member_id_no' => $member->member_id_no,
