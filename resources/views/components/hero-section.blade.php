@@ -226,10 +226,8 @@ new class extends Component {
                             </p>
 
                         </div>
-                        {{-- ==========================================
-                EVENT DETAILS
-            =========================================== --}}
-                        <div class="mt-7 grid gap-3 sm:grid-cols-2">
+        
+                        <div class="mt-5 grid gap-3 sm:grid-cols-2">
 
                             {{-- Date --}}
                             <div class="rounded-xl border border-slate-200 bg-white p-4">
@@ -249,7 +247,7 @@ new class extends Component {
                                             Finals
                                         </p>
 
-                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
+                                        <p class=" text-sm font-bold text-slate-800 sm:text-base">
                                             October 24, 2026
                                         </p>
                                     </div>
@@ -277,7 +275,7 @@ new class extends Component {
                                             Venue
                                         </p>
 
-                                        <p class="mt-1 text-sm font-bold leading-snug text-slate-800 sm:text-base">
+                                        <p class="text-sm font-bold  text-slate-800 sm:text-base">
                                             Crowne Plaza Manila Galleria
                                         </p>
 
@@ -291,9 +289,7 @@ new class extends Component {
 
                         </div>
 
-                        {{-- ==========================================
-                CLOSING MESSAGE
-            =========================================== --}}
+            
 
 
                     </div>
