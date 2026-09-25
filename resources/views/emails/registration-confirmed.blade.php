@@ -31,8 +31,8 @@
                             </p>
 
                             <p style="margin:0 0 18px 0;">
-                                Please <strong>wait for the succeeding email containing your PSA ID with QC Code</strong>,
-                                This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QC Code
+                                Please <strong>wait for the succeeding email containing your PSA ID with QR Code</strong>,
+                                This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QR Code
                                 safe and readily accessible for your convenience.
                             </p>
 
