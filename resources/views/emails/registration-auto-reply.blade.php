@@ -21,19 +21,22 @@
                             <p style="margin:0 0 18px 0;">Greetings!</p>
 
                             <p style="margin:0 0 18px 0;">
-                                 We are pleased to inform you that your registration for the 
-                                <strong>PSA 58th Annual Convention</strong> has been <strong>successfully confirmed</strong>.
+                                We have received your registration for the
+                                <strong>PSA 58th Annual Convention</strong>. Thank you for registering and for
+                                being part of this year's Annual Convention. We truly appreciate your
+                                participation and look forward to welcoming you to the event.
                             </p>
 
                             <p style="margin:0 0 18px 0;">
-                                Thank you for registering and for being part of this year's Annual Convention.
-                                We truly appreciate your participation and look forward to welcoming you to the event.
+                                Please <strong>wait for the succeeding email confirming your registration</strong>,
+                                which will be followed by your PSA ID with QC Code, which you will use to
+                                <strong>claim your Convention ID</strong>. Kindly keep your QC Code safe and
+                                accessible for the duration of the convention.
                             </p>
 
                             <p style="margin:0 0 18px 0;">
-                                Please <strong>wait for the succeeding email containing your PSA ID with QC Code</strong>,
-                                This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QC Code
-                                safe and readily accessible for your convenience.
+                                Please also note that the <strong>PSA Accounting Department will contact you
+                                directly should there be any issues or concerns regarding your payment</strong>.
                             </p>
 
                             <p style="margin:0 0 18px 0;">
@@ -41,7 +44,7 @@
                                 We look forward to seeing you at the convention!
                             </p>
 
-                            <p style="margin:0 0 40px 0;">Best regards,</p>
+                            <p style="margin:0 0 40px 0;">Warm regards,</p>
 
                             <p style="margin:0;">
                                 <strong>PSA 58th Annual Convention Secretariat</strong>

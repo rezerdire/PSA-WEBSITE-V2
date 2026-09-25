@@ -1,61 +1,41 @@
 <?php
 
-namespace App\Services;
+namespace App\Models;
 
-use Illuminate\Support\Str;
-use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\ImageManager;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class GalleryImageProcessor
+class Registration extends Model
 {
-    protected ImageManager $manager;
+    protected $table = 'registrations';
 
-    public function __construct()
+    const STATUS_PENDING  = 'Pending';
+    const STATUS_APPROVED = 'Approved';
+    const STATUS_REJECTED = 'Rejected';
+
+    protected $fillable = [
+        'psa_id', 'prc_number', 'last_name', 'first_name', 'middle_name',
+        'hospital_name', 'hospital_address', 'email', 'contact_number', 'membership', 'discount_id', 'proof_payment',
+        'status', 'country', 'rejection_title', 'rejection_reason',
+    ];
+
+    protected $casts = ['prc_number' => 'integer'];
+
+    public function scopePending($query)  { return $query->where('status', self::STATUS_PENDING); }
+    public function scopeApproved($query) { return $query->where('status', self::STATUS_APPROVED); }
+    public function scopeRejected($query) { return $query->where('status', self::STATUS_REJECTED); }
+
+    public function getFullNameAttribute(): string
     {
-        $this->manager = new ImageManager(new Driver());
+        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
     }
 
-    /**
-     * $originalPath is relative to public/, e.g. "gallery/aca-2025/day1/asean-night/IMG_001.jpg"
-     */
-    public function process(string $originalPath): array
+    public function isPending(): bool   { return $this->status === self::STATUS_PENDING; }
+    public function isApproved(): bool  { return $this->status === self::STATUS_APPROVED; }
+    public function hasDiscount(): bool { return !is_null($this->discount_id); }
+
+    public function member()
     {
-        $fullPath = public_path($originalPath);
-
-        $image = $this->manager->read($fullPath);
-
-        $width = $image->width();
-        $height = $image->height();
-
-        $dir = Str::beforeLast($originalPath, '/');
-        $name = Str::beforeLast(Str::afterLast($originalPath, '/'), '.');
-
-        $thumbRelative = "{$dir}/thumbs/{$name}.webp";
-        $largeRelative = "{$dir}/large/{$name}.webp";
-
-        $thumbFullPath = public_path($thumbRelative);
-        $largeFullPath = public_path($largeRelative);
-
-        if (! is_dir(dirname($thumbFullPath))) {
-            mkdir(dirname($thumbFullPath), 0755, true);
-        }
-        if (! is_dir(dirname($largeFullPath))) {
-            mkdir(dirname($largeFullPath), 0755, true);
-        }
-
-        $thumb = clone $image;
-        $thumb->scaleDown(width: 480);
-        file_put_contents($thumbFullPath, (string) $thumb->toWebp(70));
-
-        $large = clone $image;
-        $large->scaleDown(width: 1920);
-        file_put_contents($largeFullPath, (string) $large->toWebp(82));
-
-        return [
-            'thumb' => $thumbRelative,
-            'large' => $largeRelative,
-            'width' => $width,
-            'height' => $height,
-        ];
+        return $this->belongsTo(Member::class, 'psa_id', 'member_id_no');
     }
 }

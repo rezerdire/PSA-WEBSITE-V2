@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use Illuminate\Validation\Rule;
-use App\Mail\RegistrationConfirmed;
+use App\Mail\RegistrationAutoReply;
 use Illuminate\Support\Facades\Mail;
 
 new class extends Component {
@@ -348,7 +348,7 @@ new class extends Component {
         );
 
         // SENDING CONFIRMATION EMAIL
-        Mail::to($this->email)->send(new RegistrationConfirmed($registration));
+        Mail::to($this->email)->send(new RegistrationAutoReply($registration));
 
         $this->registrationId = (string) $registration->id;
         $this->submitted = true;
