@@ -3,7 +3,7 @@
     use App\Models\Registration;
     use Livewire\Component;
     use Livewire\WithFileUploads;
-    use App\Mail\RegistrationConfirmed;
+    use App\Mail\RegistrationAutoReply;
     use Illuminate\Support\Facades\Mail;
     use Illuminate\Support\Facades\DB;
 
@@ -194,7 +194,7 @@
             ]);
 
             // SENDING CONFIRMATION EMAIL
-            Mail::to($this->email)->send(new RegistrationConfirmed($registration));
+            Mail::to($this->email)->send(new RegistrationAutoReply($registration));
 
             $this->registrationId = (string) $registration->id;
             $this->submitted      = true;

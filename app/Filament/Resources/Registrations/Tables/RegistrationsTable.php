@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\Registrations\Tables;
 use App\Services\MemberQrService;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\RegistrationStatusUpdated;
+use App\Mail\RegistrationQrCode;
+use App\Mail\RegistrationConfirmed;
 use App\Models\MemberQr;
 use Illuminate\Support\Facades\Storage;
 use Filament\Support\Enums\FontWeight;
@@ -398,16 +399,72 @@ class RegistrationsTable
                     ])
                     ->action(fn () => null),
 
-                Action::make('approve')
-                    ->label('Approve')
-                    ->modalWidth('7xl')
+                Action::make('confirm')
+                    ->label('Confirm')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
+                    ->modalWidth('4xl')
                     ->visible(fn (Registration $r) => $r->isPending())
                     ->requiresConfirmation()
-                    ->modalHeading('Approve Registration')
-                    ->modalDescription('This action will approve the registration and QR ID will be sent. Review the details below before confirming.')
-                    ->modalSubmitActionLabel('Approve & Send Email')
+                    ->modalHeading('Confirm Registration')
+                    ->modalDescription('This will approve the registration and email the registrant a confirmation. You can send their QR ID card afterward using "Send QR".')
+                    ->modalSubmitActionLabel('Confirm Registration')
+                    ->infolist([
+                        Section::make('Email Preview')
+                            ->columns(1)
+                            ->schema([
+
+                                TextEntry::make('preview_to')
+                                    ->label('To')
+                                    ->state(fn (Registration $r) => $r->email ?? 'No email on file')
+                                    ->weight(FontWeight::Bold)
+                                    ->size('md'),
+
+                                TextEntry::make('preview_subject')
+                                    ->label('Subject')
+                                    ->state('PSA 58thAnnual Convention - Registration Received')
+                                    ->weight(FontWeight::Bold)
+                                    ->size('md'),
+
+                                TextEntry::make('preview_body')
+                                    ->label('Email Body')
+                                    ->html()
+                                    ->state(function (Registration $r) {
+                                        $html = view('emails.registration-confirmed', [
+                                            'registration' => $r,
+                                        ])->render();
+
+                                        $escaped = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<iframe srcdoc="' . $escaped . '" style="width:100%;height:500px;border:1px solid #e5e7eb;border-radius:8px;"></iframe>'
+                                        );
+                                    }),
+                            ]),
+                    ])
+                    ->action(function (Registration $r): void {
+                        $r->update(['status' => Registration::STATUS_APPROVED]);
+
+                        if ($r->email) {
+                            Mail::to($r->email)->send(new RegistrationConfirmed($r));
+                        }
+
+                        Notification::make()
+                            ->title('Registration confirmed.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('approve')
+                    ->label('Send QR')
+                    ->modalWidth('7xl')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('primary')
+                    ->visible(fn (Registration $r) => $r->status === Registration::STATUS_APPROVED)
+                    ->requiresConfirmation()
+                    ->modalHeading('Send QR Code')
+                    ->modalDescription('This will generate and email the registrant their PSA ID card with QR code. Review the details below before sending.')
+                    ->modalSubmitActionLabel('Send QR Code')
                     ->infolist([
                         Section::make('Email Preview')
                             ->columns(2)
@@ -422,7 +479,7 @@ class RegistrationsTable
 
                                 TextEntry::make('preview_subject')
                                     ->label('Subject')
-                                    ->state('Your PSA Convention Registration has been Approved')
+                                    ->state('PSA 58th Annual Convention Registration')
                                     ->weight(FontWeight::Bold)
                                     ->size('md')
                                     ->columnSpanFull(),
@@ -435,15 +492,7 @@ class RegistrationsTable
                                         $qr = $member ? MemberQr::where('member_id_no', $member->member_id_no)->first() : null;
                                         $hasIdCard = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
 
-                                        // Preview against a virtual "Approved" state, regardless
-                                        // of the record's current actual status, since it's
-                                        // still Pending at preview time.
-                                        $r->status = Registration::STATUS_APPROVED;
-
-                                        // idCardUrl intentionally left null here — real email
-                                        // clients strip data: URIs and use the CID version instead,
-                                        // so this matches exactly what recipients will actually see.
-                                        $html = view('emails.registration-status-updated', [
+                                        $html = view('emails.registration-qr', [
                                             'registration' => $r,
                                             'hasIdCard'    => $hasIdCard,
                                             'idCardUrl'    => null,
@@ -483,88 +532,118 @@ class RegistrationsTable
                             ]),
                     ])
                    ->action(function (Registration $r): void {
-                        $r->update(['status' => Registration::STATUS_APPROVED]);
-
                         $member = Member::find($r->psa_id);
+                        $hasIdCard = false;
 
                         if ($member) {
                             app(MemberQrService::class)->generate($member);
+
+                            $qr = MemberQr::where('member_id_no', $member->member_id_no)->first();
+                            $hasIdCard = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
                         }
 
                         if ($r->email) {
-                            Mail::to($r->email)->send(new RegistrationStatusUpdated($r));
+                            Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
                         }
 
-                        Notification::make()->title('Registration approved.')->success()->send();
+                        Notification::make()->title('QR code sent.')->success()->send();
                     }),
 
+                    Action::make('reject')
+                        ->label('Reject')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn (Registration $r) => $r->isPending())
+                        ->requiresConfirmation()
+                        ->modalHeading('Reject Registration')
+                        ->modalDescription('Are you sure you want to reject this registration?')
+                        ->modalSubmitActionLabel('Reject')
+                        ->schema([
+                            Toggle::make('write_message')
+                                ->label('Write a custom rejection message?')
+                                ->helperText('If off, the registrant will receive a standard rejection email with no specific reason.')
+                                ->live()
+                                ->default(false),
 
-                Action::make('reject')
-                    ->label('Reject')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->visible(fn (Registration $r) => $r->isPending()) //it show this action if the status is pending otherwise it will not how
-                    ->requiresConfirmation()
-                    ->modalHeading('Reject Registration')
-                    ->modalDescription('Are you sure you want to reject this registration?')
-                    ->modalSubmitActionLabel('Reject')
-                    ->schema([
-                        Toggle::make('write_message')
-                            ->label('Write a custom rejection message?')
-                            ->helperText('If off, the registrant will receive a standard rejection email with no specific reason.')
-                            ->live()
-                            ->default(false),
+                            TextInput::make('rejection_title')
+                                ->label('Message Title')
+                                ->placeholder('e.g. Incomplete Requirements')
+                                ->visible(fn (Get $get) => $get('write_message'))
+                                ->required(fn (Get $get) => $get('write_message')),
 
-                        TextInput::make('rejection_title')
-                            ->label('Message Title')
-                            ->placeholder('e.g. Incomplete Requirements')
-                            ->visible(fn (Get $get) => $get('write_message'))
-                            ->required(fn (Get $get) => $get('write_message')),
+                            RichEditor::make('rejection_reason')
+                                ->label('Reason for Rejection')
+                                ->placeholder('Explain why this registration is being rejected...')
+                                ->visible(fn (Get $get) => $get('write_message'))
+                                ->required(fn (Get $get) => $get('write_message'))
+                                ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link']),
+                        ])
+                        ->action(function (Registration $r, array $data): void {
+                            $r->update([
+                                'status'           => Registration::STATUS_REJECTED,
+                                'rejection_title'  => $data['write_message'] ? ($data['rejection_title']  ?? null) : null,
+                                'rejection_reason' => $data['write_message'] ? ($data['rejection_reason'] ?? null) : null,
+                            ]);
 
-                        RichEditor::make('rejection_reason')
-                            ->label('Reason for Rejection')
-                            ->placeholder('Explain why this registration is being rejected...')
-                            ->visible(fn (Get $get) => $get('write_message'))
-                            ->required(fn (Get $get) => $get('write_message'))
-                            ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link']),
-                    ])
-                    ->action(function (Registration $r, array $data): void {
-                        $r->update([
-                            'status'           => Registration::STATUS_REJECTED,
-                            'rejection_title'  => $data['write_message'] ? ($data['rejection_title']  ?? null) : null,
-                            'rejection_reason' => $data['write_message'] ? ($data['rejection_reason'] ?? null) : null,
-                        ]);
-                        Notification::make()->title('Registration rejected.')->danger()->send();
-                    }),
+                            if ($r->email) {
+                                Mail::to($r->email)->send(new RegistrationStatusUpdated($r));
+                            }
 
+                            Notification::make()->title('Registration rejected.')->danger()->send();
+                        }),
             ])
 
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
 
-                    BulkAction::make('approve_selected')
-                        ->label('Approve Selected')
+                    BulkAction::make('confirm_selected')
+                        ->label('Confirm (Selected)')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->modalHeading('Approve Selected Registrations')
-                        ->modalDescription(fn ($records) => 'This will approve ' . $records->count() . ' registration(s) and email each member their ID card. This cannot be undone.')
-                        ->modalSubmitActionLabel('Approve & Send All')
+                        ->modalHeading('Confirm Selected Registrations')
+                        ->modalDescription(fn ($records) => 'This will approve ' . $records->count() . ' registration(s) and email each registrant a confirmation. You can send their QR codes afterward.')
+                        ->modalSubmitActionLabel('Confirm Registrations')
+                        ->action(function ($records) {
+                            $records->each(function (Registration $r) {
+                                $r->update(['status' => Registration::STATUS_APPROVED]);
+
+                                if ($r->email) {
+                                    Mail::to($r->email)->send(new RegistrationConfirmed($r));
+                                }
+                            });
+
+                            Notification::make()
+                                ->title('Registrations confirmed.')
+                                ->success()
+                                ->send();
+                        }),
+
+                    BulkAction::make('approve_selected')
+                        ->label('Send QR (Selected)')
+                        ->icon('heroicon-o-qr-code')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->modalHeading('Send QR Codes to Selected Registrations')
+                        ->modalDescription(fn ($records) => 'This will generate and email each of the ' . $records->count() . ' selected registration(s) their PSA ID card with QR code.')
+                        ->modalSubmitActionLabel('Send QR Codes')
                         ->action(function ($records) {
                             $service = app(MemberQrService::class);
 
                             $records->each(function (Registration $r) use ($service) {
-                                $r->update(['status' => Registration::STATUS_APPROVED]);
-
                                 $member = Member::find($r->psa_id);
+                                $hasIdCard = false;
 
                                 if ($member) {
                                     $service->generate($member);
+
+                                    $qr = MemberQr::where('member_id_no', $member->member_id_no)->first();
+                                    $hasIdCard = $qr && Storage::disk('members_qr')->exists($qr->qr_path);
                                 }
 
                                 if ($r->email) {
-                                    Mail::to($r->email)->send(new RegistrationStatusUpdated($r));
+                                    Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
                                 }
                             });
                         }),
