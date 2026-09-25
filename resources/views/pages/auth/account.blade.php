@@ -13,6 +13,5 @@ new class extends Component
 @section('content')
 
 
-<x-account.login />
-  
+<livewire:account.login />  
 @endsection

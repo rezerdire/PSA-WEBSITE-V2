@@ -14,4 +14,4 @@ new class extends Component
 
  <livewire:account.activate />
 
-@endsection
+@endsection 

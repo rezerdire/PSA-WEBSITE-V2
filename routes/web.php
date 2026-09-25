@@ -85,15 +85,14 @@ Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-regis
 // account login
 Route::middleware('guest')->group(function () {
 
-Route::view('/Login', 'pages.account.account')->name('login');
+Route::view('/Login', 'pages.auth.account')->name('login');
 Route::view('/Activate-Account', 'pages.account.activate')->name('activate-account');
 });
  
 
+    
 
-
-// Route::middleware('auth')->group(function () {
-//     Route::get('/change-password', ChangePassword::class)->name('change-password');
-//     Route::get('/dashboard', Dashboard::class)->name('dashboard');
-// });
+Route::middleware('auth')->group(function () {
+    Route::view('/dashboard','pages.dashboard.index')->name('dashboard');
+});
  

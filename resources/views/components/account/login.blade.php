@@ -4,7 +4,29 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-new class extends Component {};
+new class extends Component {
+    public string $psa_id = '';
+    public string $password = '';
+    public bool $remember = false;
+
+    public function login(): void
+    {
+        $this->validate([
+            'psa_id' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!Auth::attempt(['psa_id' => $this->psa_id, 'password' => $this->password], $this->remember)) {
+            throw ValidationException::withMessages([
+                'psa_id' => 'The PSA ID or password you entered is incorrect.',
+            ]);
+        }
+
+        request()->session()->regenerate();
+
+        $this->redirect(route('dashboard'), navigate: true);
+    }
+};
 ?>
 
 <div class="w-full max-w-[100vw] overflow-x-hidden bg-slate-50 pt-16">
@@ -104,9 +126,6 @@ new class extends Component {};
                             class="group flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-blue-700/30 focus:outline-none focus:ring-4 focus:ring-blue-600/20 active:translate-y-0">
                             Find/Activate your PSA Account
                         </a>
-
-
-
 
                     </div>
 
