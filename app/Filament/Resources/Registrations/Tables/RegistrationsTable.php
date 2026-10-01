@@ -177,8 +177,7 @@ class RegistrationsTable
                         'Pending'  => 'Pending',
                         'Approved' => 'Approved',
                         'Rejected' => 'Rejected',
-                    ])
-                    ->default('Pending'),
+                    ]),
 
                 SelectFilter::make('membership')
                     ->label('Membership Type')
