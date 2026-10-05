@@ -4,9 +4,13 @@ use App\Models\Member;
 use App\Models\Registration;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Illuminate\Validation\Rule;
-use App\Mail\RegistrationConfirmed;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
+use App\Mail\RegistrationAutoReply;
 use Illuminate\Support\Facades\Mail;
 
 new class extends Component {
@@ -14,6 +18,7 @@ new class extends Component {
 
     // PSA Verification
     public string $psaId = '';
+    #[Locked]
     public bool $memberVerified = false;
     public string $verifyError = '';
 
@@ -21,8 +26,8 @@ new class extends Component {
     public string $firstName = '';
     public string $lastName = '';
     public string $middleName = '';
+    #[Locked]
     public string $membership = '';
-
     // Contact Details
     public string $prcNumber = '';
     public string $email = '';
@@ -65,7 +70,7 @@ new class extends Component {
     protected const REG_PERIOD_END = 'November 9, 2026';
 
     // Senior Citizen / PWD discount rate
-    protected const SENIOR_DISCOUNT_RATE = 0.25;
+    protected const SENIOR_DISCOUNT_RATE = 0.20;
 
     // bank details for manual payment
     protected const BANK_NAME = 'BPI';
@@ -88,34 +93,47 @@ new class extends Component {
 
     public function verify(): void
     {
+        $ipKey = 'registration-member-verify:'.hash('sha256', (string) request()->ip());
+        if (RateLimiter::tooManyAttempts($ipKey, 10)) {
+            $this->verifyError = 'Too many verification attempts. Please try again in a minute.';
+            return;
+        }
+        RateLimiter::hit($ipKey, 60);
+
         $this->validate(['psaId' => ['required', 'digits:4']], ['psaId.digits' => 'PSA ID must be exactly 4 digits.']);
 
         $this->verifyError = '';
-        $this->memberVerified = false;
+        if (!$this->refreshMemberFromDatabase()) {
+            return;
+        }
+    }
 
+    protected function refreshMemberFromDatabase(): ?Member
+    {
         $member = Member::find($this->psaId);
 
         if (!$member) {
+            $this->memberVerified = false;
             $this->verifyError = 'PSA ID not found. Please double-check your ID number.';
-            return;
+            return null;
         }
 
         $memType = strtoupper(trim($member->psa_mem_type ?? ''));
 
         if (!array_key_exists($memType, self::MEM_TYPE_MAP)) {
+            $this->memberVerified = false;
             $this->verifyError = 'Your membership type is not eligible for online registration.';
-            return;
+            return null;
         }
 
-        // Only block if there's a Pending or Approved registration.
-        // Rejected registrations are allowed to resubmit.
         if (
             Registration::where('psa_id', $this->psaId)
                 ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
                 ->exists()
         ) {
+            $this->memberVerified = false;
             $this->verifyError = 'This PSA ID has already been registered for this event.';
-            return;
+            return null;
         }
 
         $this->firstName = $member->mem_first_name ?? '';
@@ -124,12 +142,12 @@ new class extends Component {
         $this->membership = $memType;
         $this->memberVerified = true;
 
-        // Life Member Payment Excempted Discount Section:
-        // discount option will be = none since it is a life member.
         if ($this->isPaymentExempt()) {
             $this->discountType = 'non_disc';
             $this->discountImg = null;
         }
+
+        return $member;
     }
 
     // Filter of Life Member
@@ -235,8 +253,10 @@ new class extends Component {
      */
     public function reviewSubmission(): void
     {
-        if (!$this->memberVerified) {
-            $this->addError('psaId', 'Please verify your PSA ID before submitting.');
+        $this->validate(['psaId' => ['required', 'digits:4']]);
+
+        if (!$this->refreshMemberFromDatabase()) {
+            $this->addError('psaId', $this->verifyError);
             return;
         }
 
@@ -252,9 +272,7 @@ new class extends Component {
         }
 
         $this->normalizeDiscount();
-
         $this->validate();
-
         $this->showConfirm = true;
         $this->dispatch('open-confirm-modal');
     }
@@ -266,8 +284,11 @@ new class extends Component {
 
     public function submit(): void
     {
-        if (!$this->memberVerified) {
-            $this->addError('psaId', 'Please verify your PSA ID before submitting.');
+        $this->validate(['psaId' => ['required', 'digits:4']]);
+
+        $member = $this->refreshMemberFromDatabase();
+        if (!$member) {
+            $this->addError('psaId', $this->verifyError);
             $this->showConfirm = false;
             return;
         }
@@ -278,7 +299,6 @@ new class extends Component {
             return;
         }
 
-        // if mem_type is a life member  discount type default will be non_disc, discount img and paymentProof will be null
         if ($this->isPaymentExempt()) {
             $this->discountType = 'non_disc';
             $this->discountImg = null;
@@ -286,69 +306,84 @@ new class extends Component {
         }
 
         $this->normalizeDiscount();
-
         $this->validate();
 
-        $member = Member::find($this->psaId);
-        if (!$member) {
-            $this->verifyError = 'PSA ID could not be re-verified. Please refresh and try again.';
-            $this->memberVerified = false;
+        if (Registration::where('active_prc_number', (int) $this->prcNumber)->exists()) {
+            $this->addError('prcNumber', 'This PRC number is already registered for this event.');
             $this->showConfirm = false;
             return;
         }
 
-        if (strtolower(trim($member->mem_last_name)) !== strtolower(trim($this->lastName)) || strtolower(trim($member->mem_first_name)) !== strtolower(trim($this->firstName))) {
-            $this->verifyError = 'Member data mismatch. Please re-verify your PSA ID.';
-            $this->memberVerified = false;
-            $this->showConfirm = false;
-            return;
-        }
-
-        // Block only on Pending/Approved — allow resubmission if previously Rejected.
-        $existing = Registration::where('psa_id', $this->psaId)
-            ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
-            ->exists();
-
-        if ($existing) {
-            $this->verifyError = 'This PSA ID has already been registered.';
-            $this->memberVerified = false;
-            $this->showConfirm = false;
-            return;
-        }
+        // Keep member-owned fields authoritative even if the browser changed them.
+        $this->firstName = $member->mem_first_name ?? '';
+        $this->lastName = $member->mem_last_name ?? '';
+        $this->middleName = $member->mem_middle_name ?? '';
+ 
 
         // where the uploaded files will be stored
         $discountPath = null;
         if ($this->discountType === 'senior_disc' && $this->discountImg) {
-            $discountPath = $this->discountImg->store('Registration/ID-Upload', 'uploads');
+            $discountPath = $this->discountImg->store('Registration/ID-Upload', 'local');
+            if (!$discountPath) {
+                $this->addError('discountImg', 'Could not store the discount ID image. Please try again.');
+                return;
+            }
         }
 
-        $paymentPath = $this->paymentProof ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads') : null;
+        $paymentPath = $this->paymentProof ? $this->paymentProof->store('Registration/ProofofPayment', 'local') : null;
+        if ($this->paymentProof && !$paymentPath) {
+            if ($discountPath) {
+                Storage::disk('local')->delete($discountPath);
+            }
+            $this->addError('paymentProof', 'Could not store the payment image. Please try again.');
+            return;
+        }
 
         // If a Rejected registration already exists for this PSA ID, update that
         // same row back to Pending instead of creating a duplicate record.
-        $registration = Registration::updateOrCreate(
-            ['psa_id' => $this->psaId],
-            [
-                'prc_number' => (int) $this->prcNumber,
-                'last_name' => $this->lastName,
-                'first_name' => $this->firstName,
-                'middle_name' => $this->middleName,
-                'hospital_name' => $this->hospitalName,
-                'hospital_address' => $this->hospitalAddress,
-                'email' => $this->email,
-                'contact_number' => $this->contactNumber,
-                'membership' => $this->membership,
-                'discount_id' => $discountPath,
-                'proof_payment' => $paymentPath,
-                'status' => Registration::STATUS_PENDING,
-                'country' => $this->country,
-                'rejection_title' => null,
-                'rejection_reason' => null,
-            ],
-        );
+        try {
+            $registration = Registration::updateOrCreate(
+                ['psa_id' => $this->psaId],
+                [
+                    'prc_number' => (int) $this->prcNumber,
+                    'last_name' => $this->lastName,
+                    'first_name' => $this->firstName,
+                    'middle_name' => $this->middleName,
+                    'hospital_name' => $this->hospitalName,
+                    'hospital_address' => $this->hospitalAddress,
+                    'email' => $this->email,
+                    'contact_number' => $this->contactNumber,
+                    'membership' => $this->membership,
+                    'discount_id' => $discountPath,
+                    'proof_payment' => $paymentPath,
+                    'status' => Registration::STATUS_PENDING,
+                    'country' => $this->country,
+                    'rejection_title' => null,
+                    'rejection_reason' => null,
+                ],
+            );
+        } catch (QueryException $exception) {
+            Storage::disk('local')->delete(array_filter([$discountPath, $paymentPath]));
+
+            if (Registration::where('active_prc_number', (int) $this->prcNumber)->exists()) {
+                $this->addError('prcNumber', 'This PRC number is already registered for this event.');
+                $this->showConfirm = false;
+                return;
+            }
+
+            if (Registration::where('psa_id', $this->psaId)
+                ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
+                ->exists()) {
+                $this->verifyError = 'This PSA ID has already been registered.';
+                $this->showConfirm = false;
+                return;
+            }
+
+            throw $exception;
+        }
 
         // SENDING CONFIRMATION EMAIL
-        Mail::to($this->email)->send(new RegistrationConfirmed($registration));
+        Mail::to($this->email)->send(new RegistrationAutoReply($registration));
 
         $this->registrationId = (string) $registration->id;
         $this->submitted = true;
@@ -592,7 +627,7 @@ new class extends Component {
                             <div x-data="{ disc: @entangle('discountType') }">
                                 <label class="block text-xs font-medium text-gray-500 mb-3">Discount</label>
                                 <div class="space-y-2 mb-4">
-                                    @foreach ([['senior_disc', 'Senior Citizen/PWD (25% off)'], ['non_disc', 'None']] as [$value, $label])
+                                    @foreach ([['senior_disc', 'Senior Citizen/PWD (20% off)'], ['non_disc', 'None']] as [$value, $label])
                                         <x-form.radio-option :value="$value" :label="$label" model="disc"
                                             color="red" />
                                     @endforeach
@@ -679,7 +714,7 @@ new class extends Component {
                                 <span class="text-md font-bold text-[#000066]" x-text="amountDue"></span>
                             </div>
                             <p class="text-md text-blue-700 mt-1" x-show="disc === 'senior_disc'" x-cloak>
-                                with 25% Senior Citizen/PWD discount.
+                                with 20% Senior Citizen/PWD discount.
                             </p>
                         </div>
  
@@ -826,7 +861,7 @@ new class extends Component {
 
                                 <div class="overflow-hidden rounded-xl border border-gray-200 sm:rounded-2xl">
 
-                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''],  ['Discount', ['senior_disc' => 'Senior Citizen / PWD (25% off)', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Amount to Pay', $this->getAmountDueLabel(), 'font-bold'], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
+                                    @foreach ([['PSA ID', $psaId, 'font-mono'], ['Full Name', $firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName, ''], ['Membership', ['RM' => 'Regular Member', 'LM' => 'Life Member', 'TM' => 'Trainee Member'][$membership] ?? $membership, ''],  ['Discount', ['senior_disc' => 'Senior Citizen / PWD (20% off)', 'non_disc' => 'None'][$discountType] ?? $discountType, ''], ['Amount to Pay', $this->getAmountDueLabel(), 'font-bold'], ['PRC Number', $prcNumber, 'font-mono'], ['Email', $email, ''], ['Contact Number', $contactNumber, ''], ['Hospital', $hospitalName, ''], ['Hospital Address', $hospitalAddress, ''], ['Discount ID', $discountImg ? 'Uploaded' : 'Not uploaded', ''], ['Proof of Payment', $paymentProof ? 'Uploaded' : ($this->isPaymentExempt() ? 'Not required — Life Member' : 'Not uploaded'), '']] as [$label, $value, $extraClass])
                                         <div
                                             class="border-b border-gray-100 px-3.5 py-3 last:border-0
                                        sm:grid sm:grid-cols-[145px_1fr] sm:items-start sm:gap-4 sm:px-5 sm:py-3.5">

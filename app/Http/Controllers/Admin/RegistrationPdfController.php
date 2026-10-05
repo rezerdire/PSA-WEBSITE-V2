@@ -68,7 +68,7 @@ class RegistrationPdfController extends Controller
         return null;
     }
 
-    $disk = Storage::disk('uploads');
+        $disk = Storage::disk('local');
 
     if (! $disk->exists($relativePath)) {
         return null;

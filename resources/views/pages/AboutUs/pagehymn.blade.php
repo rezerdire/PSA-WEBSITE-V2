@@ -17,7 +17,7 @@ new class extends Component
 
     <x-about-us-content :panels="[
        
-        ['key' => 'psa-hymn','youtube' => 'FznncU_j2Rk'],
+        ['key' => 'psa-hymn','youtube' => 'rojs3qMAtV8'],
     ]" />
 
 @endsection

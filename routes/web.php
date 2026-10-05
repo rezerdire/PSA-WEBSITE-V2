@@ -1,12 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\RegistrationAttachmentController;
 use App\Http\Controllers\Admin\RegistrationPdfController;
 use App\Models\GalleryDay;
 use App\Models\GalleryEvent;
 use App\Models\GalleryImage;
 
 Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/admin/registrations/{registration}/attachments/{attachment}', RegistrationAttachmentController::class)
+        ->whereIn('attachment', ['proof-payment', 'discount-id'])
+        ->name('admin.registrations.attachment');
     Route::get('/admin/registrations-export-pdf', [RegistrationPdfController::class, 'export'])
         ->name('admin.registrations.export-pdf');
 });
