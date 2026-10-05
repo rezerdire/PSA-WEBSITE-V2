@@ -110,7 +110,7 @@ class RegistrationForm
                         Grid::make(2)->schema([
                             FileUpload::make('proof_payment')
                                 ->label('Payment Proof')
-                                ->disk('public')
+                                ->disk('local')
                                 ->directory('registrations/payment-proofs')
                                 ->image()
                                 ->imageEditor()
@@ -119,7 +119,7 @@ class RegistrationForm
 
                             FileUpload::make('discount_id')
                                 ->label('Senior Citizen Discount ID')
-                                ->disk('public')
+                                ->disk('local')
                                 ->directory('registrations/discount-ids')
                                 ->image()
                                 ->imageEditor()

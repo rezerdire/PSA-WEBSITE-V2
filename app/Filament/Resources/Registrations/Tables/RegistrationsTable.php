@@ -90,14 +90,14 @@ class RegistrationsTable
 
                 ImageColumn::make('proof_payment')
                     ->label('Payment')
-                    ->disk('uploads')
+                    ->disk('local')
                     ->height(48)
                     ->width(64)
                     ->placeholder('No Uploaded Photo')
                     ->extraImgAttributes(['class' => 'rounded-lg object-cover cursor-pointer'])
                     // table photo
-                    ->getStateUsing(fn ($record) => $record->proof_payment
-                    ? asset('uploads/' . $record->proof_payment)
+                    ->getStateUsing(fn (Registration $record) => $record->proof_payment
+                    ? route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'proof-payment'])
                     : null)
                     // whe the admin click the photo it will pop up a modal to show the full image
                     ->action(
@@ -106,7 +106,7 @@ class RegistrationsTable
                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
                                 $record->proof_payment
                                     ? '<div class="flex justify-center p-2">
-                                        <img src="' . asset('uploads/' . $record->proof_payment) . '"
+                                        <img src="' . route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'proof-payment']) . '"
                                             class="max-h-[70vh] r ounded-lg object-contain" />
                                     </div>'
                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
@@ -119,14 +119,14 @@ class RegistrationsTable
 
                 ImageColumn::make('discount_id')
                     ->label('Discount ID')
-                    ->disk('uploads')
+                    ->disk('local')
                     ->height(48)
                     ->width(64)
                     ->placeholder('No Uploaded Photo')
                     ->toggleable()
                     ->extraImgAttributes(['class' => 'rounded-lg object-cover cursor-pointer'])
-                    ->getStateUsing(fn ($record) => $record->discount_id
-                    ? asset('uploads/' . $record->discount_id)
+                    ->getStateUsing(fn (Registration $record) => $record->discount_id
+                    ? route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'discount-id'])
                     : null)
                     ->action(
                         Action::make('previewDiscountId')
@@ -134,7 +134,7 @@ class RegistrationsTable
                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
                                 $record->discount_id
                                     ? '<div class="flex justify-center p-2">
-                                        <img src="' . asset('uploads/' . $record->discount_id) . '"
+                                        <img src="' . route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'discount-id']) . '"
                                                 class="max-h-[70vh] rounded-lg object-contain" />
                                     </div>'
                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
@@ -342,14 +342,14 @@ class RegistrationsTable
                             ->columns(2)
                             ->schema([
                                 ImageEntry::make('proof_payment')
-                                    ->disk('uploads')
+                                    ->disk('local')
                                     ->label('Proof of Payment')
                                     ->height(200)
                                     ->placeholder('No Uploaded Photo')
                                     ->extraImgAttributes(['class' => 'rounded-lg object-cover w-full'])
                                     // photo in the table
-                                       ->getStateUsing(fn ($record) => $record->proof_payment
-                                        ? asset('uploads/' . $record->proof_payment)
+                                       ->getStateUsing(fn (Registration $record) => $record->proof_payment
+                                        ? route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'proof-payment'])
                                         : null)
                                         // pop up modal for image preview when the admin click the photo
                                     ->action(
@@ -359,7 +359,7 @@ class RegistrationsTable
                                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
                                                 $record->proof_payment
                                                     ? '<div class="flex justify-center p-2">
-                                                        <img src="' . asset('uploads/' . $record->proof_payment) . '"
+                                                        <img src="' . route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'proof-payment']) . '"
                                                             class="max-h-[70vh] rounded-lg object-contain" />
                                                     </div>'
                                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'
@@ -370,13 +370,13 @@ class RegistrationsTable
                                     ),
 
                                 ImageEntry::make('discount_id')
-                                    ->disk('uploads')
+                                    ->disk('local')
                                     ->label('Senior Discount ID')
                                     ->height(200)
                                     ->extraImgAttributes(['class' => 'rounded-lg object-cover cursor-pointer'])
                                     ->placeholder('No Uploaded Photo')
-                                       ->getStateUsing(fn ($record) => $record->discount_id
-                                        ? asset('uploads/' . $record->discount_id)
+                                       ->getStateUsing(fn (Registration $record) => $record->discount_id
+                                        ? route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'discount-id'])
                                         : null)
 
                                     ->action(
@@ -385,7 +385,7 @@ class RegistrationsTable
                                             ->modalContent(fn (Registration $record) => new \Illuminate\Support\HtmlString(
                                                 $record->discount_id
                                                     ? '<div class="flex justify-center p-2">
-                                                        <img src="' . asset('uploads/' . $record->discount_id) . '"
+                                                    <img src="' . route('admin.registrations.attachment', ['registration' => $record->getKey(), 'attachment' => 'discount-id']) . '"
                                                                 class="max-h-[70vh] rounded-lg object-contain" />
                                                     </div>'
                                                     : '<p class="text-center text-gray-400 py-6">No Uploaded Photo</p>'

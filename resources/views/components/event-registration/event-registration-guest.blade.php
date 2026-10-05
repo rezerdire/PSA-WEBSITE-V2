@@ -1,11 +1,17 @@
 <?php
 
     use App\Models\Registration;
+    use App\Mail\RegistrationAutoReply;
+    use App\Mail\RegistrationEmailVerification;
+    use Illuminate\Database\QueryException;
+    use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\Facades\Hash;
+    use Illuminate\Support\Facades\Mail;
+    use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str;
+    use Livewire\Attributes\Locked;
     use Livewire\Component;
     use Livewire\WithFileUploads;
-    use App\Mail\RegistrationAutoReply;
-    use Illuminate\Support\Facades\Mail;
-    use Illuminate\Support\Facades\DB;
 
     new class extends Component {
 
@@ -34,11 +40,15 @@
         // native upload events, and used both to show a loader and to block submit.
         public bool $paymentUploading = false;
 
-        // NEW: confirmation-before-submit step
+        // Confirmation and email ownership verification.
         public bool $showConfirm = false;
-
-        public bool   $submitted      = false;
+        #[Locked]
+        public bool $submitted = false;
         public string $registrationId = '';
+        #[Locked]
+        public ?string $emailVerificationUuid = null;
+        public string $emailVerificationCode = '';
+        public bool $emailVerificationSent = false;
 
         // Live PRC duplicate check status: '', 'checking', 'duplicate', 'available'
         public string $prcCheckStatus = '';
@@ -64,22 +74,17 @@
 
         protected function generateGuestPsaId(): string
         {
-            return DB::transaction(function () {
-                $last = Registration::where('psa_id', 'like', 'NM\_%') //where psa_id value has NM
-                //in case a two or more user try to create or update a specific data at the same time
-                //with that saying it will prevent to overwrite the action of the user/admin
-                    ->lockForUpdate() 
-                    ->orderByRaw('CAST(SUBSTRING(psa_id, 4) AS UNSIGNED) DESC') //organizing a proper order since psa_id has 4 digit order
-                    ->value('psa_id'); 
+            $last = Registration::where('psa_id', 'like', 'NM_%')
+                ->lockForUpdate()
+                ->orderByDesc('id')
+                ->value('psa_id');
 
-                $nextNumber = 1;
+            $nextNumber = 1;
+            if ($last && preg_match('/^NM_(\d+)$/', $last, $matches)) {
+                $nextNumber = ((int) $matches[1]) + 1;
+            }
 
-                if ($last && preg_match('/^NM_(\d+)$/', $last, $matches)) {
-                    $nextNumber = ((int) $matches[1]) + 1;
-                } // increment +1 ex: nm_0001 - next would be nm_0002
-
-                return 'NM_' . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT); // string + the increment
-            });
+            return 'NM_' . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
         }
 
         /**
@@ -90,9 +95,7 @@
          */
         protected function prcNumberAlreadyRegistered(): bool
         {
-            return Registration::where('prc_number', $this->prcNumber)
-                ->whereIn('status', [Registration::STATUS_PENDING, Registration::STATUS_APPROVED])
-                ->exists();
+            return Registration::where('active_prc_number', (int) $this->prcNumber)->exists();
         }
 
         /**
@@ -107,10 +110,16 @@
             $this->resetErrorBag('prcNumber');
             $this->prcCheckStatus = '';
 
-            // Don't hit the DB until it's a plausible PRC number.
             if (!preg_match('/^\d{5,7}$/', $this->prcNumber)) {
                 return;
             }
+
+            $ipKey = 'registration-prc-lookup:'.hash('sha256', (string) request()->ip());
+            if (RateLimiter::tooManyAttempts($ipKey, 60)) {
+                $this->addError('prcNumber', 'Too many PRC checks. Please try again later.');
+                return;
+            }
+            RateLimiter::hit($ipKey, 60);
 
             if ($this->prcNumberAlreadyRegistered()) {
                 $this->prcCheckStatus = 'duplicate';
@@ -118,6 +127,59 @@
             } else {
                 $this->prcCheckStatus = 'available';
             }
+        }
+
+        protected function sendEmailVerificationCode(): void
+        {
+            $email = Str::lower(trim($this->email));
+            $ipHash = hash('sha256', (string) request()->ip());
+            $emailHash = hash('sha256', $email);
+            $ipKey = 'registration-email-code-ip:'.$ipHash;
+            $emailKey = 'registration-email-code-email:'.$emailHash;
+
+            if (RateLimiter::tooManyAttempts($ipKey, 10) || RateLimiter::tooManyAttempts($emailKey, 3)) {
+                $this->addError('email', 'Too many verification requests. Please try again later.');
+                return;
+            }
+            RateLimiter::hit($ipKey, 3600);
+            RateLimiter::hit($emailKey, 3600);
+
+            DB::table('registration_email_verifications')->where('expires_at', '<', now())->delete();
+
+            $uuid = (string) Str::uuid();
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            DB::table('registration_email_verifications')->insert([
+                'uuid' => $uuid,
+                'email' => $email,
+                'code_hash' => Hash::make($code),
+                'expires_at' => now()->addMinutes(15),
+                'attempts' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->emailVerificationUuid = $uuid;
+            $this->emailVerificationSent = true;
+
+            try {
+                Mail::to($email)->send(new RegistrationEmailVerification($code));
+            } catch (\Throwable $exception) {
+                DB::table('registration_email_verifications')->where('uuid', $uuid)->delete();
+                $this->emailVerificationUuid = null;
+                $this->emailVerificationSent = false;
+                report($exception);
+                $this->addError('email', 'We could not send a verification code. Please try again later.');
+            }
+        }
+
+        public function resendEmailVerification(): void
+        {
+            $this->validate(['email' => ['required', 'email', 'max:255']]);
+            $this->emailVerificationUuid = null;
+            $this->emailVerificationCode = '';
+            $this->emailVerificationSent = false;
+            $this->sendEmailVerificationCode();
         }
 
         /**
@@ -153,7 +215,10 @@
 
         public function submit(): void
         {
-            // Non-members are always fixed price / non-discounted, regardless of anything client-side.
+            if ($this->submitted) {
+                return;
+            }
+
             $this->discountType = 'non_disc';
 
             if ($this->paymentUploading) {
@@ -162,45 +227,156 @@
                 return;
             }
 
+            $ipHash = hash('sha256', (string) request()->ip());
+            $ipKey = 'registration-submit-ip:'.$ipHash;
+            if (RateLimiter::tooManyAttempts($ipKey, 20)) {
+                $this->addError('email', 'Too many registration attempts. Please try again later.');
+                return;
+            }
+            RateLimiter::hit($ipKey, 3600);
+
             $this->validate();
 
-            if ($this->prcNumberAlreadyRegistered()) {
-                $this->addError('prcNumber', 'This PRC number is already registered.');
-                $this->showConfirm = false;
+            $emailHash = hash('sha256', Str::lower(trim($this->email)));
+            $emailKey = 'registration-submit-email:'.$emailHash;
+            if (RateLimiter::tooManyAttempts($emailKey, 5)) {
+                $this->addError('email', 'Too many registration attempts. Please try again later.');
+                return;
+            }
+            RateLimiter::hit($emailKey, 3600);
+
+            if (!$this->emailVerificationUuid) {
+                $this->sendEmailVerificationCode();
                 return;
             }
 
-            $paymentPath = $this->paymentProof
-                ? $this->paymentProof->store('Registration/ProofofPayment', 'uploads')
-                : null;
+            $verificationIpKey = 'registration-email-verify-ip:'.$ipHash;
+            if (RateLimiter::tooManyAttempts($verificationIpKey, 20)) {
+                $this->addError('emailVerificationCode', 'Too many code attempts. Please request a new code later.');
+                return;
+            }
+            RateLimiter::hit($verificationIpKey, 3600);
 
-            $registration = Registration::create([
-                'psa_id'           => $this->generateGuestPsaId(),
-                'prc_number'       => (int) $this->prcNumber,
-                'last_name'        => $this->lastName,
-                'first_name'       => $this->firstName,
-                'middle_name'      => $this->middleName,
-                'hospital_name'    => $this->hospitalName,
-                'hospital_address' => $this->hospitalAddress,
-                'email'            => $this->email,
-                'contact_number'   => $this->contactNumber,
-                'membership'       => 'NM',
-                'discount_id'      => null,
-                'proof_payment'    => $paymentPath,
-                'status'           => Registration::STATUS_PENDING,
-                'country'          => $this->country,
-                'rejection_title'  => null,
-                'rejection_reason' => null,
-            ]);
+            $this->validate(['emailVerificationCode' => ['required', 'digits:6']]);
 
-            // SENDING CONFIRMATION EMAIL
-            Mail::to($this->email)->send(new RegistrationAutoReply($registration));
+            $paymentPath = null;
+            $registration = null;
+            for ($attempt = 0; $attempt < 3; $attempt++) {
+                try {
+                    $result = DB::transaction(function () use (&$paymentPath): array {
+                        $email = Str::lower(trim($this->email));
+                        $challenge = DB::table('registration_email_verifications')
+                            ->where('uuid', $this->emailVerificationUuid)
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (
+                            !$challenge
+                            || $challenge->email !== $email
+                            || $challenge->verified_at !== null
+                            || now()->greaterThan($challenge->expires_at)
+                        ) {
+                            return ['error' => 'expired'];
+                        }
+
+                        if ($challenge->attempts >= 5) {
+                            return ['error' => 'attempts'];
+                        }
+
+                        if (!Hash::check($this->emailVerificationCode, $challenge->code_hash)) {
+                            DB::table('registration_email_verifications')
+                                ->where('id', $challenge->id)
+                                ->increment('attempts');
+
+                            return ['error' => 'invalid'];
+                        }
+
+                        if ($this->prcNumberAlreadyRegistered()) {
+                            return ['error' => 'duplicate-prc'];
+                        }
+
+                        $paymentPath = $this->paymentProof->store('Registration/ProofofPayment', 'local');
+                        if (!$paymentPath) {
+                            return ['error' => 'storage'];
+                        }
+
+                        DB::table('registration_email_verifications')
+                            ->where('id', $challenge->id)
+                            ->update(['verified_at' => now(), 'updated_at' => now()]);
+                        $registration = Registration::create([
+                            'psa_id' => $this->generateGuestPsaId(),
+                            'prc_number' => (int) $this->prcNumber,
+                            'last_name' => $this->lastName,
+                            'first_name' => $this->firstName,
+                            'middle_name' => $this->middleName,
+                            'hospital_name' => $this->hospitalName,
+                            'hospital_address' => $this->hospitalAddress,
+                            'email' => $email,
+                            'contact_number' => $this->contactNumber,
+                            'membership' => 'NM',
+                            'discount_id' => null,
+                            'proof_payment' => $paymentPath,
+                            'status' => Registration::STATUS_PENDING,
+                            'country' => $this->country,
+                            'rejection_title' => null,
+                            'rejection_reason' => null,
+                        ]);
+
+                        return ['registration' => $registration];
+                    });
+                } catch (QueryException $exception) {
+                    if ($paymentPath) {
+                        Storage::disk('local')->delete($paymentPath);
+                        $paymentPath = null;
+                    }
+
+                    if (Registration::where('active_prc_number', (int) $this->prcNumber)->exists()) {
+                        $this->addError('prcNumber', 'This PRC number is already registered for this event.');
+                        return;
+                    }
+
+                    if ($attempt === 2) {
+                        throw $exception;
+                    }
+
+                    continue;
+                }
+
+                if (isset($result['error'])) {
+                    $message = match ($result['error']) {
+                        'invalid' => 'That verification code is incorrect.',
+                        'attempts' => 'Too many incorrect codes. Request a new code to continue.',
+                        'storage' => 'We could not securely store the payment proof. Please try again.',
+                        default => 'The verification code expired or no longer matches this email. Request a new code.',
+                    };
+                    $this->addError(
+                        $result['error'] === 'duplicate-prc' ? 'prcNumber' : 'emailVerificationCode',
+                        $message,
+                    );
+                    if ($result['error'] === 'attempts' || $result['error'] === 'expired') {
+                        $this->emailVerificationUuid = null;
+                        $this->emailVerificationSent = false;
+                    }
+                    return;
+                }
+
+                $registration = $result['registration'];
+                break;
+            }
+
+            if (!$registration) {
+                return;
+            }
+
+            try {
+                Mail::to($registration->email)->send(new RegistrationAutoReply($registration));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
 
             $this->registrationId = (string) $registration->id;
-            $this->submitted      = true;
-            $this->showConfirm    = false;
-
-            // adding this event to the browser's window so that the frontend can scroll to top
+            $this->submitted = true;
+            $this->showConfirm = false;
             $this->dispatch('registration-submitted');
         }
     };
@@ -554,6 +730,33 @@
 
                         </div>
 
+                            @if ($emailVerificationSent)
+                                <div class="mx-4 mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4 sm:mx-7">
+                                    <label for="email-verification-code" class="block text-sm font-semibold text-blue-900">
+                                        Email verification code
+                                    </label>
+                                    <p class="mt-1 text-xs text-blue-800">
+                                        Enter the 6-digit code sent to your email. It expires in 15 minutes.
+                                    </p>
+                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input id="email-verification-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+                                            maxlength="6" wire:model="emailVerificationCode"
+                                            class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm"
+                                            aria-describedby="email-verification-error">
+                                        <button type="button" wire:click="resendEmailVerification"
+                                            class="shrink-0 rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-800">
+                                            Send a new code
+                                        </button>
+                                    </div>
+                                    @error('emailVerificationCode')
+                                        <p id="email-verification-error" class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    @error('email')
+                                        <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
+
 
                         {{-- footer --}}
                         <div class="shrink-0 border-t border-gray-100 bg-white px-4 py-3 sm:px-7 sm:py-4">
@@ -583,7 +786,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
 
-                                        Confirm & Submit
+                                        {{ $emailVerificationSent ? 'Verify code and submit' : 'Send verification code' }}
 
                                     </span>
 

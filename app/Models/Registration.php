@@ -13,6 +13,17 @@ class Registration extends Model
     const STATUS_APPROVED = 'Approved';
     const STATUS_REJECTED = 'Rejected';
 
+    protected static function booted(): void
+    {
+        static::saving(function (Registration $registration): void {
+            $registration->active_prc_number = in_array(
+                $registration->status,
+                [self::STATUS_PENDING, self::STATUS_APPROVED],
+                true,
+            ) ? $registration->prc_number : null;
+        });
+    }
+
     protected $fillable = [
         'psa_id', 'prc_number', 'last_name', 'first_name', 'middle_name',
         'hospital_name', 'hospital_address', 'email', 'contact_number', 'membership', 'discount_id', 'proof_payment',
