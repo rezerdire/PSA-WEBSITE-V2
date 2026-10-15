@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\RegistrationPdfController;
 use App\Models\GalleryDay;
 use App\Models\GalleryEvent;
 use App\Models\GalleryImage;
+use App\Livewire\BoothScan;
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/admin/registrations-export-pdf', [RegistrationPdfController::class, 'export'])
@@ -79,3 +80,12 @@ Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')
 Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
 
 Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-registry');
+
+// booth
+Route::get('/booth/{booth_code}', function (string $booth_code) {
+    return "Booth scan page for {$booth_code}";
+})->name('booth.scan');
+
+Route::get('/booth/{booth_code}', function (string $booth_code) {
+    return view('pages.booth_page.index', ['booth_code' => $booth_code]);
+})->name('booth.scan');
