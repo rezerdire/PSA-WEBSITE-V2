@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class WorkshopRegistration extends Model
 {
@@ -11,5 +12,19 @@ class WorkshopRegistration extends Model
         'prc_number', 'hospital', 'email', 'phone', 'workshops',
     ];
 
-    protected $casts = ['workshops' => 'array'];
+   protected function casts(): array
+    {
+        return [
+            'workshops' => 'array',
+        ];
+    }
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::get(fn () => collect([
+            $this->mem_first_name,
+            $this->mem_middle_name,
+            $this->mem_last_name,
+        ])->filter()->implode(' '));
+    }
 }
