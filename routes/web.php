@@ -89,3 +89,7 @@ Route::get('/booth/{booth_code}', function (string $booth_code) {
 Route::get('/booth/{booth_code}', function (string $booth_code) {
     return view('pages.booth_page.index', ['booth_code' => $booth_code]);
 })->name('booth.scan');
+
+
+// WORKSHOP
+Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');
