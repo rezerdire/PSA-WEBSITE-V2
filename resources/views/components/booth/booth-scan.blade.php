@@ -120,7 +120,7 @@ new #[Title('Booth Check-in')] class extends Component
                         wire:model="member_id_no"
                         autocomplete="off"
                         placeholder="PSA ID"
-                        class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-amber-500 focus:ring-amber-500"
+                        class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-blue-5 00 focus:ring-blue-500"
                     >
                     @error('member_id_no')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -130,7 +130,7 @@ new #[Title('Booth Check-in')] class extends Component
                 <button
                     type="submit"
                     wire:loading.attr="disabled"
-                    class="w-full rounded-lg bg-amber-500 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60"
+                    class="w-full rounded-lg bg-blue-600 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60"
                 >
                     <span wire:loading.remove>Verify</span>
                     <span wire:loading>Checking...</span>

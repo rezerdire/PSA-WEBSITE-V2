@@ -7,6 +7,10 @@ use Livewire\Attributes\On;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Mail\WorkshopRegistrationConfirmation;
 use App\Models\Member;
 use App\Models\WorkshopRegistration;
 
@@ -17,7 +21,12 @@ new class extends Component {
     #[Locked]
     public string $memType = '';
 
-    // Auto-filled for members, typed in by non-members
+    // True only when the member record has a REAL PRC number (then it is locked).
+    // If the member table has "NA" / empty, this is false and the user types it in.
+    #[Locked]
+    public bool $prcFromMember = false;
+
+    // Auto-filled for members (locked), typed in by non-members
     public string $lastName = '';
     public string $firstName = '';
     public string $middleName = '';
@@ -35,6 +44,9 @@ new class extends Component {
 
     // Maximum registrants per workshop
     public const WORKSHOP_LIMIT = 60;
+
+    // Max PSA ID lookups per IP per minute
+    protected const LOOKUP_MAX_ATTEMPTS = 10;
 
     public const WORKSHOPS = [
         'RA' => 'Regional Anesthesia Workshop (RA)',
@@ -77,6 +89,9 @@ new class extends Component {
         'TM' => 'Trainee Member',
     ];
 
+    // Values in the member table that mean "no PRC number on file"
+    protected const PRC_PLACEHOLDERS = ['', 'NA', 'NONE', 'NULL', 'NIL', '0'];
+
     // Registrations per workshop, e.g. ['RA' => 12, 'POCUS' => 0, 'AIRWAY' => 5]
     #[Computed]
     public function taken(): array
@@ -94,20 +109,20 @@ new class extends Component {
         return WorkshopRegistration::whereJsonContains('workshops', $key)->count();
     }
 
-    // The checker only sends the PSA ID. We look the member up again here,
-    // so the autofilled values always come from the database.
-    #[On('psa-id-selected')]
-    public function fillFromMember(string $psaId): void
+    // True for "", "NA", "N/A", "n.a.", "none", "-" ... (no real PRC number)
+    protected function isPlaceholderPrc(?string $value): bool
     {
-        $member = Member::find($psaId); // same lookup as your event registration
+        $normalized = strtoupper(preg_replace('/[\s\.\/\-_]+/', '', trim((string) $value)));
 
-        if (!$member) {
-            $this->addError('psaId', 'PSA ID not found.');
-            return;
-        }
+        return in_array($normalized, self::PRC_PLACEHOLDERS, true);
+    }
 
-        $this->resetErrorBag();
-
+    // Copies the member's identity data from the database into the component.
+    // $freshLookup = true right after verifying (clears the PRC box when the
+    // member has none on file). On submit it is false, so whatever the member
+    // typed into the PRC box is kept.
+    protected function applyMember(Member $member, bool $freshLookup): void
+    {
         $code = strtoupper(trim($member->psa_mem_type ?? ''));
 
         $this->psaId = (string) $member->getKey();
@@ -115,7 +130,86 @@ new class extends Component {
         $this->firstName = (string) ($member->mem_first_name ?? '');
         $this->middleName = (string) ($member->mem_middle_name ?? '');
         $this->memType = self::MEM_TYPE_MAP[$code] ?? $code; // "RM" -> "Regular Member"
-        $this->prcNumber = (string) ($member->mem_prc_no ?? ''); // adjust column name
+
+        $dbPrc = trim((string) ($member->mem_prc_no ?? ''));
+
+        if ($this->isPlaceholderPrc($dbPrc)) {
+            // No real PRC on file: the member types it in manually
+            $this->prcFromMember = false;
+
+            if ($freshLookup) {
+                $this->prcNumber = '';
+            }
+        } else {
+            // Real PRC on file: force it from the database and lock the field
+            $this->prcFromMember = true;
+            $this->prcNumber = $dbPrc;
+        }
+    }
+
+    // Limits how fast one IP can look up PSA IDs (stops ID enumeration).
+    // Returns true when the request may proceed.
+    protected function lookupAllowed(): bool
+    {
+        $key = 'psa-id-lookup:' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, self::LOOKUP_MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($key);
+            $this->addError('psaId', "Too many attempts. Please try again in {$seconds} seconds.");
+            return false;
+        }
+
+        RateLimiter::hit($key, 60);
+        return true;
+    }
+
+    // Overwrites identity fields with database values for verified members.
+    // Whatever the browser sent for these fields is discarded.
+    // Returns false if the member could not be confirmed.
+    protected function enforceMemberData(): bool
+    {
+        if ($this->psaId === '') {
+            return true; // non-member, nothing to enforce
+        }
+
+        $member = Member::find($this->psaId);
+
+        if (!$member) {
+            $this->clearMember();
+            $this->addError('psaId', 'PSA ID not found. Please verify again.');
+            return false;
+        }
+
+        $this->applyMember($member, false);
+
+        return true;
+    }
+
+    // The checker only sends the PSA ID. We look the member up again here,
+    // so the autofilled values always come from the database.
+    #[On('psa-id-selected')]
+    public function fillFromMember(string $psaId): void
+    {
+        if (!$this->lookupAllowed()) {
+            return;
+        }
+
+        $member = Member::find($psaId); // same lookup as your event registration
+
+        if (!$member) {
+            $this->addError('psaId', 'PSA ID not found.');
+            return;
+        }
+
+        // Already registered: show the error and do NOT autofill anything
+        if (WorkshopRegistration::where('psa_id', (string) $member->getKey())->exists()) {
+            $this->addError('psaId', 'This PSA ID is already registered for a workshop.');
+            return;
+        }
+
+        $this->resetErrorBag();
+
+        $this->applyMember($member, true);
     }
 
     // PSA ID VERIFICATION
@@ -134,30 +228,48 @@ new class extends Component {
 
     public function clearMember(): void
     {
-        $this->reset(['psaId', 'memType', 'lastName', 'firstName', 'middleName', 'prcNumber']);
+        $this->reset(['psaId', 'memType', 'lastName', 'firstName', 'middleName', 'prcNumber', 'prcFromMember', 'psaIdInput']);
         $this->resetErrorBag();
     }
 
     public function submit(): void
     {
+        // CHECK 1: Typed a PSA ID but never clicked Verify.
+        // Without this, a member could be saved as a "Non-member".
+        if ($this->psaId === '' && trim($this->psaIdInput) !== '') {
+            $this->addError('psaId', 'Please click Verify for the PSA ID you typed, or clear the field.');
+            return;
+        }
+
+        // Members: replace whatever the browser sent with the database values
+        if (!$this->enforceMemberData()) {
+            return;
+        }
+
         $this->email = trim($this->email);
         $this->phone = trim($this->phone);
+
+        // Normalize the PRC number (no spaces, uppercase) so "12345" and "12345 "
+        // are treated as the same number everywhere below.
+        $this->prcNumber = strtoupper(preg_replace('/\s+/', '', $this->prcNumber));
 
         $validated = $this->validate(
             [
                 'lastName' => ['required', 'string', 'max:255'],
                 'firstName' => ['required', 'string', 'max:255'],
                 'middleName' => ['nullable', 'string', 'max:255'],
-                'prcNumber' => ['required', 'string', 'max:50'],
+                'prcNumber' => ['required', 'string', 'min:5', 'max:7'],
                 'hospital' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email:rfc', 'max:255'],
-                'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
+                'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/', 'digits:11'],
                 'workshop' => ['required', 'in:' . implode(',', array_keys(self::WORKSHOPS))],
             ],
             [
                 'lastName.required' => 'Please enter your last name.',
                 'firstName.required' => 'Please enter your first name.',
                 'prcNumber.required' => 'Please enter your PRC number.',
+                'prcNumber.min' => 'PRC number must be at least 5 characters.',
+                'prcNumber.max' => 'PRC number must not be more than 7 characters.',
                 'hospital.required' => 'Please enter your hospital.',
                 'email.required' => 'Please enter your email address.',
                 'email.email' => 'Please enter a valid email address.',
@@ -167,6 +279,24 @@ new class extends Component {
                 'workshop.in' => 'Please select a valid workshop.',
             ],
         );
+
+        // CHECK 2: PRC number ownership.
+        // If the PRC belongs to a PSA member, only that verified member may use it.
+        $memberWithPrc = Member::where('mem_prc_no', $validated['prcNumber'])->first();
+
+        if ($memberWithPrc) {
+            if ($this->psaId === '') {
+                // Not verified, but using a member's PRC number
+                $this->addError('prcNumber', 'This PRC number belongs to a PSA member. Please verify your PSA ID above.');
+                return;
+            }
+
+            if ((string) $memberWithPrc->getKey() !== $this->psaId) {
+                // Verified as one member, but typed another member's PRC number
+                $this->addError('prcNumber', 'This PRC number belongs to a different PSA member.');
+                return;
+            }
+        }
 
         if ($this->psaId !== '' && WorkshopRegistration::where('psa_id', $this->psaId)->exists()) {
             $this->addError('psaId', 'This PSA ID is already registered.');
@@ -186,7 +316,8 @@ new class extends Component {
                     return 'full';
                 }
 
-                WorkshopRegistration::create([
+                // Returns the saved record so we can email it after the lock is released
+                return WorkshopRegistration::create([
                     'psa_id' => $this->psaId !== '' ? $this->psaId : null,
                     'mem_last_name' => $validated['lastName'],
                     'mem_first_name' => $validated['firstName'],
@@ -198,8 +329,6 @@ new class extends Component {
                     'phone' => $validated['phone'],
                     'workshops' => [$validated['workshop']],
                 ]);
-
-                return 'ok';
             });
         } catch (LockTimeoutException $e) {
             $this->addError('workshop', 'The system is busy. Please try again in a moment.');
@@ -214,6 +343,13 @@ new class extends Component {
             $this->addError('workshop', 'Sorry, this workshop is already full. Please choose another one.');
             $this->workshop = '';
             return;
+        }
+
+        // Confirmation email. A mail failure must not undo a saved registration.
+        try {
+            Mail::to($result->email)->send(new WorkshopRegistrationConfirmation($result, self::WORKSHOPS[$validated['workshop']]));
+        } catch (\Throwable $e) {
+            Log::error('Workshop confirmation email failed: ' . $e->getMessage());
         }
 
         $this->submitted = true;
@@ -236,6 +372,12 @@ new class extends Component {
 
         <x-event-registration.event-registration-layout>
             <livewire:psa-id-checker mode="both" heading="Find Your PSA ID" />
+
+            @php
+                // True once a PSA ID is verified: name fields are locked
+                $memberLocked = $psaId !== '';
+                $lockedClass = 'bg-gray-50 text-gray-700 cursor-not-allowed';
+            @endphp
 
             <form wire:submit="submit" class="bg-white rounded-2xl shadow-md overflow-hidden">
                 <div class="h-1.5 bg-gradient-to-r from-[#000066] to-[#0000aa]"></div>
@@ -278,12 +420,20 @@ new class extends Component {
                             @enderror
                         </div>
 
+                        @if ($memberLocked)
+                            <p class="text-xs text-gray-400 sm:col-span-2">
+                                Name details are taken from the PSA records and cannot be edited here.
+                                To correct them, please contact the PSA secretariat.
+                            </p>
+                        @endif
+
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                                 Last Name <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" wire:model="lastName" placeholder="Last name"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                            <input type="text" wire:model="lastName" placeholder="Last name" @readonly($memberLocked)
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('lastName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -293,8 +443,9 @@ new class extends Component {
                             <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                                 First Name <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" wire:model="firstName" placeholder="First name"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                            <input type="text" wire:model="firstName" placeholder="First name" @readonly($memberLocked)
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('firstName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -305,7 +456,8 @@ new class extends Component {
                                 class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Middle
                                 Name</label>
                             <input type="text" wire:model="middleName" placeholder="Middle name (optional)"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                                @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('middleName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -327,7 +479,13 @@ new class extends Component {
                                 PRC Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prcNumber" placeholder="Enter your PRC number"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                                minlength="5" maxlength="7" @readonly($prcFromMember)
+                                tabindex="{{ $prcFromMember ? '-1' : '0' }}"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $prcFromMember ? $lockedClass : '' }}">
+                            @if ($psaId && !$prcFromMember)
+                                <p class="text-gray-400 text-xs mt-1">No PRC number is on file in the PSA records.
+                                    Please enter it manually.</p>
+                            @endif
                             @error('prcNumber')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -351,8 +509,9 @@ new class extends Component {
                             <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                                 Phone Number <span class="text-red-500">*</span>
                             </label>
-                            <input type="tel" wire:model="phone" placeholder="e.g. 0917 123 4567" autocomplete="tel"
-                                inputmode="tel" maxlength="20"
+                            <input type="tel" wire:model="phone" placeholder="e.g. 09171234567" autocomplete="tel"
+                                inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                oninput="this.value = this.value.replace(/\D/g, '')"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @error('phone')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
