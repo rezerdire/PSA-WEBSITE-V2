@@ -160,16 +160,10 @@ new class extends Component {
                 x-transition:leave-end="opacity-0" class="col-start-1 row-start-1" style="display: none;">
                 <div class="grid items-center gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 xl:gap-16">
 
-    
+
                     <div class="max-w-2xl">
 
-                        {{-- Announcement Label --}}
-                        <div
-                            class="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            The Finalists Are In!
-                        </div>
-
+                     
                         {{-- Event Name --}}
                         <p class="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-base">
                             PSA Tagisan ng Talino 2026
@@ -313,14 +307,14 @@ new class extends Component {
 
 
 
-            {{-- slide 1 --}}
+            {{-- slide 1 Sim Wars Episode 2 --}}
             <div x-show="slide === 1" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-6" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-6" class="col-start-1 row-start-1"
                 style="display: none;">
 
-                <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-2 lg:gap-16">
+                <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
 
                     {{-- Decorative background --}}
                     <div
@@ -335,27 +329,10 @@ new class extends Component {
                     ========================== --}}
                     <div class="relative z-10 max-w-2xl">
 
-                        {{-- Announcement Badge --}}
-                        <div
-                            class="mb-7 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 shadow-sm">
-                            <span class="relative flex h-2.5 w-2.5">
-                                <span
-                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                            </span>
-
-                            Results Are In
-
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m5 12 5 5L20 7" />
-                            </svg>
-                        </div>
+                  
 
                         {{-- Eyebrow --}}
                         <div class="mb-4 flex items-center gap-3">
-                            <span class="h-px w-8 bg-blue-600"></span>
 
                             <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-sm">
                                 Philippines Anesthesia Crisis Competition 2026
@@ -383,66 +360,140 @@ new class extends Component {
 
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                                    Episode 01
+                                    Episode 02
                                 </p>
 
                                 <p class="mt-1 text-xl font-bold leading-tight text-slate-700 sm:text-2xl">
-                                    Elimination Round
+                                    PSA Sim Wars Trilogy Competition
                                 </p>
                             </div>
                         </div>
 
                         {{-- Description --}}
                         <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            We are pleased to announce the winning teams of
+                            Get ready for an exciting battle of knowledge, skills, and teamwork as we bring the
+                            world together for the
                             <span class="font-semibold text-slate-700">
-                                Episode 1
+                                PSA Sim Wars Trilogy Competition 2026!
                             </span>
-                            in the Sim Wars trilogy!
-                            <br><br>
-                            Held on <span class="font-semibold text-slate-700"> August 9, 2026 at the Aesculap Academy
-                                Philippines, </span> Episode 1 showcased incredible teamwork, skill, and clinical
-                            excellence.
-                            <br><br> To all participating teams, thank you for bringing your passion, energy, and
-                            competitive spirit to the first episode of the trilogy. And to our 10 winning
-                            teams—congratulations on an outstanding performance!
                         </p>
 
+                        {{-- Event details --}}
+                        <div class="mt-7 grid gap-3 sm:grid-cols-2">
 
+                            {{-- Date --}}
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="flex items-start gap-3">
+
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                            Date
+                                        </p>
+
+                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
+                                            November 27, 2026
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {{-- Time --}}
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="flex items-start gap-3">
+
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="9" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                            Time
+                                        </p>
+
+                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
+                                            8:00 AM – 12:00 NN
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {{-- Venue --}}
+                            <div class="rounded-xl border border-slate-200 bg-white p-4 sm:col-span-2">
+                                <div class="flex items-start gap-3">
+
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                            Venue
+                                        </p>
+
+                                        <p class="mt-1 text-sm font-bold leading-snug text-slate-800 sm:text-base">
+                                            Marriott Ballroom, Marriott Hotel
+                                        </p>
+
+                                        <p class="mt-0.5 text-xs text-slate-500">
+                                            Newport, Pasay City
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {{-- Tagline --}}
+                        <div class="mt-7 border-l-4 border-blue-600 pl-5">
+                            <p class="text-base font-bold leading-7 text-slate-800 sm:text-lg">
+                                Share with the World. Compete with Excellence.
+                                <span class="text-blue-600">Save Lives Through Simulation.</span>
+                            </p>
+
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                Witness the power of simulation in advancing anesthesia practice!
+                            </p>
+                        </div>
 
                     </div>
 
-
+{{-- simwars --}}
                     {{-- =========================
                         RIGHT IMAGE
                     ========================== --}}
                     <div class="relative z-10 flex justify-center lg:justify-end">
 
-                        {{-- Outer Glow --}}
-                        <div class="absolute inset-4 rounded-[3rem] bg-blue-400/20 blur-3xl"></div>
-
-                        {{-- Decorative circles --}}
-                        <div class="absolute -right-4 -top-6 h-24 w-24 rounded-full border border-blue-200/60"></div>
-                        <div class="absolute -bottom-5 -left-5 h-20 w-20 rounded-full border border-cyan-200/60"></div>
-
-                        {{-- Image Card --}}
-                        <div
-                            class="group relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl">
-
-                            {{-- Image --}}
-                            <div class="relative overflow-hidden rounded-[1.5rem] bg-slate-100">
-
-                                <img src="{{ asset('images/simwars/simwarswinner.jpg') }}"
-                                    alt="PSA Sim Wars 2026 Trilogy Competition Episode 1 Elimination Round Winners"
-                                    class="relative max-h-[560px] w-full object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                                {{-- Image Gradient --}}
-                                <div
-                                    class="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                                </div>
-
-                            </div>
+                        {{-- Frameless image --}}
+                        <div class="group w-full overflow-hidden rounded-2xl">
+                            <img src="{{ asset('images/simwars/simwars_oct_2026.png') }}"
+                                alt="PSA Sim Wars Trilogy Competition Episode 2 - November 27, 2026 at Marriott Ballroom, Newport, Pasay City"
+                                class="w-full max-h-[760px] object-contain transition duration-700 ease-out group-hover:scale-[1.02] lg:max-w-none" />
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -548,11 +599,11 @@ new class extends Component {
                         <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
 
                         <div
-                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
                             <img src="{{ asset('images/researchforum2026.jpg') }}"
                                 alt="PSA Research Forum 2026 - Call for Abstracts"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
 
                         </div>
 
@@ -653,11 +704,11 @@ new class extends Component {
                         <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
 
                         <div
-                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
                             <img src="{{ asset('images/InterestingCase.png') }}"
                                 alt="PSA Interesting Case Competition 2026"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
 
                         </div>
 
@@ -746,11 +797,11 @@ new class extends Component {
                         <div class="absolute inset-10 rounded-full bg-blue-100/70 blur-3xl"></div>
 
                         <div
-                            class="relative rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
+                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
 
                             <img src="{{ asset('annual-convention/annualposter.png') }}"
                                 alt="PSA 58th Annual Convention Poster"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain" />
+                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
 
                         </div>
 
