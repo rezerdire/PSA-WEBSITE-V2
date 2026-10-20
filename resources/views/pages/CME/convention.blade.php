@@ -44,10 +44,10 @@
         // ],
         [
             'key' => 'sponsorships',
-            'title' => 'Sponsors & Exhibitors',
-            'description' => 'Support the convention and get featured',
-            'icon' => 'user-group',
-            'href' => '#',
+            'title' => 'Booth Checker',
+            'description' => 'Check the booths you have visited.',
+            'icon' => 'clipboard-document-list',
+            'href' => route('booth.checker'),
         ],
     ];
 @endphp

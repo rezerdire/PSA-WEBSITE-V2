@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Booths\Schemas;
 
+use App\Models\Booth;
 use App\Support\BoothQr;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -18,25 +19,43 @@ class BoothForm
         return $schema
             ->components([
                 TextInput::make('booth_type')
-                    ->placeholder('e.g. Suite 1')
+                    ->label('Category')
+                    ->placeholder('e.g. Regular Booths')
+                    ->datalist([
+                        'Hospital Suites',
+                        'Prime Foyer',
+                        'Prime Booths',
+                        'Regular Booths',
+                        'Regular Tables',
+                    ])
+                    ->required(),
+
+                TextInput::make('booth_code')
+                    ->label('Booth code')
+                    ->placeholder('e.g. Suite 1, T1, RB 24, RB 25')
                     ->required()
+                    ->helperText('For one booth covering several spots, separate them with commas (e.g. RB 24, RB 25).')
                     ->live(onBlur: true)
-                    ->afterStateUpdated(fn (Get $get, Set $set) => self::syncCode($get, $set)),
+                    ->dehydrateStateUsing(fn ($state) => trim(preg_replace('/\s+/', ' ', (string) $state)))
+                    ->afterStateUpdated(fn (Get $get, Set $set, string $operation) => self::syncGeneratedCode($get, $set, $operation)),
+
+                TextInput::make('location')
+                    ->placeholder('e.g. Ballroom C'),
 
                 TextInput::make('booth_name')
+                    ->label('Booth name')
                     ->placeholder('e.g. BD Philippines')
                     ->required()
                     ->live(onBlur: true)
-                    ->afterStateUpdated(fn (Get $get, Set $set) => self::syncCode($get, $set)),
+                    ->afterStateUpdated(fn (Get $get, Set $set, string $operation) => self::syncGeneratedCode($get, $set, $operation)),
 
-                TextInput::make('location'),
-
-                TextInput::make('booth_code')
+                TextInput::make('booth_generated_code')
+                    ->label('Generated code')
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => strtoupper(trim($state)))
-                    ->helperText('Auto-generated from booth type + booth name. You can edit it if there is a conflict.'),
+                    ->dehydrateStateUsing(fn ($state) => strtoupper(trim((string) $state)))
+                    ->helperText('Auto-generated from booth code + initials of the booth name (T1 + ALAGAO SCRUBSUIT = T1AS). This is what the QR contains. You can edit it if there is a conflict.'),
 
                 TextInput::make('booth_qr')
                     ->label('Booth QR (file path)')
@@ -48,11 +67,11 @@ class BoothForm
                             ->label('Generate QR')
                             ->icon('heroicon-m-qr-code')
                             ->action(function (Get $get, Set $set) {
-                                $code = strtoupper(trim((string) $get('booth_code')));
+                                $code = strtoupper(trim((string) $get('booth_generated_code')));
 
                                 if ($code === '') {
                                     Notification::make()
-                                        ->title('Enter the booth type and name first.')
+                                        ->title('Enter the booth code and name first.')
                                         ->warning()
                                         ->send();
 
@@ -71,29 +90,21 @@ class BoothForm
             ]);
     }
 
-    protected static function syncCode(Get $get, Set $set): void
+    /**
+     * Fill the generated code once the booth code and name are both entered.
+     * Only on create, so editing a booth never silently changes a printed QR.
+     */
+    protected static function syncGeneratedCode(Get $get, Set $set, string $operation): void
     {
-        $type = $get('booth_type');
-        $name = $get('booth_name');
-
-        if (filled($type) && filled($name)) {
-            $set('booth_code', self::generateCode($type, $name));
+        if ($operation !== 'create') {
+            return;
         }
-    }
 
-    /** "Suite 1" + "BD Philippines" => S1BDP */
-    public static function generateCode(string $type, string $name): string
-    {
-        $words = fn (string $v) => preg_split('/\s+/', trim(preg_replace('/[^A-Za-z0-9\s]/', '', $v)), -1, PREG_SPLIT_NO_EMPTY);
+        $code = trim((string) $get('booth_code'));
+        $name = trim((string) $get('booth_name'));
 
-        $typePart = collect($words($type))
-            ->map(fn ($w) => ctype_digit($w) ? $w : mb_substr($w, 0, 1))
-            ->implode('');
-
-        $namePart = collect($words($name))
-            ->map(fn ($w) => mb_strlen($w) <= 3 ? $w : mb_substr($w, 0, 1))
-            ->implode('');
-
-        return strtoupper($typePart . $namePart);
+        if ($code !== '' && $name !== '') {
+            $set('booth_generated_code', Booth::makeGeneratedCode($code, $name));
+        }
     }
 }
