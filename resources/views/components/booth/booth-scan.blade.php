@@ -60,6 +60,9 @@ new #[Title('Booth Check-in')] class extends Component {
             ['visited_at' => now()],
         );
 
+        // Remember the verified member so the Booth Checker page needs no re-entry.
+        session()->put('booth_verified_id', $member->member_id_no);
+
         $this->verifiedId = $member->member_id_no;
         $this->memberName = preg_replace('/\s+/', ' ', $member->full_name) ?: null;
         $this->memberChapter = $this->chapterLabel($member);
@@ -159,7 +162,6 @@ new #[Title('Booth Check-in')] class extends Component {
         <div
             class="overflow-hidden rounded-3xl border border-slate-200
                     bg-white shadow-xl shadow-slate-200/60">
-
             @if (!$result)
 
                 {{-- Check-in Form --}}
@@ -193,9 +195,9 @@ new #[Title('Booth Check-in')] class extends Component {
                                     </svg>
                                 </div>
 
-                                <input id="member_id_no" type="numeric" wire:model="member_id_no" autocomplete="off"
-                                    autocapitalize="characters" placeholder="Enter your PSA ID" minlength="4" maxlength="4"
-                                    aria-describedby="member-id-help"
+                                <input id="member_id_no" type="text" wire:model="member_id_no" autocomplete="off"
+                                    autocapitalize="characters" placeholder="Enter your PSA ID" minlength="4"
+                                    maxlength="4" aria-describedby="member-id-help"
                                     @error('member_id_no')
                                         aria-invalid="true"
                                     @enderror
@@ -299,6 +301,20 @@ new #[Title('Booth Check-in')] class extends Component {
                             ? 'Your visit to this booth has been successfully recorded. Thank you!'
                             : 'Your visit to this booth has already been recorded. You’re good to go!' }}
                     </p>
+
+                    {{-- Link to Booth Checker (no PSA ID re-entry needed) --}}
+                    <a href="{{ route('booth.checker') }}" wire:navigate
+                        class="mt-6 inline-flex w-full items-center justify-center gap-2
+                               rounded-xl bg-slate-900 px-5 py-4 text-base font-extrabold
+                               text-white shadow-lg shadow-slate-200 transition duration-200
+                               hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
+                        </svg>
+                        Check my visited &amp; pending booths
+                    </a>
                 </div>
 
                 {{-- Member Information --}}
