@@ -2,7 +2,7 @@
 
 @section('title', 'Booth Checker')
 @section('content')
-<div class="flex items-center min-h-dvh mt-10">
+<x-booth.page-shell>
     <livewire:booth.booth-checker />
-</div>
+</x-booth.page-shell>
 @endsection

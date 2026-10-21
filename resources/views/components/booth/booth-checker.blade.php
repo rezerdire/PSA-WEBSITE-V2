@@ -186,7 +186,7 @@ new #[Title('Booth Checker')] class extends Component {
 };
 ?>
 
-<div class="min-h-dvh w-full bg-slate-50 px-4 py-8 sm:px-6 lg:py-12">
+<div class="w-full" data-booth-checker>
     @php
         $booths = $this->booths;
         $total = $this->stats['total'];
@@ -195,188 +195,80 @@ new #[Title('Booth Checker')] class extends Component {
         $percent = $this->stats['percent'];
     @endphp
 
-    <div class="mx-auto max-w-xl">
+    <x-booth.page-header eyebrow="Event Booths" title="Booth Checker"
+        description="Review the booths you have visited and the ones you still have left." />
 
-        {{-- Header --}}
-        <div class="mb-6 text-center">
-            <div
-                class="mx-auto mb-4 flex h-16 w-16 items-center justify-center
-                        rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200/50">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
-                </svg>
+    @if (!$verifiedId)
+        <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
+            <div class="p-6 sm:p-8">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold tracking-tight text-slate-900">Which booths did you visit?</h2>
+                    <p class="mt-2 text-sm leading-6 text-slate-500">
+                        Enter your PSA ID to see your current booth journey.
+                    </p>
+                </div>
+
+                <x-booth.member-id-field submit-action="check" submit-label="Check my booths"
+                    loading-label="Checking..." />
+            </div>
+        </div>
+    @else
+        <div data-booth-result
+            class="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
+            <div class="p-5 sm:p-8">
+                <x-booth.member-card :name="$memberName" :member-id="$verifiedId" :chapter="$memberChapter" action="checkAnother"
+                    action-label="Check another ID" />
             </div>
 
-            <p class="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">
-                Event Booths
-            </p>
-
-            <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                Booth Checker
-            </h1>
-        </div>
-
-        <div
-            class="overflow-hidden rounded-3xl border border-slate-200
-                    bg-white shadow-xl shadow-slate-200/60">
-
-            @if (!$verifiedId)
-
-                {{-- Lookup form --}}
-                <div class="p-6 sm:p-8">
-                    <div class="mb-7">
-                        <h2 class="text-xl font-bold text-slate-900">Which booths did you visit?</h2>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Enter your PSA ID to see the booths you have already visited
-                            and the ones you still have left.
-                        </p>
-                    </div>
-
-                    <form wire:submit="check" class="space-y-5">
-                        <div>
-                            <label for="member_id_no" class="mb-2 block text-sm font-bold text-slate-700">
-                                PSA ID
-                            </label>
-
-                            <input id="member_id_no" type="text" minlength="4" maxlength="4"
-                                wire:model="member_id_no" autocomplete="off" autocapitalize="characters"
-                                placeholder="Enter your PSA ID"
-                                class="block w-full rounded-xl border bg-slate-50 px-4 py-4
-                                       text-base font-medium text-slate-900
-                                       placeholder:font-normal placeholder:text-slate-400
-                                       transition duration-200
-                                       focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100
-                                       {{ $errors->has('member_id_no')
-                                           ? 'border-red-400 focus:border-red-500'
-                                           : 'border-slate-200 focus:border-blue-400' }}"
-                                @if ($errors->has('member_id_no')) aria-invalid="true" @endif>
-
-                            @error('member_id_no')
-                                <div role="alert"
-                                    class="mt-3 rounded-xl border border-red-100 bg-red-50 p-3
-                                            text-sm text-red-700">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-                        </div>
-
-                        <button type="submit" wire:loading.attr="disabled" wire:target="check"
-                            class="flex w-full items-center justify-center rounded-xl bg-blue-600
-                                   px-5 py-4 text-base font-bold text-white
-                                   shadow-lg shadow-blue-100 transition duration-200
-                                   hover:bg-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-200
-                                   disabled:cursor-wait disabled:opacity-60">
-                            <span wire:loading.remove wire:target="check">Check my booths</span>
-                            <span wire:loading wire:target="check">Checking...</span>
-                        </button>
-                    </form>
-                </div>
-            @else
-                {{-- Member --}}
-                <div class="border-b border-slate-100 p-6 sm:p-8">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                Verified member
-                            </p>
-
-                            @if ($memberName)
-                                <p class="mt-1 break-words text-lg font-extrabold text-slate-900">
-                                    {{ $memberName }}
-                                </p>
-                            @endif
-
-                            <p class="mt-1 text-sm text-slate-600">
-                                PSA ID:
-                                <span class="font-semibold text-slate-800">{{ $verifiedId }}</span>
-                            </p>
-
-                            @if ($memberChapter)
-                                <p class="mt-1 text-sm text-slate-600">
-                                    Chapter:
-                                    <span class="font-semibold text-slate-800">{{ $memberChapter }}</span>
-                                </p>
-                            @endif
-                        </div>
-
-                        <button type="button" wire:click="checkAnother"
-                            class="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs
-                                   font-bold text-slate-600 transition hover:bg-slate-50">
-                            Check another ID
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Progress --}}
-                <div class="px-5 py-6 sm:px-8">
-                    <div class="flex items-end justify-between gap-3">
-                        <div>
-                            <h3 class="text-lg font-extrabold text-slate-900">Your booth journey</h3>
-                            <p class="mt-1 text-sm text-slate-500">{{ $percent }}% completed</p>
-                        </div>
-
-                        <p class="text-2xl font-extrabold tabular-nums text-slate-900">
-                            {{ $visited }}<span class="text-base font-semibold text-slate-400"> /
-                                {{ $total }}</span>
-                        </p>
-                    </div>
-
-                    <div class="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full rounded-full bg-emerald-500 transition-all duration-700"
-                            style="width: {{ $percent }}%" role="progressbar" aria-label="Booth visit progress"
-                            aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $percent }}"></div>
-                    </div>
-
-                    {{-- Search --}}
-                    <div class="relative mt-6">
+            <x-booth.progress-summary :total="$total" :visited="$visited" :percent="$percent">
+                <div class="mt-7">
+                    <div class="relative">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <circle cx="11" cy="11" r="7" />
                                 <path stroke-linecap="round" d="m20 20-3.5-3.5" />
                             </svg>
                         </div>
 
                         <input type="search" wire:model.live.debounce.300ms="search" autocomplete="off"
-                            placeholder="Search booth name, code or location"
-                            aria-label="Search booths"
-                            class="block w-full rounded-xl border border-slate-200 bg-slate-50
-                                   py-3 pl-10 pr-4 text-sm font-medium text-slate-900
-                                   placeholder:font-normal placeholder:text-slate-400
-                                   transition duration-200
-                                   focus:border-blue-400 focus:bg-white focus:outline-none
-                                   focus:ring-4 focus:ring-blue-100">
+                            placeholder="Search booth name, code or location" aria-label="Search booths"
+                            class="block w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm
+                                   font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400
+                                   transition duration-200 focus:border-blue-600 focus:bg-white focus:outline-none
+                                   focus:ring-2 focus:ring-blue-100">
                     </div>
 
-                    {{-- Filter --}}
                     <div class="mt-3 grid grid-cols-3 gap-2">
                         <button type="button" wire:click="setFilter('all')"
-                            class="rounded-lg px-3 py-2 text-xs font-bold transition
-                                       {{ $filter === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                            class="rounded-lg border px-3 py-2 text-xs font-bold transition
+                                {{ $filter === 'all'
+                                    ? 'border-blue-600 bg-blue-600 text-white'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
                             All ({{ $total }})
                         </button>
 
                         <button type="button" wire:click="setFilter('visited')"
-                            class="rounded-lg px-3 py-2 text-xs font-bold transition
-                                       {{ $filter === 'visited' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
+                            class="rounded-lg border px-3 py-2 text-xs font-bold transition
+                                {{ $filter === 'visited'
+                                    ? 'border-emerald-600 bg-emerald-600 text-white'
+                                    : 'border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
                             Visited ({{ $visited }})
                         </button>
 
                         <button type="button" wire:click="setFilter('pending')"
-                            class="rounded-lg px-3 py-2 text-xs font-bold transition
-                                       {{ $filter === 'pending' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100' }}">
+                            class="rounded-lg border px-3 py-2 text-xs font-bold transition
+                                {{ $filter === 'pending'
+                                    ? 'border-slate-700 bg-slate-700 text-white'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
                             Pending ({{ $pending }})
                         </button>
                     </div>
 
-                    {{-- Result count + per page --}}
                     <div class="mt-4 flex items-center justify-between gap-3">
                         <p class="text-xs font-semibold text-slate-500">
                             @if ($booths->total() > 0)
-                                Showing {{ $booths->firstItem() }}–{{ $booths->lastItem() }}
-                                of {{ $booths->total() }}
+                                Showing {{ $booths->firstItem() }}–{{ $booths->lastItem() }} of {{ $booths->total() }}
                             @else
                                 No results
                             @endif
@@ -385,9 +277,8 @@ new #[Title('Booth Checker')] class extends Component {
                         <label class="flex items-center gap-2 text-xs font-semibold text-slate-500">
                             Per page
                             <select wire:model.live="perPage"
-                                class="rounded-lg border border-slate-200 bg-white px-2 py-1.5
-                                       text-xs font-bold text-slate-700 focus:border-blue-400
-                                       focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700
+                                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100">
                                 <option value="10">10</option>
                                 <option value="20">20</option>
                                 <option value="30">30</option>
@@ -395,63 +286,12 @@ new #[Title('Booth Checker')] class extends Component {
                         </label>
                     </div>
 
-                    {{-- Booth list --}}
                     <ul class="mt-3 space-y-2">
                         @forelse ($booths as $item)
-                            <li wire:key="booth-{{ $item['id'] }}"
-                                class="flex items-center gap-3 rounded-xl border p-3
-                                       {{ $item['visited_at'] ? 'border-emerald-100 bg-emerald-50/50' : 'border-slate-100 bg-white' }}">
-
-                                <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-                                            {{ $item['visited_at'] ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">
-                                    @if ($item['visited_at'])
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
-                                        </svg>
-                                    @else
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="1.8">
-                                            <rect x="4" y="4" width="16" height="16" rx="3" />
-                                        </svg>
-                                    @endif
-                                </div>
-
-                                <div class="min-w-0 flex-1">
-                                    <p
-                                        class="break-words text-sm font-bold
-                                              {{ $item['visited_at'] ? 'text-emerald-900' : 'text-slate-800' }}">
-                                        {{ $item['name'] }}
-                                    </p>
-
-                                    <p class="mt-0.5 break-words text-xs text-slate-500">
-                                        {{ $item['code'] }}
-                                        @if ($item['location'])
-                                            <span class="px-0.5">·</span>{{ $item['location'] }}
-                                        @endif
-                                    </p>
-                                </div>
-
-                                @if ($item['visited_at'])
-                                    <span class="shrink-0 text-right text-[11px] font-bold text-emerald-700">
-                                        Visited
-                                        <span class="block font-medium text-emerald-600">
-                                            {{ $item['visited_at']->format('M j, g:i A') }}
-                                        </span>
-                                    </span>
-                                @else
-                                    <span
-                                        class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1
-                                                 text-[11px] font-bold text-slate-500">
-                                        Pending
-                                    </span>
-                                @endif
-                            </li>
+                            <x-booth.list-item :item="$item" />
                         @empty
                             <li
-                                class="rounded-xl border border-dashed border-slate-200 p-6
-                                       text-center text-sm text-slate-500">
+                                class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
                                 @if (trim($search) !== '')
                                     No booths match “{{ $search }}”.
                                 @elseif ($filter === 'visited')
@@ -463,7 +303,6 @@ new #[Title('Booth Checker')] class extends Component {
                         @endforelse
                     </ul>
 
-                    {{-- Pagination --}}
                     @if ($booths->hasPages())
                         <div class="mt-5">
                             {{ $booths->links() }}
@@ -472,16 +311,34 @@ new #[Title('Booth Checker')] class extends Component {
 
                     @if ($total > 0 && $visited === $total)
                         <div class="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
-                            <p class="text-base font-extrabold text-blue-900">
-                                Amazing! You visited every booth!
-                            </p>
-                            <p class="mt-1 text-sm text-blue-800">
-                                Thank you for participating in the event.
-                            </p>
+                            <p class="text-base font-extrabold text-blue-900">Amazing! You visited every booth!</p>
+                            <p class="mt-1 text-sm text-blue-800">Thank you for participating in the event.</p>
                         </div>
                     @endif
                 </div>
-            @endif
+            </x-booth.progress-summary>
         </div>
-    </div>
+    @endif
 </div>
+
+@script
+    <script>
+        let boothCheckerResultVisible = Boolean(document.querySelector('[data-booth-result]'));
+
+        Livewire.hook('morph.updated', ({
+            el
+        }) => {
+            if (!el.closest?.('[data-booth-checker]')) {
+                return;
+            }
+
+            const resultVisible = Boolean(document.querySelector('[data-booth-result]'));
+
+            if (!boothCheckerResultVisible && resultVisible) {
+                requestAnimationFrame(() => window.scrollTo(0, 0));
+            }
+
+            boothCheckerResultVisible = resultVisible;
+        });
+    </script>
+@endscript
