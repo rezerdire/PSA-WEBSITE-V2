@@ -42,6 +42,53 @@
                 'icon' => 'sparkles',
                 'href' => '#',
             ],
+@php
+    $links = [
+        [
+            'key' => 'poster',
+            'title' => 'Poster',
+            'description' => 'Download the official convention poster',
+            'icon' => 'photo',
+            'href' => route('annual-convention-poster'),
+        ],
+        [
+            'key' => 'Registration Form',
+            'title' => 'Registration Form',
+            'description' => 'Registration for the convention',
+            'icon' => 'document-text',
+            'href' => route('Event-Registration'), 
+        ],
+        [
+            'key' => 'scientific',
+            'title' => 'Scientific Program',
+            'description' => 'View the full lineup of talks and sessions',
+            'icon' => 'book-open',
+            'href' => '#',
+        ],
+        [
+            'key' => 'social',
+            'title' => 'Social Programs',
+            'description' => 'Evening events and networking activities',
+            'icon' => 'sparkles',
+            'href' => '#',
+        ],
+        // [
+        //     'key' => 'tours',
+        //     'title' => 'Tours & Accommodations',
+        //     'description' => 'Hotel options and city tour packages',
+        //     'icon' => 'paper-airplane',
+        //     'href' => '#',
+        // ],
+        [
+            'key' => 'sponsorships',
+            'title' => 'Booth Checker',
+            'description' => 'Check the booths you have visited.',
+            'icon' => 'clipboard-document-list',
+            'href' => route('booth.checker'),
+        ],
+    ];
+@endphp
+<div class="min-h-screen bg-white">
 
             [
                 'key' => 'sponsorships',

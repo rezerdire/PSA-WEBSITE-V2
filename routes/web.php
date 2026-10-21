@@ -93,3 +93,7 @@ Route::get('/booth/{booth_code}', function (string $booth_code) {
 
 // WORKSHOP
 Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');
+// booth checker
+Route::get('/booth-checker', function () {
+    return view('pages.booth_page.checker');
+})->name('booth.checker');
