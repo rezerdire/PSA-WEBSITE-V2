@@ -96,33 +96,6 @@ new #[Title('Booth Check-in')] class extends Component {
 };
 ?>
 
-<div class="mx-auto max-w-md p-5">
-    <div class="rounded-2xl bg-white p-6 shadow">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
-            Booth Check-in
-        </p>
-        <h1 class="mt-1 text-center text-2xl font-bold text-gray-900">{{ $booth->booth_name }}</h1>
-        <p class="mt-1 text-center text-sm text-gray-500">
-            {{ $booth->booth_type }}@if($booth->location) &bull; {{ $booth->location }}@endif
-        </p>
-
-        @if (! $result)
-            <form wire:submit="verify" class="mt-6 space-y-4">
-                <div>
-                    <label for="member_id_no" class="block text-sm font-medium text-gray-700">
-                        Enter your PSA ID to confirm your visit
-                    </label>
-                    <input
-                        id="member_id_no"
-                        type="text"
-                        wire:model="member_id_no"
-                        autocomplete="off"
-                        placeholder="PSA ID"
-                        class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-blue-5 00 focus:ring-blue-500"
-                    >
-                    @error('member_id_no')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
 <div class="min-h-dvh w-full bg-slate-50 px-4 py-8 sm:px-6 lg:py-12">
     @php
         $boothProgress = $this->progress;
@@ -295,25 +268,6 @@ new #[Title('Booth Check-in')] class extends Component {
                 {{-- Result Header --}}
                 <div class="px-6 pb-6 pt-8 text-center sm:px-8">
 
-                <button
-                    type="submit"
-                    wire:loading.attr="disabled"
-                    class="w-full rounded-lg bg-blue-600 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60"
-                >
-                    <span wire:loading.remove>Verify</span>
-                    <span wire:loading>Checking...</span>
-                </button>
-            </form>
-        @else
-            <div class="mt-6 rounded-xl p-4 text-center {{ $result === 'success' ? 'bg-green-50 text-green-800' : 'bg-blue-50 text-blue-800' }}">
-                <p class="text-lg font-semibold">
-                    {{ $result === 'success' ? 'Visit recorded!' : 'You already checked in here.' }}
-                </p>
-
-                <div class="mt-3 border-t border-black/10 pt-3">
-                    @if ($memberName)
-                        <p class="text-base font-bold">{{ $memberName }}</p>
-                    @endif
                     <div
                         class="mx-auto flex h-16 w-16 items-center justify-center
                                 rounded-full
