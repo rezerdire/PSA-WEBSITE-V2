@@ -7,7 +7,7 @@ new class extends Component
     //
 };
 ?>
-
+{{-- convention highlights --}}
 <section id="highlight" class="py-15 bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
