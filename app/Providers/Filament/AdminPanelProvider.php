@@ -35,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('Images/PSA_LOGO.png'))
             ->brandName('PSA Admin')
             ->default()
+            ->globalSearch(false)
             ->id('admin')
             ->path('admin')
             ->globalSearch(false)
