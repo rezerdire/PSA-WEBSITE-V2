@@ -26,10 +26,27 @@ class BoothAttendancesTable
         ));
     }
 
+    /**
+     * Distinct booths this attendee has visited.
+     *
+     * Do not use $record->booths_count in the View modal: Filament re-loads
+     * the record with "WHERE attendance_id = <key>" BEFORE the GROUP BY runs,
+     * so the grouped COUNT(*) there only ever sees that one row (always 1).
+     */
+    protected static function visitedCount($record): int
+    {
+        return BoothAttendance::where('member_id_no', $record->member_id_no)
+            ->distinct()
+            ->count('booth_id');
+    }
+
     public static function configure(Table $table): Table
     {
         $members  = (new Member)->getTable();
         $chapters = (new Chapter)->getTable();
+
+        // One query per request instead of one per row.
+        $totalBooths = Booth::count();
 
         return $table
             // One row per attendee (with name and chapter joined in)
@@ -39,7 +56,8 @@ class BoothAttendancesTable
                 ->select([
                     'booth_attendances.member_id_no',
                     DB::raw('MIN(booth_attendances.attendance_id) as attendance_id'),
-                    DB::raw('COUNT(*) as booths_count'),
+                    // DISTINCT so a duplicated join row can never inflate the count
+                    DB::raw('COUNT(DISTINCT booth_attendances.booth_id) as booths_count'),
                     DB::raw('MAX(booth_attendances.visited_at) as last_visit'),
                     DB::raw("MAX({$members}.mem_first_name) as mem_first_name"),
                     DB::raw("MAX({$members}.mem_middle_name) as mem_middle_name"),
@@ -75,7 +93,7 @@ class BoothAttendancesTable
                 TextColumn::make('booths_count')
                     ->label('Booths visited')
                     ->badge()
-                    ->suffix(fn () => ' / ' . Booth::count())
+                    ->suffix(' / ' . $totalBooths)
                     ->sortable(),
 
                 TextColumn::make('last_visit')
@@ -111,7 +129,7 @@ class BoothAttendancesTable
 
                         TextEntry::make('summary')
                             ->hiddenLabel()
-                            ->state(fn ($record) => $record->booths_count . ' of ' . Booth::count() . ' booths visited')
+                            ->state(fn ($record) => self::visitedCount($record) . ' of ' . $totalBooths . ' booths visited')
                             ->weight('bold'),
 
                         RepeatableEntry::make('visits')
