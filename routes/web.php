@@ -81,11 +81,17 @@ Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name(
 
 Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-registry');
 
-// booth
-Route::get('/booth/{booth_code}', function (string $booth_code) {
-    return "Booth scan page for {$booth_code}";
-})->name('booth.scan');
 
-Route::get('/booth/{booth_code}', function (string $booth_code) {
-    return view('pages.booth_page.index', ['booth_code' => $booth_code]);
-})->name('booth.scan');
+
+// Route::get('/booth/{booth_code}', function (string $booth_code) {
+//     return view('pages.booth_page.index', ['booth_code' => $booth_code]);
+// })->name('booth.scan');
+
+// // booth checker
+// Route::get('/booth-checker', function () {
+//     return view('pages.booth_page.checker');
+// })->name('booth.checker');
+
+
+// WORKSHOP
+// Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');

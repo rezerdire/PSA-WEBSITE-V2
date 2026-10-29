@@ -30,7 +30,7 @@ class BoothsTable
                 TextColumn::make('booth_type')->searchable(),
                 TextColumn::make('booth_name')->searchable(),
                 TextColumn::make('location')->searchable(),
-                TextColumn::make('booth_code')->searchable(),
+                TextColumn::make('booth_generated_code')->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
