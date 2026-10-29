@@ -5,7 +5,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -15,14 +15,13 @@ use App\Models\Member;
 use App\Models\WorkshopRegistration;
 
 new class extends Component {
-    // Server-filled only (members). Stay empty for non-members.
+    // Server-filled for members; generated on submit for non-members.
     #[Locked]
     public string $psaId = '';
     #[Locked]
     public string $memType = '';
 
-    // True only when the member record has a REAL PRC number (then it is locked).
-    // If the member table has "NA" / empty, this is false and the user types it in.
+    // PRC numbers are always entered by the registrant, including verified members.
     #[Locked]
     public bool $prcFromMember = false;
 
@@ -42,8 +41,12 @@ new class extends Component {
 
     public bool $submitted = false;
 
+    #[Locked]
+    public bool $confirmationEmailSent = false;
+
     // Maximum registrants per workshop
     public const WORKSHOP_LIMIT = 60;
+    public const NON_MEMBER_PSA_PREFIX = 'NMW_';
 
     // Max PSA ID lookups per IP per minute
     protected const LOOKUP_MAX_ATTEMPTS = 10;
@@ -55,9 +58,10 @@ new class extends Component {
     ];
 
     // Program details shown when a workshop is selected.
-    // Program rows: [topic, speaker, duration|null]
+    // Program rows: [topic, speaker|null, time or duration|null]
     // Station rows: [name, description|null, setup]
-    // Leave 'program' and 'stations' empty to show no panel.
+    // Optional keys: 'program_label', 'stations_label', 'facilitators' (list of names)
+    // Leave 'program', 'stations' and 'facilitators' empty to show no panel.
     public const WORKSHOP_DETAILS = [
         'RA' => [
             'title' => 'Regional Anesthesia Workshop',
@@ -67,18 +71,48 @@ new class extends Component {
             'stations' => [['MSK Session', 'Musculoskeletal ultrasound of shoulder, knee, hip and SI joints.', '2 stations with 1 model and 1 UTZ each station'], ['Plan A Blocks', null, '4 stations with 1 model and 1 UTZ each']],
         ],
         'POCUS' => [
-            'title' => 'POCUS',
-            'program' => [],
-            'session' => null,
-            'venue' => null,
-            'stations' => [],
+            'title' => 'POCUS Workshop',
+            'program_label' => 'Lectures',
+            'program' => [
+                ['Focused Cardiac Ultrasound', 'Dr. Raisalam Macataman', '8:30 – 8:45 AM'],
+                ['Lung Ultrasound', 'Dr. Peñafrancia C. Cano', '8:45 – 9:00 AM'],
+                ['Gastric Ultrasound', 'Dr. Laiza Teodoro Teoxon', '9:00 – 9:15 AM'],
+                ['Airway Ultrasound', 'Dr. Noel Aypa', '9:15 – 9:30 AM'],
+                ['Optic Ultrasound', 'Dr. Geraldine Jose', '9:30 – 9:45 AM'],
+                ['Coffee Break', null, '9:45 – 10:00 AM'],
+            ],
+            'session' => '8:30 AM – 12:00 Noon',
+            'venue' => 'Executive 5',
+            'stations_label' => 'Workshops',
+            'stations' => [
+                ['Station 1: PLAX/PSAX/A4C', 'Dr. Raisalam Macataman & Dr. Gina Gumintad', '10:00 – 10:20 AM'],
+                ['Station 2: Subcostal/IVC/EXUS', 'Dr. Melissa Caranto', '10:20 – 10:40 AM'],
+                ['Station 3: Lung', 'Dr. Peñafrancia C. Cano & Dr. Chlenice Dela Cruz', '10:40 – 11:00 AM'],
+                ['Station 4: Gastric', 'Dr. Laiza Teodoro Teoxon', '11:00 – 11:20 AM'],
+                ['Station 5: Airway', 'Dr. Noel Aypa', '11:20 – 11:40 AM'],
+                ['Station 6: Optic', 'Dr. Geraldine Jose', '11:40 AM – 12:00 NN'],
+            ],
         ],
         'AIRWAY' => [
-            'title' => 'Airway',
+            'title' => 'Airway Management Workshop',
             'program' => [],
-            'session' => null,
-            'venue' => null,
+            'session' => '1:30 – 4:30 PM',
+            'venue' => 'Executive 5',
             'stations' => [],
+            'facilitators' => [
+                'Dr. Roan Jocson',
+                'Dr. Maria Margarita Hilvano-Corsiga',
+                'Dr. Ralph Philip Anislag',
+                'Dr. Ivan Gil Balmadrid',
+                'Dr. Jafer Lim',
+                'Dr. Lauren Laforteza-Sagadal',
+                'Dr. Dennis Lopez',
+                'Dr. Hansley Milton Tan',
+                'Dr. Christian Soriño',
+                'Dr. Emily Nery',
+                'Dr. Mark Lee Contillo',
+                'Dr. James Monje',
+            ],
         ],
     ];
 
@@ -109,6 +143,32 @@ new class extends Component {
         return WorkshopRegistration::whereJsonContains('workshops', $key)->count();
     }
 
+    // Allocates the next four-digit PSA ID for a non-member workshop registrant.
+    // The caller holds the workshop-registration lock while this is calculated.
+    protected function generateNonMemberPsaId(): string
+    {
+        $highestNumber = 0;
+        $pattern = '/^' . preg_quote(self::NON_MEMBER_PSA_PREFIX, '/') . '(\d{4})$/';
+
+        foreach (
+            WorkshopRegistration::where('psa_id', 'like', self::NON_MEMBER_PSA_PREFIX . '%')
+                ->lockForUpdate()
+                ->pluck('psa_id') as $psaId
+        ) {
+            if (preg_match($pattern, (string) $psaId, $matches)) {
+                $highestNumber = max($highestNumber, (int) $matches[1]);
+            }
+        }
+
+        $nextNumber = $highestNumber + 1;
+
+        if ($nextNumber > 9999) {
+            throw new \OverflowException('The non-member PSA ID sequence is exhausted.');
+        }
+
+        return self::NON_MEMBER_PSA_PREFIX . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
     // True for "", "NA", "N/A", "n.a.", "none", "-" ... (no real PRC number)
     protected function isPlaceholderPrc(?string $value): bool
     {
@@ -117,10 +177,7 @@ new class extends Component {
         return in_array($normalized, self::PRC_PLACEHOLDERS, true);
     }
 
-    // Copies the member's identity data from the database into the component.
-    // $freshLookup = true right after verifying (clears the PRC box when the
-    // member has none on file). On submit it is false, so whatever the member
-    // typed into the PRC box is kept.
+    // Copies only the member identity data from the database into the component.
     protected function applyMember(Member $member, bool $freshLookup): void
     {
         $code = strtoupper(trim($member->psa_mem_type ?? ''));
@@ -130,20 +187,10 @@ new class extends Component {
         $this->firstName = (string) ($member->mem_first_name ?? '');
         $this->middleName = (string) ($member->mem_middle_name ?? '');
         $this->memType = self::MEM_TYPE_MAP[$code] ?? $code; // "RM" -> "Regular Member"
+        $this->prcFromMember = false;
 
-        $dbPrc = trim((string) ($member->mem_prc_no ?? ''));
-
-        if ($this->isPlaceholderPrc($dbPrc)) {
-            // No real PRC on file: the member types it in manually
-            $this->prcFromMember = false;
-
-            if ($freshLookup) {
-                $this->prcNumber = '';
-            }
-        } else {
-            // Real PRC on file: force it from the database and lock the field
-            $this->prcFromMember = true;
-            $this->prcNumber = $dbPrc;
+        if ($freshLookup) {
+            $this->prcNumber = '';
         }
     }
 
@@ -260,8 +307,8 @@ new class extends Component {
                 'middleName' => ['nullable', 'string', 'max:255'],
                 'prcNumber' => ['required', 'string', 'min:5', 'max:7'],
                 'hospital' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email:rfc', 'max:255'],
-                'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/', 'digits:11'],
+                'email' => ['required', 'email', 'max:255'],
+                'phone' => ['required', 'regex:/^09\d{9}$/'],
                 'workshop' => ['required', 'in:' . implode(',', array_keys(self::WORKSHOPS))],
             ],
             [
@@ -312,26 +359,35 @@ new class extends Component {
         // grabbing the last slot at the same time can't both get in.
         try {
             $result = Cache::lock('workshop-registration', 10)->block(5, function () use ($validated) {
-                if ($this->countFor($validated['workshop']) >= self::WORKSHOP_LIMIT) {
-                    return 'full';
-                }
+                return DB::transaction(function () use ($validated) {
+                    if ($this->countFor($validated['workshop']) >= self::WORKSHOP_LIMIT) {
+                        return 'full';
+                    }
 
-                // Returns the saved record so we can email it after the lock is released
-                return WorkshopRegistration::create([
-                    'psa_id' => $this->psaId !== '' ? $this->psaId : null,
-                    'mem_last_name' => $validated['lastName'],
-                    'mem_first_name' => $validated['firstName'],
-                    'mem_middle_name' => $validated['middleName'] ?? '',
-                    'mem_type' => $this->psaId !== '' ? $this->memType : 'Non-member',
-                    'prc_number' => $validated['prcNumber'],
-                    'hospital' => $validated['hospital'],
-                    'email' => $validated['email'],
-                    'phone' => $validated['phone'],
-                    'workshops' => [$validated['workshop']],
-                ]);
+                    $assignedPsaId = $this->psaId !== ''
+                        ? $this->psaId
+                        : $this->generateNonMemberPsaId();
+
+                    // Returns the saved record so we can email it after the lock is released
+                    return WorkshopRegistration::create([
+                        'psa_id' => $assignedPsaId,
+                        'mem_last_name' => $validated['lastName'],
+                        'mem_first_name' => $validated['firstName'],
+                        'mem_middle_name' => $validated['middleName'] ?? '',
+                        'mem_type' => $this->psaId !== '' ? $this->memType : 'Non-member',
+                        'prc_number' => $validated['prcNumber'],
+                        'hospital' => $validated['hospital'],
+                        'email' => $validated['email'],
+                        'phone' => $validated['phone'],
+                        'workshops' => [$validated['workshop']],
+                    ]);
+                });
             });
         } catch (LockTimeoutException $e) {
             $this->addError('workshop', 'The system is busy. Please try again in a moment.');
+            return;
+        } catch (\OverflowException $e) {
+            $this->addError('psaId', 'No non-member PSA IDs are available. Please contact the PSA secretariat.');
             return;
         } catch (UniqueConstraintViolationException $e) {
             // Two submissions raced past the exists() check
@@ -344,12 +400,22 @@ new class extends Component {
             $this->workshop = '';
             return;
         }
+        $this->psaId = (string) $result->psa_id;
+        $this->confirmationEmailSent = false;
 
         // Confirmation email. A mail failure must not undo a saved registration.
         try {
-            Mail::to($result->email)->send(new WorkshopRegistrationConfirmation($result, self::WORKSHOPS[$validated['workshop']]));
+            Mail::to($result->email)->send(new WorkshopRegistrationConfirmation(
+                $result,
+                self::WORKSHOPS[$validated['workshop']],
+                self::WORKSHOP_DETAILS[$validated['workshop']] ?? [],
+            ));
+            $this->confirmationEmailSent = true;
         } catch (\Throwable $e) {
-            Log::error('Workshop confirmation email failed: ' . $e->getMessage());
+            Log::error('Workshop confirmation email failed.', [
+                'registration_id' => $result->getKey(),
+                'exception' => $e,
+            ]);
         }
 
         $this->submitted = true;
@@ -359,12 +425,97 @@ new class extends Component {
 
 <div>
     @if ($submitted)
-        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        @php
+            $confirmationDetails = self::WORKSHOP_DETAILS[$workshop] ?? [];
+            $confirmationWorkshop = self::WORKSHOPS[$workshop] ?? 'Selected workshop';
+        @endphp
+        <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100">
             <div class="h-1.5 bg-gradient-to-r from-[#000066] to-[#0000aa]"></div>
-            <div class="p-8 text-center">
-                <h2 class="font-bold text-lg text-[#000066]">Registration Complete</h2>
-                <p class="text-sm text-gray-500 mt-2">Thank you, {{ $firstName }} {{ $lastName }}. Your workshop
-                    slot has been recorded.</p>
+            <div class="p-6 sm:p-8">
+                <div class="flex flex-col items-center text-center">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"
+                        aria-hidden="true">
+                        <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 7" />
+                        </svg>
+                    </div>
+                    <p class="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Registration
+                        confirmed</p>
+                    <h2 class="mt-2 text-2xl font-bold text-[#000066]">You're successfully registered</h2>
+                    <p class="mt-2 max-w-lg text-sm leading-6 text-gray-500">
+                        Thank you, {{ $firstName }} {{ $lastName }}. Your workshop slot has been recorded.
+                    </p>
+                </div>
+
+                <div class="mt-7 overflow-hidden rounded-xl border border-[#000066]/10">
+                    <div class="bg-[#000066] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white">
+                        Registration summary
+                    </div>
+                    <dl class="divide-y divide-gray-100">
+                        <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
+                            <dt class="text-xs text-gray-400">Workshop</dt>
+                            <dd class="text-sm font-semibold text-gray-700">{{ $confirmationWorkshop }}</dd>
+                        </div>
+                        @if (!empty($confirmationDetails['session']))
+                            <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
+                                <dt class="text-xs text-gray-400">Schedule</dt>
+                                <dd class="text-sm text-gray-700">{{ $confirmationDetails['session'] }}</dd>
+                            </div>
+                        @endif
+                        @if (!empty($confirmationDetails['venue']))
+                            <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
+                                <dt class="text-xs text-gray-400">Venue</dt>
+                                <dd class="text-sm text-gray-700">{{ $confirmationDetails['venue'] }}</dd>
+                            </div>
+                        @endif
+                    </dl>
+                </div>
+
+                <div class="mt-5 rounded-xl border p-4 {{ $confirmationEmailSent ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-amber-50' }}"
+                    role="status" aria-live="polite">
+                    <div class="flex items-start gap-3">
+                        @if ($confirmationEmailSent)
+                            <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 8.5 12 14l9-5.5M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-emerald-800">Confirmation email sent</p>
+                                <p class="mt-1 text-xs leading-5 text-emerald-700">
+                                    We sent the confirmation to <span class="font-semibold">{{ $email }}</span>.
+                                    Please check your inbox and spam folder.
+                                </p>
+                            </div>
+                        @else
+                            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v4m0 4h.01M10.3 3.8 2.7 17a2 2 0 0 0 1.74 3h15.12a2 2 0 0 0 1.74-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-amber-800">Registration saved</p>
+                                <p class="mt-1 text-xs leading-5 text-amber-700">
+                                    Your slot was recorded, but we could not send the confirmation email. For further
+                                    inquiries, contact us at <span class="font-semibold">psainc_sec@yahoo.com</span>.
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+
+                <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                    <a href="{{ route('workshop') }}"
+                        class="inline-flex items-center justify-center rounded-lg bg-[#000066] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+                        Return to workshop page
+                    </a>
+                    <a href="{{ url('/') }}"
+                        class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50">
+                        Back to home
+                    </a>
+                </div>
             </div>
         </div>
     @else
@@ -387,7 +538,8 @@ new class extends Component {
                         <h2 class="font-bold text-base text-[#000066]">Workshop Registration</h2>
                         <p class="text-gray-400 text-xs mt-0.5">
                             PSA members: select your PSA ID above to auto-fill your details.
-                            Non-members: just fill in the fields below.
+                            Non-members: just fill in the fields below; an NMW_0001 PSA ID will be assigned after
+                            registration.
                         </p>
                     </div>
 
@@ -479,12 +631,10 @@ new class extends Component {
                                 PRC Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prcNumber" placeholder="Enter your PRC number"
-                                minlength="5" maxlength="7" @readonly($prcFromMember)
-                                tabindex="{{ $prcFromMember ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $prcFromMember ? $lockedClass : '' }}">
-                            @if ($psaId && !$prcFromMember)
-                                <p class="text-gray-400 text-xs mt-1">No PRC number is on file in the PSA records.
-                                    Please enter it manually.</p>
+                                minlength="5" maxlength="7"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                            @if ($psaId)
+                                <p class="text-gray-400 text-xs mt-1">Please enter your PRC number manually.</p>
                             @endif
                             @error('prcNumber')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -510,7 +660,8 @@ new class extends Component {
                                 Phone Number <span class="text-red-500">*</span>
                             </label>
                             <input type="tel" wire:model="phone" placeholder="e.g. 09171234567" autocomplete="tel"
-                                inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                inputmode="numeric" maxlength="11" pattern="09[0-9]{9}"
+                                title="Please enter a valid PH mobile number (e.g. 09123456789)."
                                 oninput="this.value = this.value.replace(/\D/g, '')"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @error('phone')
@@ -574,7 +725,7 @@ new class extends Component {
                             $details = self::WORKSHOP_DETAILS[$workshop] ?? null;
                         @endphp
 
-                        @if ($details && ($details['program'] || $details['stations']))
+                        @if ($details && ($details['program'] || $details['stations'] || !empty($details['facilitators'])))
                             <div wire:key="ws-details-{{ $workshop }}" x-data x-transition
                                 class="mt-4 rounded-xl border border-[#000066]/15 bg-[#f4f4fb] p-5 space-y-4">
 
@@ -584,7 +735,7 @@ new class extends Component {
                                 @if ($details['program'])
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                            Program</p>
+                                            {{ $details['program_label'] ?? 'Program' }}</p>
                                         <div class="overflow-x-auto rounded-lg border border-[#000066]/15 bg-white">
                                             <table class="w-full text-sm text-left">
                                                 <thead class="bg-[#000066] text-white text-xs uppercase tracking-wide">
@@ -592,7 +743,7 @@ new class extends Component {
                                                         <th class="px-4 py-2.5 font-semibold">Topic</th>
                                                         <th class="px-4 py-2.5 font-semibold">Speaker</th>
                                                         <th class="px-4 py-2.5 font-semibold whitespace-nowrap">
-                                                            Duration
+                                                            Time / Duration
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -603,7 +754,7 @@ new class extends Component {
                                                             </td>
                                                             <td
                                                                 class="px-4 py-2.5 font-medium text-[#000066] whitespace-nowrap">
-                                                                {{ $speaker }}</td>
+                                                                {{ $speaker ?? '—' }}</td>
                                                             <td class="px-4 py-2.5 text-gray-500 whitespace-nowrap">
                                                                 {{ $duration ?? '—' }}</td>
                                                         </tr>
@@ -646,7 +797,7 @@ new class extends Component {
                                 @if ($details['stations'])
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                            Workshop Stations</p>
+                                            {{ $details['stations_label'] ?? 'Workshop Stations' }}</p>
                                         <div class="space-y-3">
                                             @foreach ($details['stations'] as [$name, $description, $setup])
                                                 <div class="text-sm">
@@ -658,6 +809,21 @@ new class extends Component {
                                                 </div>
                                             @endforeach
                                         </div>
+                                    </div>
+                                @endif
+                                @if (!empty($details['facilitators']))
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                                            Facilitators</p>
+                                        <ul
+                                            class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-700">
+                                            @foreach ($details['facilitators'] as $facilitator)
+                                                <li class="flex items-start gap-2">
+                                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#000066] shrink-0"></span>
+                                                    <span>{{ $facilitator }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </div>
                                 @endif
                             </div>
