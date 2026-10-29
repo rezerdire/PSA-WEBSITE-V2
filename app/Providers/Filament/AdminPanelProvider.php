@@ -38,6 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->globalSearch(false)
             ->id('admin')
             ->path('admin')
+            ->globalSearch(false)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->colors([

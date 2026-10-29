@@ -111,7 +111,7 @@
 
             <div class="flex gap-4 transition-transform duration-500 ease-in-out sm:gap-5"
                 :style="`
-                            transform: translateX( calc(-${index} *((100% + ${visible === 1 ? 16 : 20}px) / ${visible})))`">
+                                            transform: translateX( calc(-${index} *((100% + ${visible === 1 ? 16 : 20}px) / ${visible})))`">
 
                 {{-- dynamic events --}}
                 @foreach ($events as $event)
