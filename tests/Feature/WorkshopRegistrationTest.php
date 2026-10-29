@@ -105,7 +105,7 @@ it('rejects invalid contact details through Livewire validation', function () {
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
             'email' => 'not-an-email',
-            'phone' => 'abc',
+            'phone' => '08171234567',
             'privacyConsent' => true,
         ]))
         ->call('submit')

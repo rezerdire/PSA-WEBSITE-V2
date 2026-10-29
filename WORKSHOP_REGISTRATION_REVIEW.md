@@ -111,7 +111,7 @@ Either:
 
 ### P2 — Improve validation consistency
 
-The email input is `type="email"`, so malformed email text is stopped by browser-native constraint validation before Livewire calls `submit()`. The server has a custom `email:rfc` message, but that message is not reached in this case.
+The email input is `type="email"`, so malformed email text is stopped by browser-native constraint validation before Livewire calls `submit()`. The server has a custom email validation message, but that message is not reached in this case.
 
 Choose one consistent experience:
 

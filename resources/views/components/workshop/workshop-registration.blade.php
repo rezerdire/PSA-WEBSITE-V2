@@ -55,9 +55,10 @@ new class extends Component {
     ];
 
     // Program details shown when a workshop is selected.
-    // Program rows: [topic, speaker, duration|null]
+    // Program rows: [topic, speaker|null, time or duration|null]
     // Station rows: [name, description|null, setup]
-    // Leave 'program' and 'stations' empty to show no panel.
+    // Optional keys: 'program_label', 'stations_label', 'facilitators' (list of names)
+    // Leave 'program', 'stations' and 'facilitators' empty to show no panel.
     public const WORKSHOP_DETAILS = [
         'RA' => [
             'title' => 'Regional Anesthesia Workshop',
@@ -67,18 +68,48 @@ new class extends Component {
             'stations' => [['MSK Session', 'Musculoskeletal ultrasound of shoulder, knee, hip and SI joints.', '2 stations with 1 model and 1 UTZ each station'], ['Plan A Blocks', null, '4 stations with 1 model and 1 UTZ each']],
         ],
         'POCUS' => [
-            'title' => 'POCUS',
-            'program' => [],
-            'session' => null,
-            'venue' => null,
-            'stations' => [],
+            'title' => 'POCUS Workshop',
+            'program_label' => 'Lectures',
+            'program' => [
+                ['Focused Cardiac Ultrasound', 'Dr. Raisalam Macataman', '8:30 – 8:45 AM'],
+                ['Lung Ultrasound', 'Dr. Peñafrancia C. Cano', '8:45 – 9:00 AM'],
+                ['Gastric Ultrasound', 'Dr. Laiza Teodoro Teoxon', '9:00 – 9:15 AM'],
+                ['Airway Ultrasound', 'Dr. Noel Aypa', '9:15 – 9:30 AM'],
+                ['Optic Ultrasound', 'Dr. Geraldine Jose', '9:30 – 9:45 AM'],
+                ['Coffee Break', null, '9:45 – 10:00 AM'],
+            ],
+            'session' => '8:30 AM – 12:00 Noon',
+            'venue' => 'Executive 5',
+            'stations_label' => 'Workshops',
+            'stations' => [
+                ['Station 1: PLAX/PSAX/A4C', 'Dr. Raisalam Macataman & Dr. Gina Gumintad', '10:00 – 10:20 AM'],
+                ['Station 2: Subcostal/IVC/EXUS', 'Dr. Melissa Caranto', '10:20 – 10:40 AM'],
+                ['Station 3: Lung', 'Dr. Peñafrancia C. Cano & Dr. Chlenice Dela Cruz', '10:40 – 11:00 AM'],
+                ['Station 4: Gastric', 'Dr. Laiza Teodoro Teoxon', '11:00 – 11:20 AM'],
+                ['Station 5: Airway', 'Dr. Noel Aypa', '11:20 – 11:40 AM'],
+                ['Station 6: Optic', 'Dr. Geraldine Jose', '11:40 AM – 12:00 NN'],
+            ],
         ],
         'AIRWAY' => [
-            'title' => 'Airway',
+            'title' => 'Airway Management Workshop',
             'program' => [],
-            'session' => null,
-            'venue' => null,
+            'session' => '1:30 – 4:30 PM',
+            'venue' => 'Executive 5',
             'stations' => [],
+            'facilitators' => [
+                'Dr. Roan Jocson',
+                'Dr. Maria Margarita Hilvano-Corsiga',
+                'Dr. Ralph Philip Anislag',
+                'Dr. Ivan Gil Balmadrid',
+                'Dr. Jafer Lim',
+                'Dr. Lauren Laforteza-Sagadal',
+                'Dr. Dennis Lopez',
+                'Dr. Hansley Milton Tan',
+                'Dr. Christian Soriño',
+                'Dr. Emily Nery',
+                'Dr. Mark Lee Contillo',
+                'Dr. James Monje',
+            ],
         ],
     ];
 
@@ -260,8 +291,8 @@ new class extends Component {
                 'middleName' => ['nullable', 'string', 'max:255'],
                 'prcNumber' => ['required', 'string', 'min:5', 'max:7'],
                 'hospital' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email:rfc', 'max:255'],
-                'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/', 'digits:11'],
+                'email' => ['required', 'email', 'max:255'],
+                'phone' => ['required', 'regex:/^09\d{9}$/'],
                 'workshop' => ['required', 'in:' . implode(',', array_keys(self::WORKSHOPS))],
             ],
             [
@@ -510,7 +541,8 @@ new class extends Component {
                                 Phone Number <span class="text-red-500">*</span>
                             </label>
                             <input type="tel" wire:model="phone" placeholder="e.g. 09171234567" autocomplete="tel"
-                                inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                inputmode="numeric" maxlength="11" pattern="09[0-9]{9}"
+                                title="Please enter a valid PH mobile number (e.g. 09123456789)."
                                 oninput="this.value = this.value.replace(/\D/g, '')"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @error('phone')
@@ -574,7 +606,7 @@ new class extends Component {
                             $details = self::WORKSHOP_DETAILS[$workshop] ?? null;
                         @endphp
 
-                        @if ($details && ($details['program'] || $details['stations']))
+                        @if ($details && ($details['program'] || $details['stations'] || !empty($details['facilitators'])))
                             <div wire:key="ws-details-{{ $workshop }}" x-data x-transition
                                 class="mt-4 rounded-xl border border-[#000066]/15 bg-[#f4f4fb] p-5 space-y-4">
 
@@ -584,7 +616,7 @@ new class extends Component {
                                 @if ($details['program'])
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                            Program</p>
+                                            {{ $details['program_label'] ?? 'Program' }}</p>
                                         <div class="overflow-x-auto rounded-lg border border-[#000066]/15 bg-white">
                                             <table class="w-full text-sm text-left">
                                                 <thead class="bg-[#000066] text-white text-xs uppercase tracking-wide">
@@ -592,7 +624,7 @@ new class extends Component {
                                                         <th class="px-4 py-2.5 font-semibold">Topic</th>
                                                         <th class="px-4 py-2.5 font-semibold">Speaker</th>
                                                         <th class="px-4 py-2.5 font-semibold whitespace-nowrap">
-                                                            Duration
+                                                            Time / Duration
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -603,7 +635,7 @@ new class extends Component {
                                                             </td>
                                                             <td
                                                                 class="px-4 py-2.5 font-medium text-[#000066] whitespace-nowrap">
-                                                                {{ $speaker }}</td>
+                                                                {{ $speaker ?? '—' }}</td>
                                                             <td class="px-4 py-2.5 text-gray-500 whitespace-nowrap">
                                                                 {{ $duration ?? '—' }}</td>
                                                         </tr>
@@ -646,7 +678,7 @@ new class extends Component {
                                 @if ($details['stations'])
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                            Workshop Stations</p>
+                                            {{ $details['stations_label'] ?? 'Workshop Stations' }}</p>
                                         <div class="space-y-3">
                                             @foreach ($details['stations'] as [$name, $description, $setup])
                                                 <div class="text-sm">
@@ -658,6 +690,21 @@ new class extends Component {
                                                 </div>
                                             @endforeach
                                         </div>
+                                    </div>
+                                @endif
+                                @if (!empty($details['facilitators']))
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                                            Facilitators</p>
+                                        <ul
+                                            class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-700">
+                                            @foreach ($details['facilitators'] as $facilitator)
+                                                <li class="flex items-start gap-2">
+                                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#000066] shrink-0"></span>
+                                                    <span>{{ $facilitator }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </div>
                                 @endif
                             </div>
