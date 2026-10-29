@@ -9,7 +9,7 @@ new class extends Component {
 
 <section x-data="{
     slide: 0,
-    total: 5,
+    total: 4,
     timer: null,
 
     next() {
@@ -154,160 +154,10 @@ new class extends Component {
 
         {{-- slide start --}}
         <div class="relative grid">
-            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-500"
-                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0" class="col-start-1 row-start-1" style="display: none;">
-                <div class="grid items-center gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 xl:gap-16">
-
-
-                    <div class="max-w-2xl">
-
-                     
-                        {{-- Event Name --}}
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-base">
-                            PSA Tagisan ng Talino 2026
-                        </p>
-
-                        {{-- Main Heading --}}
-                        <h1
-                            class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                            The Finalists
-                            <span class="block text-blue-600">
-                                Are In!
-                            </span>
-                        </h1>
-
-                        {{-- Short Highlight --}}
-                        <div class="mt-6 border-l-4 border-blue-600 pl-5">
-                            <p class="text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
-                                Final Round
-                            </p>
-
-                            <p class="mt-1 text-xl font-bold text-slate-800 sm:text-2xl">
-                                31 Institutions. One Champion.
-                            </p>
-                        </div>
-
-                        {{-- Announcement --}}
-                        <div class="mt-6 space-y-4 text-base leading-7 text-slate-600 sm:text-lg">
-
-                            <p>
-                                Congratulations to the
-                                <strong class="font-bold text-slate-900">
-                                    31 institutions
-                                </strong>
-                                who have earned their spot in the
-                                <strong class="font-bold text-blue-600">
-                                    PSA Tagisan ng Talino 2026 Final Round!
-                                </strong>
-                            </p>
-
-                            <p>
-                                Your hard work, teamwork, and knowledge have brought you to the final stage.
-                                Now, the ultimate challenge awaits!
-                            </p>
-
-                        </div>
-                        <div class="mt-7">
-
-                            <p class="text-base font-semibold leading-7 text-slate-700 sm:text-lg">
-                                Who will claim the title of
-                                <span class="font-bold text-blue-600">
-                                    PSA Tagisan ng Talino 2026 Champion?
-                                </span>
-
-                            </p>
-
-                        </div>
-                        {{-- ==========================================
-                EVENT DETAILS
-            =========================================== --}}
-                        <div class="mt-7 grid gap-3 sm:grid-cols-2">
-
-                            {{-- Date --}}
-                            <div class="rounded-xl border border-slate-200 bg-white p-4">
-                                <div class="flex items-start gap-3">
-
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                                        </svg>
-                                    </div>
-
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                            Finals
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
-                                            October 24, 2026
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {{-- Venue --}}
-                            <div class="rounded-xl border border-slate-200 bg-white p-4">
-                                <div class="flex items-start gap-3">
-
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </div>
-
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                            Venue
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold leading-snug text-slate-800 sm:text-base">
-                                            Crowne Plaza Manila Galleria
-                                        </p>
-
-                                        <p class="mt-0.5 text-xs text-slate-500">
-                                            Ortigas Center, Quezon City
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {{-- ==========================================
-                CLOSING MESSAGE
-            =========================================== --}}
-
-
-                    </div>
-
-
-                    <div class="flex items-center justify-center lg:justify-end">
-
-                        <div class="group w-full max-w-2xl  overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-2xl shadow-slate-300/40 backdrop-blur-xl">
-                            <img src="{{ asset('images/tnt/tnt-2026-elimination-round-winner.png') }}"
-                                alt="PSA Tagisan ng Talino 2026 Finalists"
-                                class="mx-auto max-h-[680px] w-full rounded-[2rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]">
-                        </div>
-                    </div>
-
-                </div>
-            </div>
 
 
 
-            {{-- slide 1 Sim Wars Episode 2 --}}
+            {{-- slide 2 Sim Wars Episode 2 --}}
             <div x-show="slide === 1" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-6" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
@@ -498,7 +348,7 @@ new class extends Component {
                 </div>
             </div>
 
-            {{-- slide 2 Research Forum 2026 --}}
+            {{-- slide 3 Research Forum 2026 --}}
             <div x-show="slide === 2" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
@@ -614,113 +464,10 @@ new class extends Component {
             </div>
 
 
-            {{-- slide 3 interesting case --}}
-            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    <div class="max-w-2xl">
-
-                        <div
-                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Call for Entries
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
-                            Clinical Knowledge & Innovation
-                        </p>
-
-                        <h1
-                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            PSA
-                            <span class="text-blue-600">
-                                Interesting Case
-                            </span>
-                            Competition
-                            <span class="block text-slate-400">2026</span>
-                        </h1>
-
-                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Share your unique and interesting clinical cases,
-                            engage with colleagues, and inspire learning through
-                            knowledge, experience, and innovation.
-                        </p>
-
-                        <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-
-                            <div
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                                    <path d="M3 9h18" />
-                                    <path d="M9 21V9" />
-                                </svg>
-                            </div>
-
-                            <p class="text-sm leading-6 text-slate-600">
-                                We are now accepting case reports for the PSA
-                                Interesting Case Competition 2026.
-                                <strong class="text-slate-800">
-                                    Deadline: August 28, 2026.
-                                </strong>
-                            </p>
-
-                        </div>
-
-                        <div class="mt-8 flex flex-wrap gap-3">
-
-                            <a href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com" target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Submit Your Entry
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5 12h14" />
-                                    <path d="m12 5 7 7-7 7" />
-                                </svg>
-                            </a>
-
-                            <a href="{{ route('Interesting-Case') }}"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600">
-                                Learn More
-                            </a>
-
-                        </div>
-
-                    </div>
 
 
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
-
-                        <div
-                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img src="{{ asset('images/InterestingCase.png') }}"
-                                alt="PSA Interesting Case Competition 2026"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- slide 4 annual convention --}}
-            <div x-show="slide === 4" x-transition:enter="transition ease-out duration-700"
+            {{-- slide 1 Annual Convention --}}
+            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
@@ -813,7 +560,7 @@ new class extends Component {
 
 
             {{-- slide 4 Default hero section page --}}
-            <div x-show="slide === 5" x-transition:enter="transition ease-out duration-700"
+            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
@@ -1174,22 +921,20 @@ new class extends Component {
             <div class="flex items-center gap-2">
 
                 <button @click="go(0)" :class="slide === 0 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to Sim Wars slide"></button>
-
-                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Research Forum slide"></button>
-
-                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Interesting Case slide"></button>
-
-                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
                     aria-label="Go to Annual Convention slide"></button>
 
-                <button @click="go(4)" :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300"
+                    aria-label="Go to Sim Wars slide"></button>
+
+                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300"
+                    aria-label="Go to Research Forum slide"></button>
+
+                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300" aria-label="Go to PSA main slide"></button>
+
 
             </div>
 
