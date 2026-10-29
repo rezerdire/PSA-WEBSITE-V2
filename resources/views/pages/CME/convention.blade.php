@@ -22,13 +22,13 @@
                 'icon' => 'document-text',
                 'href' => route('Event-Registration'),
             ],
-            [
-                'key' => 'workshops',
-                'title' => 'Workshops Registration',
-                'description' => 'Register for the convention workshops',
-                'icon' => 'clipboard-document-check',
-                'href' => route('workshop'),
-            ],
+            // [
+            //     'key' => 'workshops',
+            //     'title' => 'Workshops Registration',
+            //     'description' => 'Register for the convention workshops',
+            //     'icon' => 'clipboard-document-check',
+            //     'href' => route('workshop'),
+            // ],
             [
                 'key' => 'scientific',
                 'title' => 'Scientific Program',
@@ -43,13 +43,13 @@
                 'icon' => 'sparkles',
                 'href' => '#',
             ],
-            [
-                'key' => 'booth-checker',
-                'title' => 'Booth Checker',
-                'description' => 'Check the booths you have visited',
-                'icon' => 'clipboard-document-list',
-                'href' => route('booth.checker'),
-            ],
+            // [
+            //     'key' => 'booth-checker',
+            //     'title' => 'Booth Checker',
+            //     'description' => 'Check the booths you have visited',
+            //     'icon' => 'clipboard-document-list',
+            //     'href' => route('booth.checker'),
+            // ],
           
         ];
     @endphp
