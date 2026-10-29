@@ -12,13 +12,14 @@ class WorkshopRegistrationConfirmation extends Mailable
     public function __construct(
         public WorkshopRegistration $registration,
         public string $workshopLabel,
+        public array $workshopDetails = [],
     ) {
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'PSA Workshop Registration',
+            subject: 'PSA Workshop Registration Confirmed',
         );
     }
 
@@ -27,8 +28,11 @@ class WorkshopRegistrationConfirmation extends Mailable
         return new Content(
             markdown: 'emails.workshop-registration-confirmation',
             with: [
+                'registration' => $this->registration,
                 'name' => $this->registration->full_name,
                 'workshop' => $this->workshopLabel,
+                'session' => $this->workshopDetails['session'] ?? null,
+                'venue' => $this->workshopDetails['venue'] ?? null,
             ],
         );
     }

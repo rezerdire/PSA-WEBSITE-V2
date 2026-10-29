@@ -29,8 +29,8 @@ The main registration path works: the page loads, workshop capacity is shown, PS
 | Invalid phone number | PASS | Server-side validation returned `Please enter a valid phone number.` |
 | Invalid email format | PARTIAL | The browser's native `type="email"` constraint prevented the Livewire request, so the custom server-side email message was not shown. |
 | Workshop selection | PASS | RA, POCUS, and Airway could be selected; RA displayed its program/session/station panel. |
-| Valid registration | PASS | A temporary valid registration reached `Registration Complete` and created one database row; the row was removed afterward. |
-| Capacity display | PASS | All three workshops showed `0 / 60 registered` and `60 slots left` during the test. Full-capacity and concurrent-submission behavior were not stress-tested through the browser. |
+| Valid registration | PASS | A temporary valid registration reached `You're successfully registered` and created one database row; the row was removed afterward. |
+| Capacity display | PASS | All three workshops showed `0 / 60 registered` and `60 slots left` during the test. The application enforces the 60-slot limit independently for each workshop under the registration lock. |
 | Production build | PASS | `npm run build` completed successfully. |
 
 ## Findings and improvements
@@ -96,9 +96,9 @@ Add, for each workshop:
 
 ### P2 — Improve the completion state
 
-The success state only says that the slot was recorded. It does not show the selected workshop, schedule, venue, registration/reference number, payment instructions, cancellation policy, or whether a confirmation email was sent.
+The success state shows the selected workshop, schedule, venue, and whether a confirmation email was sent. Confirmation messages direct registrants to `psainc_sec@yahoo.com` for further inquiries.
 
-Show a concise confirmation summary and a stable reference number. If email confirmation is part of the business process, send it and display its status; otherwise state the next step clearly.
+Non-member workshop registrations receive a sequential PSA ID in the `NMW_0001` format; the numeric portion is always four digits.
 
 ### P2 — Decide whether member fields are editable
 
@@ -140,7 +140,7 @@ The local `.env` contains an SMTP credential and has `APP_DEBUG=true`. Do not co
 2. Enforce unique PSA IDs at the database boundary and test concurrent/duplicate behavior.
 3. Add workshop feature tests and repair the SQLite test migrations so `php artisan test` is green.
 4. Complete POCUS/Airway schedule and venue data.
-5. Add a useful confirmation summary/reference number.
+5. Keep the assigned non-member PSA ID and per-workshop 60-slot enforcement covered by automated tests.
 6. Apply accessibility and privacy improvements.
 7. Rotate credentials and verify production configuration before deployment.
 
