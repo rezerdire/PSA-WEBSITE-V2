@@ -9,7 +9,7 @@ new class extends Component {
 
 <section x-data="{
     slide: 0,
-    total: 5,
+    total: 4,
     timer: null,
 
     next() {
@@ -157,8 +157,8 @@ new class extends Component {
 
 
 
-            {{-- slide 1 Sim Wars Episode 2 --}}
-            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-700"
+            {{-- slide 2 Sim Wars Episode 2 --}}
+            <div x-show="slide === 1" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-6" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-6" class="col-start-1 row-start-1"
@@ -348,7 +348,7 @@ new class extends Component {
                 </div>
             </div>
 
-            {{-- slide 2 Research Forum 2026 --}}
+            {{-- slide 3 Research Forum 2026 --}}
             <div x-show="slide === 2" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
@@ -464,113 +464,10 @@ new class extends Component {
             </div>
 
 
-            {{-- slide 3 interesting case --}}
-            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    <div class="max-w-2xl">
-
-                        <div
-                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Call for Entries
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
-                            Clinical Knowledge & Innovation
-                        </p>
-
-                        <h1
-                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            PSA
-                            <span class="text-blue-600">
-                                Interesting Case
-                            </span>
-                            Competition
-                            <span class="block text-slate-400">2026</span>
-                        </h1>
-
-                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Share your unique and interesting clinical cases,
-                            engage with colleagues, and inspire learning through
-                            knowledge, experience, and innovation.
-                        </p>
-
-                        <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-
-                            <div
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                                    <path d="M3 9h18" />
-                                    <path d="M9 21V9" />
-                                </svg>
-                            </div>
-
-                            <p class="text-sm leading-6 text-slate-600">
-                                We are now accepting case reports for the PSA
-                                Interesting Case Competition 2026.
-                                <strong class="text-slate-800">
-                                    Deadline: August 28, 2026.
-                                </strong>
-                            </p>
-
-                        </div>
-
-                        <div class="mt-8 flex flex-wrap gap-3">
-
-                            <a href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com" target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Submit Your Entry
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5 12h14" />
-                                    <path d="m12 5 7 7-7 7" />
-                                </svg>
-                            </a>
-
-                            <a href="{{ route('Interesting-Case') }}"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600">
-                                Learn More
-                            </a>
-
-                        </div>
-
-                    </div>
 
 
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
-
-                        <div
-                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img src="{{ asset('images/InterestingCase.png') }}"
-                                alt="PSA Interesting Case Competition 2026"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- slide 4 annual convention --}}
-            <div x-show="slide === 4" x-transition:enter="transition ease-out duration-700"
+            {{-- slide 1 Annual Convention --}}
+            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
@@ -663,7 +560,7 @@ new class extends Component {
 
 
             {{-- slide 4 Default hero section page --}}
-            <div x-show="slide === 5" x-transition:enter="transition ease-out duration-700"
+            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
                 x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
@@ -1024,22 +921,20 @@ new class extends Component {
             <div class="flex items-center gap-2">
 
                 <button @click="go(0)" :class="slide === 0 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to Sim Wars slide"></button>
-
-                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Research Forum slide"></button>
-
-                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Interesting Case slide"></button>
-
-                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300"
                     aria-label="Go to Annual Convention slide"></button>
 
-                <button @click="go(4)" :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300"
+                    aria-label="Go to Sim Wars slide"></button>
+
+                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                    class="h-2 rounded-full transition-all duration-300"
+                    aria-label="Go to Research Forum slide"></button>
+
+                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
                     class="h-2 rounded-full transition-all duration-300" aria-label="Go to PSA main slide"></button>
+
 
             </div>
 
