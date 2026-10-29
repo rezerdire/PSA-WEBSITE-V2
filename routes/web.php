@@ -87,7 +87,7 @@ Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-regis
 //     return view('pages.booth_page.index', ['booth_code' => $booth_code]);
 // })->name('booth.scan');
 
-// booth checker
+// // booth checker
 // Route::get('/booth-checker', function () {
 //     return view('pages.booth_page.checker');
 // })->name('booth.checker');

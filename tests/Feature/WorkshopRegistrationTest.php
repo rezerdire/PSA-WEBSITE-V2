@@ -24,13 +24,11 @@ function validWorkshopRegistrationData(array $overrides = []): array
     return array_merge([
         'lastName' => 'Visitor',
         'firstName' => 'Workshop',
-        'middleName' => '',
-        'prcNumber' => 'PRC-' . fake()->unique()->numerify('#####'),
+        'prcNumber' => fake()->unique()->numerify('######'),
         'hospital' => 'Test Hospital',
         'email' => 'visitor@example.test',
         'phone' => '09171234567',
         'workshop' => 'RA',
-        'privacyConsent' => true,
     ], $overrides);
 }
 
@@ -47,7 +45,6 @@ function workshopRegistrationRecordData(array $overrides = []): array
         'email' => 'existing@example.test',
         'phone' => '09171234567',
         'workshops' => ['RA'],
-        'privacy_consented_at' => now(),
     ], $overrides);
 }
 
@@ -58,11 +55,11 @@ it('serves the workshop registration page with all workshop choices', function (
         ->assertSee('Regional Anesthesia Workshop (RA)')
         ->assertSee('POCUS')
         ->assertSee('Airway')
-        ->assertSee('Privacy notice and consent');
+        ->assertSee('0 / 60 registered');
 });
 
 
-it('fills verified member data and clears the stale PSA input', function () {
+it('fills verified member data without populating the PRC number', function () {
     $member = makeWorkshopMember(['member_id_no' => '0001']);
 
     Livewire::test('workshop.workshop-registration')
@@ -73,7 +70,10 @@ it('fills verified member data and clears the stale PSA input', function () {
         ->assertSet('lastName', 'Tester')
         ->assertSet('firstName', 'Member')
         ->assertSet('memType', 'Regular Member')
-        ->assertSet('prcNumber', '123456')
+        ->assertSet('prcNumber', '')
+        ->assertSet('prcFromMember', false)
+        ->set('prcNumber', '654321')
+        ->assertSet('prcNumber', '654321')
         ->call('clearMember')
         ->assertSet('psaId', '')
         ->assertSet('psaIdInput', '')
@@ -86,7 +86,7 @@ it('rejects unknown PSA IDs', function () {
         ->assertHasErrors(['psaId' => 'PSA ID not found.']);
 });
 
-it('requires privacy consent and the registration fields', function () {
+it('requires the registration fields', function () {
     Livewire::test('workshop.workshop-registration')
         ->call('submit')
         ->assertHasErrors([
@@ -97,7 +97,6 @@ it('requires privacy consent and the registration fields', function () {
             'email',
             'phone',
             'workshop',
-            'privacyConsent',
         ]);
 });
 
@@ -105,29 +104,44 @@ it('rejects invalid contact details through Livewire validation', function () {
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
             'email' => 'not-an-email',
-            'phone' => 'abc',
-            'privacyConsent' => true,
+            'phone' => '08171234567',
         ]))
         ->call('submit')
         ->assertHasErrors(['email', 'phone'])
         ->assertSet('submitted', false);
 });
 
-it('persists a valid registration with a reference number and consent timestamp', function () {
-    $data = validWorkshopRegistrationData(['prcNumber' => 'PRC-SUCCESS-001']);
+it('persists a valid non-member registration with a workshop PSA ID', function () {
+    $data = validWorkshopRegistrationData(['prcNumber' => '900001']);
 
     Livewire::test('workshop.workshop-registration')
         ->set($data)
         ->call('submit')
         ->assertSet('submitted', true)
-        ->assertSet('referenceNo', 'WR-000001')
-        ->assertSee('Registration Complete')
-        ->assertSee('WR-000001');
+        ->assertSet('psaId', 'NMW_0001')
+        ->assertSee("You're successfully registered")
+        ->assertDontSee('NMW_0001');
 
-    $registration = WorkshopRegistration::where('prc_number', 'PRC-SUCCESS-001')->firstOrFail();
+    $registration = WorkshopRegistration::where('prc_number', '900001')->firstOrFail();
 
-    expect($registration->reference_number)->toBe('WR-000001')
-        ->and($registration->privacy_consented_at)->not->toBeNull();
+    expect($registration->psa_id)->toBe('NMW_0001')
+        ->and($registration->mem_type)->toBe('Non-member');
+});
+
+it('continues the four-digit non-member PSA ID sequence', function () {
+    WorkshopRegistration::create(workshopRegistrationRecordData([
+        'psa_id' => 'NMW_0007',
+        'prc_number' => '900002',
+    ]));
+
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData([
+            'prcNumber' => '900003',
+            'workshop' => 'POCUS',
+        ]))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('psaId', 'NMW_0008');
 });
 
 it('rejects an already registered PSA ID inside the registration lock', function () {
@@ -135,7 +149,7 @@ it('rejects an already registered PSA ID inside the registration lock', function
     WorkshopRegistration::create(workshopRegistrationRecordData([
         'psa_id' => $member->getKey(),
         'mem_type' => 'Regular Member',
-        'prc_number' => 'PRC-EXISTING-002',
+        'prc_number' => '900004',
     ]));
 
     Livewire::test('workshop.workshop-registration')
@@ -143,7 +157,7 @@ it('rejects an already registered PSA ID inside the registration lock', function
         ->set(validWorkshopRegistrationData([
             'lastName' => 'Tester',
             'firstName' => 'Member',
-            'prcNumber' => 'PRC-NEW-002',
+            'prcNumber' => '900005',
         ]))
         ->call('submit')
         ->assertHasErrors(['psaId' => 'This PSA ID is already registered.'])
@@ -151,10 +165,10 @@ it('rejects an already registered PSA ID inside the registration lock', function
 });
 
 it('rejects duplicate PRC numbers', function () {
-    WorkshopRegistration::create(workshopRegistrationRecordData(['prc_number' => 'PRC-DUPLICATE-001']));
+    WorkshopRegistration::create(workshopRegistrationRecordData(['prc_number' => '900006']));
 
     Livewire::test('workshop.workshop-registration')
-        ->set(validWorkshopRegistrationData(['prcNumber' => 'PRC-DUPLICATE-001']))
+        ->set(validWorkshopRegistrationData(['prcNumber' => '900006']))
         ->call('submit')
         ->assertHasErrors(['prcNumber' => 'This PRC number is already registered.']);
 });
@@ -162,17 +176,37 @@ it('rejects duplicate PRC numbers', function () {
 it('rejects a workshop after its capacity is reached', function () {
     foreach (range(1, 60) as $index) {
         WorkshopRegistration::create(workshopRegistrationRecordData([
-            'prc_number' => 'PRC-FULL-' . str_pad((string) $index, 3, '0', STR_PAD_LEFT),
+            'prc_number' => '91' . str_pad((string) $index, 4, '0', STR_PAD_LEFT),
         ]));
     }
 
     Livewire::test('workshop.workshop-registration')
-        ->set(validWorkshopRegistrationData(['prcNumber' => 'PRC-OVER-CAPACITY']))
+        ->set(validWorkshopRegistrationData(['prcNumber' => '920001']))
         ->call('submit')
         ->assertHasErrors(['workshop' => 'Sorry, this workshop is already full. Please choose another one.'])
         ->assertSet('workshop', '')
         ->assertSet('submitted', false);
 });
+
+it('keeps the 60-slot limit separate for each workshop', function () {
+    foreach (range(1, 60) as $index) {
+        WorkshopRegistration::create(workshopRegistrationRecordData([
+            'prc_number' => '93' . str_pad((string) $index, 4, '0', STR_PAD_LEFT),
+        ]));
+    }
+
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData([
+            'prcNumber' => '940001',
+            'workshop' => 'POCUS',
+        ]))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('psaId', 'NMW_0001');
+
+    expect(WorkshopRegistration::whereJsonContains('workshops', 'POCUS')->count())->toBe(1);
+});
+
 
 it('enforces the nullable PSA ID unique index at the database boundary', function () {
     WorkshopRegistration::create(workshopRegistrationRecordData([

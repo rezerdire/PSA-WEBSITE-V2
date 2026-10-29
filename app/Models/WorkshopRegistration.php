@@ -27,4 +27,5 @@ class WorkshopRegistration extends Model
             $this->mem_last_name,
         ])->filter()->implode(' '));
     }
+
 }
