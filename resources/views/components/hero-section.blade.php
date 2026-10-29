@@ -1,1063 +1,370 @@
-<?php
+@php
+    $slides = \App\Models\HeroSlide::query()
+        ->published()
+        ->get();
+@endphp
 
-use Livewire\Component;
+@if ($slides->isNotEmpty())
+    <section
+        x-data="{
+            slide: 0,
+            total: {{ $slides->count() }},
+            timer: null,
+            next() {
+                this.slide = (this.slide + 1) % this.total
+            },
+            prev() {
+                this.slide = (this.slide - 1 + this.total) % this.total
+            },
+            go(index) {
+                this.slide = index
+                this.start()
+            },
+            start() {
+                this.stop()
+                this.timer = setInterval(() => this.next(), 10000)
+            },
+            stop() {
+                if (this.timer) {
+                    clearInterval(this.timer)
+                    this.timer = null
+                }
+            }
+        }"
+        x-init="start()"
+        @mouseenter="stop()"
+        @mouseleave="start()"
+        @keydown.right.prevent="next()"
+        @keydown.left.prevent="prev()"
+        tabindex="0"
+        aria-label="PSA featured content"
+        aria-roledescription="carousel"
+        class="relative min-h-screen overflow-hidden bg-white pt-16 outline-none"
+    >
+        <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div class="absolute inset-0 bg-gradient-to-br from-white via-blue-50/40 to-cyan-50/50"></div>
+            <div class="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-100/50"></div>
+            <div class="absolute -bottom-48 -left-48 h-[550px] w-[550px] rounded-full bg-cyan-100/40"></div>
+            <div class="absolute right-[12%] top-[18%] h-4 w-4 rounded-full bg-blue-400/30"></div>
+            <div class="absolute left-[8%] top-[35%] h-3 w-3 rounded-full bg-cyan-400/30"></div>
+            <div class="absolute bottom-[25%] right-[7%] h-5 w-5 rounded-full bg-blue-300/30"></div>
 
-new class extends Component {
-    //
-};
-?>
+            <svg class="absolute left-0 top-0 h-full w-full opacity-[0.07]" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#2563EB" stroke-width="3">
+                    <rect x="105" y="130" width="80" height="30" rx="8" />
+                    <rect x="130" y="105" width="30" height="80" rx="8" />
+                    <path d="M120 290 C120 350 150 390 205 390 C260 390 290 350 290 290" />
+                    <path d="M120 290V250" />
+                    <path d="M290 290V250" />
+                    <circle cx="120" cy="240" r="14" />
+                    <circle cx="290" cy="240" r="14" />
+                    <path d="M205 390V425" />
+                    <circle cx="205" cy="450" r="25" />
+                    <path d="M205 425V450" />
+                    <circle cx="1280" cy="350" r="60" />
+                    <circle cx="1280" cy="350" r="42" />
+                    <circle cx="1280" cy="350" r="18" />
+                </g>
 
-<section x-data="{
-    slide: 0,
-    total: 5,
-    timer: null,
+                <path d="M0 690 H160 L190 690 L215 620 L240 760 L270 690 H430 L460 690 L485 640 L510 730 L535 690 H700 L730 690 L755 610 L780 770 L810 690 H970 L1000 690 L1025 645 L1050 735 L1075 690 H1250 L1280 690 L1305 625 L1330 755 L1360 690 H1440" stroke="#2563EB" stroke-width="3" />
 
-    next() {
-        this.slide = (this.slide + 1) % this.total
-    },
+                <g stroke="#06B6D4" stroke-width="2">
+                    <path d="M1120 100 C1180 140 1180 210 1120 250" />
+                    <path d="M1200 100 C1140 140 1140 210 1200 250" />
+                    <line x1="1140" y1="125" x2="1180" y2="125" />
+                    <line x1="1135" y1="155" x2="1185" y2="155" />
+                    <line x1="1135" y1="190" x2="1185" y2="190" />
+                    <line x1="1140" y1="225" x2="1180" y2="225" />
+                    <path d="M430 170h35M447.5 152.5v35" />
+                    <path d="M960 280h35M977.5 262.5v35" />
+                    <path d="M1330 540h35M1347.5 522.5v35" />
+                </g>
+            </svg>
 
-    prev() {
-        this.slide = (this.slide - 1 + this.total) % this.total
-    },
+            <svg class="absolute inset-0 h-full w-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="medical-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                        <circle cx="2" cy="2" r="1.5" fill="#2563EB" />
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#medical-grid)" />
+            </svg>
+        </div>
 
-    go(i) {
-        this.slide = i
-    },
-
-    start() {
-        this.stop()
-        this.timer = setInterval(() => this.next(), 10000)
-    },
-
-    stop() {
-        if (this.timer) {
-            clearInterval(this.timer)
-            this.timer = null
-        }
-    }
-}" x-init="start()" @mouseenter="stop()" @mouseleave="start()"
-    class="relative min-h-screen overflow-hidden bg-white pt-16">
-
-    {{-- med bg --}}
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-
-        {{-- Soft medical blue gradient --}}
-        <div class="absolute inset-0 bg-gradient-to-br from-white via-blue-50/40 to-cyan-50/50"></div>
-
-        {{-- Large decorative circles --}}
-        <div class="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-blue-100/50"></div>
-        <div class="absolute -bottom-48 -left-48 h-[550px] w-[550px] rounded-full bg-cyan-100/40"></div>
-
-        {{-- Small floating circles --}}
-        <div class="absolute top-[18%] right-[12%] h-4 w-4 rounded-full bg-blue-400/30"></div>
-        <div class="absolute top-[35%] left-[8%] h-3 w-3 rounded-full bg-cyan-400/30"></div>
-        <div class="absolute bottom-[25%] right-[7%] h-5 w-5 rounded-full bg-blue-300/30"></div>
-
-        {{-- line art from my BFF --}}
-        <svg class="absolute left-0 top-0 h-full w-full opacity-[0.07]" viewBox="0 0 1440 900" fill="none"
-            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-
-            {{-- Medical cross --}}
-            <g stroke="#2563EB" stroke-width="3">
-                <rect x="105" y="130" width="80" height="30" rx="8" />
-                <rect x="130" y="105" width="30" height="80" rx="8" />
-            </g>
-
-            {{-- Stethoscope --}}
-            <g stroke="#2563EB" stroke-width="3">
-                <path d="M120 290
-                       C120 350 150 390 205 390
-                       C260 390 290 350 290 290" />
-                <path d="M120 290V250" />
-                <path d="M290 290V250" />
-                <circle cx="120" cy="240" r="14" />
-                <circle cx="290" cy="240" r="14" />
-                <path d="M205 390V425" />
-                <circle cx="205" cy="450" r="25" />
-                <path d="M205 425V450" />
-            </g>
-
-            {{-- ECG --}}
-            <path d="
-                    M0 690
-                    H160
-                    L190 690
-                    L215 620
-                    L240 760
-                    L270 690
-                    H430
-                    L460 690
-                    L485 640
-                    L510 730
-                    L535 690
-                    H700
-                    L730 690
-                    L755 610
-                    L780 770
-                    L810 690
-                    H970
-                    L1000 690
-                    L1025 645
-                    L1050 735
-                    L1075 690
-                    H1250
-                    L1280 690
-                    L1305 625
-                    L1330 755
-                    L1360 690
-                    H1440
-                " stroke="#2563EB" stroke-width="3" />
-
-            {{-- DNA / molecule style medical decoration --}}
-            <g stroke="#06B6D4" stroke-width="2">
-                <path d="M1120 100 C1180 140 1180 210 1120 250" />
-                <path d="M1200 100 C1140 140 1140 210 1200 250" />
-
-                <line x1="1140" y1="125" x2="1180" y2="125" />
-                <line x1="1135" y1="155" x2="1185" y2="155" />
-                <line x1="1135" y1="190" x2="1185" y2="190" />
-                <line x1="1140" y1="225" x2="1180" y2="225" />
-            </g>
-
-            {{-- Medical pulse circles --}}
-            <g stroke="#2563EB" stroke-width="2">
-                <circle cx="1280" cy="350" r="60" />
-                <circle cx="1280" cy="350" r="42" />
-                <circle cx="1280" cy="350" r="18" />
-            </g>
-
-            {{-- Small medical plus signs --}}
-            <g stroke="#06B6D4" stroke-width="3">
-                <path d="M430 170h35M447.5 152.5v35" />
-                <path d="M960 280h35M977.5 262.5v35" />
-                <path d="M1330 540h35M1347.5 522.5v35" />
-            </g>
-
-        </svg>
-
-        {{-- Dot grid --}}
-        <svg class="absolute inset-0 h-full w-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <pattern id="medical-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                    <circle cx="2" cy="2" r="1.5" fill="#2563EB" />
-                </pattern>
-            </defs>
-
-            <rect width="100%" height="100%" fill="url(#medical-grid)" />
-        </svg>
-
-    </div>
-
-
-    {{-- hero section --}}
-    <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-
-        {{-- slide start --}}
-        <div class="relative grid">
-
-
-
-            {{-- slide 1 Sim Wars Episode 2 --}}
-            <div x-show="slide === 0" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-6" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-6" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="relative grid items-center gap-12 overflow-hidden lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
-
-                    {{-- Decorative background --}}
+        <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+            <div class="relative grid">
+                @foreach ($slides as $index => $slide)
                     <div
-                        class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl">
-                    </div>
-                    <div
-                        class="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-100/50 blur-3xl">
-                    </div>
+                        x-show="slide === {{ $index }}"
+                        x-transition:enter="transition ease-out duration-700"
+                        x-transition:enter-start="opacity-0 translate-x-6"
+                        x-transition:enter-end="opacity-100 translate-x-0"
+                        x-transition:leave="transition ease-in duration-500"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0 -translate-x-6"
+                        class="col-start-1 row-start-1"
+                        style="{{ $index === 0 ? '' : 'display: none;' }}"
+                        aria-label="{{ trim($slide->title . ' ' . $slide->highlight) }}"
+                    >
+                        @php
+                            $imageUrls = $slide->image_urls;
+                        @endphp
 
-                    {{-- =========================
-                        LEFT CONTENT
-                    ========================== --}}
-                    <div class="relative z-10 max-w-2xl">
+                        <div class="relative grid items-center gap-12 overflow-hidden {{ $imageUrls !== [] ? 'lg:grid-cols-[0.85fr_1.15fr] lg:gap-12' : 'lg:grid-cols-1' }}">
+                            <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl"></div>
+                            <div class="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-100/50 blur-3xl"></div>
 
-                  
-
-                        {{-- Eyebrow --}}
-                        <div class="mb-4 flex items-center gap-3">
-
-                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-sm">
-                                Philippines Anesthesia Crisis Competition 2026
-                            </p>
-                        </div>
-
-                        {{-- Main Heading --}}
-                        <h1
-                            class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl xl:text-7xl">
-                            Anesthesia
-                            <span class="block text-blue-600">
-                                Sim Wars
-                            </span>
-
-                            <span class="mt-1 block text-slate-900">
-                                Trilogy
-                            </span>
-                        </h1>
-
-                        {{-- Episode --}}
-                        <div class="mt-6 flex items-start gap-4">
-                            <div
-                                class="mt-2 h-10 w-1 shrink-0 rounded-full bg-gradient-to-b from-blue-600 to-cyan-400">
-                            </div>
-
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                                    Episode 02
-                                </p>
-
-                                <p class="mt-1 text-xl font-bold leading-tight text-slate-700 sm:text-2xl">
-                                    PSA Sim Wars Trilogy Competition
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Description --}}
-                        <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Get ready for an exciting battle of knowledge, skills, and teamwork as we bring the
-                            world together for the
-                            <span class="font-semibold text-slate-700">
-                                PSA Sim Wars Trilogy Competition 2026!
-                            </span>
-                        </p>
-
-                        {{-- Event details --}}
-                        <div class="mt-7 grid gap-3 sm:grid-cols-2">
-
-                            {{-- Date --}}
-                            <div class="rounded-xl border border-slate-200 bg-white p-4">
-                                <div class="flex items-start gap-3">
-
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                                        </svg>
+                            <div class="relative z-10 max-w-2xl {{ $imageUrls === [] ? 'lg:max-w-4xl' : '' }}">
+                                @if (filled($slide->eyebrow))
+                                    <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                                        <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+                                        {{ $slide->eyebrow }}
                                     </div>
-
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                            Date
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
-                                            November 27, 2026
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {{-- Time --}}
-                            <div class="rounded-xl border border-slate-200 bg-white p-4">
-                                <div class="flex items-start gap-3">
-
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <circle cx="12" cy="12" r="9" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
-                                        </svg>
-                                    </div>
-
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                            Time
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold text-slate-800 sm:text-base">
-                                            8:00 AM – 12:00 NN
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {{-- Venue --}}
-                            <div class="rounded-xl border border-slate-200 bg-white p-4 sm:col-span-2">
-                                <div class="flex items-start gap-3">
-
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </div>
-
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                            Venue
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold leading-snug text-slate-800 sm:text-base">
-                                            Marriott Ballroom, Marriott Hotel
-                                        </p>
-
-                                        <p class="mt-0.5 text-xs text-slate-500">
-                                            Newport, Pasay City
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {{-- Tagline --}}
-                        <div class="mt-7 border-l-4 border-blue-600 pl-5">
-                            <p class="text-base font-bold leading-7 text-slate-800 sm:text-lg">
-                                Share with the World. Compete with Excellence.
-                                <span class="text-blue-600">Save Lives Through Simulation.</span>
-                            </p>
-
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Witness the power of simulation in advancing anesthesia practice!
-                            </p>
-                        </div>
-
-                    </div>
-
-{{-- simwars --}}
-                    {{-- =========================
-                        RIGHT IMAGE
-                    ========================== --}}
-                    <div class="relative z-10 flex justify-center lg:justify-end">
-
-                        {{-- Frameless image --}}
-                        <div class="group w-full overflow-hidden rounded-2xl">
-                            <img src="{{ asset('images/simwars/simwars_oct_2026.png') }}"
-                                alt="PSA Sim Wars Trilogy Competition Episode 2 - November 27, 2026 at Marriott Ballroom, Newport, Pasay City"
-                                class="w-full max-h-[760px] object-contain transition duration-700 ease-out group-hover:scale-[1.02] lg:max-w-none" />
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            {{-- slide 2 Research Forum 2026 --}}
-            <div x-show="slide === 2" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    <div class="max-w-2xl">
-
-                        <div
-                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Call for Abstracts
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
-                            Share Your Discoveries
-                        </p>
-
-                        <h1
-                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            Research
-                            <span class="text-blue-600">Forum</span>
-                            <span class="block text-slate-400">2026</span>
-                        </h1>
-
-                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Share your discoveries, exchange ideas, and showcase
-                            your work to the community. The call for abstracts for
-                            Research Forum 2026 is now open.
-                        </p>
-
-                        <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-
-                            <div
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                                    <path d="M3 9h18" />
-                                    <path d="M9 21V9" />
-                                </svg>
-                            </div>
-
-                            <p class="text-sm leading-6 text-slate-600">
-                                We are now accepting abstract submissions for
-                                Research Forum 2026.
-                                <strong class="text-slate-800">
-                                    Deadline: August 20, 2026.
-                                </strong>
-                            </p>
-
-                        </div>
-
-                        <div class="mt-8 flex flex-wrap gap-3">
-
-                            <a href="https://compose.mail.yahoo.com/?to=psaresearchforum@gmail.com" target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Submit Your Abstract
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5 12h14" />
-                                    <path d="m12 5 7 7-7 7" />
-                                </svg>
-                            </a>
-                            {{-- guideline button downloadable --}}
-                            <a href="{{ asset('Research_Forum_Guidelines.pdf') }}" target="_blank"
-                                rel="noopener noreferrer" download
-                                class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-700">
-                                <!-- PDF Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="h-5 w-5">
-                                    <path
-                                        d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
-                                </svg>
-
-                                <span>Download Guidelines</span>
-
-                                <!-- Download Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="2" stroke="currentColor" class="h-4 w-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-                                </svg>
-                            </a>
-                        </div>
-
-                    </div>
-
-
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
-
-                        <div
-                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img src="{{ asset('images/researchforum2026.jpg') }}"
-                                alt="PSA Research Forum 2026 - Call for Abstracts"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- slide 3 interesting case --}}
-            <div x-show="slide === 3" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    <div class="max-w-2xl">
-
-                        <div
-                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Call for Entries
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
-                            Clinical Knowledge & Innovation
-                        </p>
-
-                        <h1
-                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            PSA
-                            <span class="text-blue-600">
-                                Interesting Case
-                            </span>
-                            Competition
-                            <span class="block text-slate-400">2026</span>
-                        </h1>
-
-                        <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Share your unique and interesting clinical cases,
-                            engage with colleagues, and inspire learning through
-                            knowledge, experience, and innovation.
-                        </p>
-
-                        <div class="mt-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-
-                            <div
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                                    <path d="M3 9h18" />
-                                    <path d="M9 21V9" />
-                                </svg>
-                            </div>
-
-                            <p class="text-sm leading-6 text-slate-600">
-                                We are now accepting case reports for the PSA
-                                Interesting Case Competition 2026.
-                                <strong class="text-slate-800">
-                                    Deadline: August 28, 2026.
-                                </strong>
-                            </p>
-
-                        </div>
-
-                        <div class="mt-8 flex flex-wrap gap-3">
-
-                            <a href="https://compose.mail.yahoo.com/?to=psainc_sec@yahoo.com" target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Submit Your Entry
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5 12h14" />
-                                    <path d="m12 5 7 7-7 7" />
-                                </svg>
-                            </a>
-
-                            <a href="{{ route('Interesting-Case') }}"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600">
-                                Learn More
-                            </a>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        <div class="absolute inset-10 rounded-full bg-cyan-100/60 blur-3xl"></div>
-
-                        <div
-                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img src="{{ asset('images/InterestingCase.png') }}"
-                                alt="PSA Interesting Case Competition 2026"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- slide 4 annual convention --}}
-            <div x-show="slide === 4" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    <div class="max-w-2xl">
-
-                        <div
-                            class="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Upcoming Event
-                        </div>
-
-                        <p class="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-cyan-600">
-                            Philippine Society of Anesthesiologists
-                        </p>
-
-                        <h1
-                            class="font-display text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            PSA
-                            <span class="text-blue-600">
-                                58<sup class="text-2xl sm:text-3xl">th</sup>
-                            </span>
-                            Annual Convention
-                        </h1>
-
-                        <div class="mt-5 flex items-center gap-3">
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 12h4l2-8 4 16 2-8h6" />
-                                </svg>
-                            </div>
-
-                            <p class="text-lg font-semibold text-slate-600">
-                                Beyond the Operating Room:
-                                <span class="text-blue-600">
-                                    Innovation, Safety, Excellence
-                                </span>
-                            </p>
-                        </div>
-
-                        <p class="mt-5 text-sm leading-7 text-slate-500 sm:text-base">
-                            Marriott Grand Ballroom, Pasay City
-                            <span class="mx-1 text-slate-300">•</span>
-                            November 25–27, 2026
-                        </p>
-
-                        <div class="mt-8">
-
-                            <a href="{{ route('annual-convention-poster') }}"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Check the Registration Rates
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M5 12h14" />
-                                    <path d="m12 5 7 7-7 7" />
-                                </svg>
-                            </a>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="relative flex justify-center lg:justify-end">
-
-                        <div class="absolute inset-10 rounded-full bg-blue-100/70 blur-3xl"></div>
-
-                        <div
-                            class="group relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-2xl shadow-blue-100 backdrop-blur">
-
-                            <img src="{{ asset('annual-convention/annualposter.png') }}"
-                                alt="PSA 58th Annual Convention Poster"
-                                class="max-h-[540px] w-auto rounded-[1.5rem] object-contain transition duration-700 ease-out group-hover:scale-[1.02]" />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {{-- slide 4 Default hero section page --}}
-            <div x-show="slide === 5" x-transition:enter="transition ease-out duration-700"
-                x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
-                x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-x-4" class="col-start-1 row-start-1"
-                style="display: none;">
-
-                <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-
-                    {{-- Main copy --}}
-                    <div class="max-w-2xl">
-
-                        {{-- Medical badge --}}
-                        <div
-                            class="mb-7 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 2v20" />
-                                    <path d="M2 12h20" />
-                                </svg>
-
-                            </span>
-
-                            <span class="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">
-                                Advancing Anesthesia Care
-                            </span>
-
-                        </div>
-
-
-                        <h1
-                            class="font-display text-4xl font-semibold leading-[1.08] text-slate-900 sm:text-5xl lg:text-7xl">
-
-                            Philippine Society
-                            <span class="block text-slate-400">
-                                of
-                            </span>
-
-                            <span class="text-blue-600">
-                                Anesthesiologists
-                            </span>
-
-                        </h1>
-
-
-                        <p class="mt-7 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                            Promoting safe and quality anesthesia care across the nation.
-                            A community of world-class Filipino anesthesiologists driven
-                            by excellence, education, innovation, and patient safety.
-                        </p>
-
-
-                        {{-- Buttons --}}
-                        <div class="mt-8 flex flex-wrap gap-3">
-
-                            <a href="{{ asset('Membership Form.pdf') }}" download
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700">
-                                Download Membership Form
-
-                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-                                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                                    <path d="M12 18v-6" />
-                                    <path d="m9 15 3 3 3-3" />
-                                </svg>
-
-                            </a>
-
-
-                            <a href="#recent-events"
-                                class="inline-flex items-center rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-700 backdrop-blur transition-all hover:border-blue-300 hover:text-blue-600">
-                                Explore Our Events
-                            </a>
-
-                        </div>
-
-
-                        {{-- stats --}}
-                        <div
-                            class="mt-10 grid grid-cols-3 gap-3 border-t border-slate-200/70 pt-7 sm:mt-14 sm:gap-5 sm:pt-8">
-
-                            <div
-                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
-
-                                <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
-                                    70+
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
-                                    Years of Service
-                                </p>
-
-                            </div>
-
-
-                            <div
-                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
-
-                                <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
-                                    6,000+
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
-                                    Members Nationwide
-                                </p>
-
-                            </div>
-
-
-                            <div
-                                class="rounded-2xl border border-blue-100 bg-white/70 p-3 shadow-sm backdrop-blur sm:p-5">
-
-                                <p class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">
-                                    32
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[9px] font-semibold uppercase leading-tight tracking-wider text-slate-400 sm:text-xs">
-                                    Regional Chapters
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- med panel from my bff --}}
-                    <div class="relative hidden min-h-[500px] items-center justify-center lg:flex">
-
-                        {{-- circle design --}}
-                        <div
-                            class="absolute h-[430px] w-[430px] rounded-full bg-gradient-to-br from-blue-100 to-cyan-50">
-                        </div>
-
-                        {{-- ring in the middle --}}
-                        <div class="absolute h-[500px] w-[500px] rounded-full border border-blue-100"></div>
-
-                        {{-- Inner ring --}}
-                        <div class="absolute h-[360px] w-[360px] rounded-full border border-cyan-100"></div>
-
-
-                        {{-- card (only for default hero section) --}}
-                        <div
-                            class="relative z-10 w-[360px] rounded-[2rem] border border-white bg-white/90 p-7 shadow-2xl shadow-blue-200/60 backdrop-blur">
-
-                            {{-- Header --}}
-                            <div class="flex items-center justify-between">
-
-                                <div class="flex items-center gap-3">
-
-                                    <div
-                                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                                        {{-- icon guard --}}
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                            <path d="M12 8v6" />
-                                            <path d="M9 11h6" />
-                                        </svg>
-
-                                    </div>
-
-                                    <div>
-                                        <p class="text-sm font-bold text-slate-900">
-                                            Patient Safety
-                                        </p>
-
-                                        <p class="text-xs text-slate-400">
-                                            Our commitment
-                                        </p>
-                                    </div>
-
-                                </div>
-
-                                <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
-
-                            </div>
-
-
-                            {{-- line graph --}}
-                            <div class="mt-8 overflow-hidden rounded-2xl bg-slate-50 p-5">
-
-                                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                    Clinical Excellence
-                                </p>
-
-                                <svg viewBox="0 0 500 120" class="h-24 w-full" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path d=" M0 60
-                                            H90
-                                            L110 60
-                                            L130 25
-                                            L150 95
-                                            L175 60
-                                            H250
-                                            L270 60
-                                            L290 35
-                                            L310 85
-                                            L330 60
-                                            H420
-                                            L440 60
-                                            L460 20
-                                            L480 100
-                                            L500 60
-                                        " stroke="#2563EB" stroke-width="4" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-
-                                </svg>
-
-                            </div>
-
-
-                            {{-- Medical pillars --}}
-                            <div class="mt-5 grid grid-cols-3 gap-3">
-
-                                <div class="rounded-xl bg-blue-50 p-3 text-center">
-                                    <div
-                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 2v20" />
-                                            <path d="M2 12h20" />
-                                        </svg>
-                                    </div>
-
-                                    <p class="mt-2 text-[10px] font-semibold text-slate-500">
-                                        Safety
+                                @endif
+
+                                <h1 class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl xl:text-7xl">
+                                    {{ $slide->title }}
+                                    @if (filled($slide->highlight))
+                                        <span class="block text-blue-600">{{ $slide->highlight }}</span>
+                                    @endif
+                                </h1>
+
+                                @if (filled($slide->description))
+                                    <p class="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
+                                        {{ $slide->description }}
                                     </p>
-                                </div>
+                                @endif
 
+                                @php
+                                    $details = collect(is_array($slide->details) ? $slide->details : [])
+                                        ->filter(fn ($detail) => filled($detail['label'] ?? null) && filled($detail['value'] ?? null))
+                                        ->take(4)
+                                        ->values();
+                                @endphp
 
-                                <div class="rounded-xl bg-cyan-50 p-3 text-center">
-                                    <div
-                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-cyan-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M3 12h4l2-8 4 16 2-8h6" />
-                                        </svg>
+                                @if ($details->isNotEmpty())
+                                    <div class="mt-7 grid gap-3 sm:grid-cols-2">
+                                        @foreach ($details as $detail)
+                                            @php
+                                                $detailLabel = strtolower((string) $detail['label']);
+                                            @endphp
+                                            <div class="{{ $details->count() === 1 ? 'sm:col-span-2' : '' }} rounded-xl border border-slate-200 bg-white p-4">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                        @if (str_contains($detailLabel, 'date') || str_contains($detailLabel, 'deadline'))
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                                            </svg>
+                                                        @elseif (str_contains($detailLabel, 'venue') || str_contains($detailLabel, 'location'))
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                        @else
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2-8 4 16 2-8h6" />
+                                                            </svg>
+                                                        @endif
+                                                    </div>
+
+                                                    <div>
+                                                        <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                                                            {{ $detail['label'] }}
+                                                        </p>
+                                                        <p class="mt-1 text-sm font-bold leading-snug text-slate-800 sm:text-base">
+                                                            {{ $detail['value'] }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
+                                @endif
 
-                                    <p class="mt-2 text-[10px] font-semibold text-slate-500">
-                                        Excellence
-                                    </p>
-                                </div>
+                                @php
+                                    $primaryUrl = $slide->primary_href;
+                                    $secondaryUrl = $slide->secondary_href;
+                                @endphp
 
+                                @if ((filled($slide->primary_label) && filled($primaryUrl)) || (filled($slide->secondary_label) && filled($secondaryUrl)))
+                                    <div class="mt-8 flex flex-wrap gap-3">
+                                        @if (filled($slide->primary_label) && filled($primaryUrl))
+                                            <a
+                                                href="{{ $primaryUrl }}"
+                                                @if (str_starts_with($primaryUrl, 'http')) target="_blank" rel="noopener noreferrer" @endif
+                                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
+                                            >
+                                                {{ $slide->primary_label }}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+                                                </svg>
+                                            </a>
+                                        @endif
 
-                                <div class="rounded-xl bg-blue-50 p-3 text-center">
-                                    <div
-                                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                        </svg>
+                                        @if (filled($slide->secondary_label) && filled($secondaryUrl))
+                                            <a
+                                                href="{{ $secondaryUrl }}"
+                                                @if (str_starts_with($secondaryUrl, 'http')) target="_blank" rel="noopener noreferrer" @endif
+                                                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600"
+                                            >
+                                                {{ $slide->secondary_label }}
+                                            </a>
+                                        @endif
                                     </div>
-
-                                    <p class="mt-2 text-[10px] font-semibold text-slate-500">
-                                        Community
-                                    </p>
-                                </div>
-
+                                @endif
                             </div>
 
-                        </div>
 
+                            @if ($imageUrls !== [])
 
-                        {{-- Floating medical badge --}}
-                        <div
-                            class="absolute right-0 top-10 z-20 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-xl backdrop-blur">
-
-                            <div class="flex items-center gap-3">
+                            <div class="relative z-10 flex justify-center lg:justify-end">
+                                <div class="absolute inset-10 rounded-full bg-blue-100/70 blur-3xl"></div>
 
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                    x-data="{
+                                        image: 0,
+                                        total: {{ count($imageUrls) }},
+                                        timer: null,
+                                        nextImage() {
+                                            this.image = (this.image + 1) % this.total
+                                        },
+                                        previousImage() {
+                                            this.image = (this.image - 1 + this.total) % this.total
+                                        },
+                                        goToImage(index) {
+                                            this.image = index
+                                            this.startImage()
+                                        },
+                                        startImage() {
+                                            if (this.total < 2) {
+                                                return
+                                            }
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M20 6 9 17l-5-5" />
-                                    </svg>
+                                            this.stopImage()
+                                            this.timer = setInterval(() => this.nextImage(), 7000)
+                                        },
+                                        stopImage() {
+                                            if (this.timer) {
+                                                clearInterval(this.timer)
+                                                this.timer = null
+                                            }
+                                        }
+                                    }"
+                                    x-init="startImage()"
+                                    @mouseenter="stopImage()"
+                                    @mouseleave="startImage()"
+                                    class="group relative flex min-h-[320px] w-full items-center justify-center sm:min-h-[440px] lg:min-h-[540px]"
+                                >
+                                    @foreach ($imageUrls as $imageIndex => $imageUrl)
+                                        <img
+                                            x-show="image === {{ $imageIndex }}"
+                                            x-transition:enter="transition ease-out duration-500"
+                                            x-transition:enter-start="opacity-0 translate-x-4"
+                                            x-transition:enter-end="opacity-100 translate-x-0"
+                                            x-transition:leave="transition ease-in duration-300 absolute"
+                                            x-transition:leave-start="opacity-100"
+                                            x-transition:leave-end="opacity-0 -translate-x-4"
+                                            src="{{ $imageUrl }}"
+                                            alt="{{ $slide->image_alt }}"
+                                            loading="{{ $index === 0 && $imageIndex === 0 ? 'eager' : 'lazy' }}"
+                                            style="{{ $imageIndex === 0 ? '' : 'display: none;' }}"
+                                            :aria-hidden="image !== {{ $imageIndex }}"
+                                            class="mx-auto max-h-[540px] w-auto max-w-full rounded-xl object-contain transition duration-700 ease-out group-hover:scale-[1.02]"
+                                        />
+                                    @endforeach
 
+                                    @if (count($imageUrls) > 1)
+                                        <button
+                                            type="button"
+                                            @click.stop="previousImage()"
+                                            aria-label="Previous hero image"
+                                            class="absolute left-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-sm backdrop-blur transition hover:text-blue-600"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" />
+                                            </svg>
+                                        </button>
+
+                                        <div class="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1.5 backdrop-blur">
+                                            @foreach ($imageUrls as $imageIndex => $imageUrl)
+                                                <button
+                                                    type="button"
+                                                    @click.stop="goToImage({{ $imageIndex }})"
+                                                    :class="image === {{ $imageIndex }} ? 'w-5 bg-blue-600' : 'w-1.5 bg-slate-300'"
+                                                    class="h-1.5 rounded-full transition-all duration-300"
+                                                    aria-label="Show hero image {{ $imageIndex + 1 }}"
+                                                ></button>
+                                            @endforeach
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            @click.stop="nextImage()"
+                                            aria-label="Next hero image"
+                                            class="absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-sm backdrop-blur transition hover:text-blue-600"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
-
-                                <div>
-                                    <p class="text-xs font-bold text-slate-800">
-                                        Quality Care
-                                    </p>
-
-                                    <p class="text-[10px] text-slate-400">
-                                        Patient-centered
-                                    </p>
-                                </div>
-
                             </div>
-
+                            @endif
                         </div>
-
-
-                        {{-- Floating stethoscope badge --}}
-                        <div
-                            class="absolute bottom-12 left-0 z-20 flex h-16 w-16 items-center justify-center rounded-2xl border border-white bg-white/90 text-blue-600 shadow-xl backdrop-blur">
-
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 3v5a6 6 0 0 0 12 0V3" />
-                                <path d="M6 8H3" />
-                                <path d="M18 8h3" />
-                                <path d="M12 14v3" />
-                                <circle cx="12" cy="20" r="3" />
-                            </svg>
-
-                        </div>
-
                     </div>
+                @endforeach
+            </div>
 
+            <div class="mt-10 flex items-center justify-center gap-5 sm:mt-14">
+                <button
+                    type="button"
+                    @click="prev()"
+                    aria-label="Previous slide"
+                    class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+
+                <div class="flex items-center gap-2" role="tablist" aria-label="Hero slides">
+                    @foreach ($slides as $index => $slide)
+                        <button
+                            type="button"
+                            @click="go({{ $index }})"
+                            :class="slide === {{ $index }} ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
+                            class="h-2 rounded-full transition-all duration-300"
+                            aria-label="Go to {{ trim($slide->title . ' ' . $slide->highlight) }} slide"
+                            :aria-selected="slide === {{ $index }}"
+                            role="tab"
+                        ></button>
+                    @endforeach
                 </div>
 
+                <button
+                    type="button"
+                    @click="next()"
+                    aria-label="Next slide"
+                    class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+                    </svg>
+                </button>
             </div>
-
         </div>
-
-
-        {{-- =====================================================
-            SLIDER CONTROLS
-        ====================================================== --}}
-        <div class="mt-10 flex items-center justify-center gap-5 sm:mt-14">
-
-            {{-- Previous --}}
-            <button @click="prev()" aria-label="Previous slide"
-                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md">
-
-                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="m15 18-6-6 6-6" />
-                </svg>
-
-            </button>
-
-
-            {{-- Indicators --}}
-            <div class="flex items-center gap-2">
-
-                <button @click="go(0)" :class="slide === 0 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to Sim Wars slide"></button>
-
-                <button @click="go(1)" :class="slide === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Research Forum slide"></button>
-
-                <button @click="go(2)" :class="slide === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Interesting Case slide"></button>
-
-                <button @click="go(3)" :class="slide === 3 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300"
-                    aria-label="Go to Annual Convention slide"></button>
-
-                <button @click="go(4)" :class="slide === 4 ? 'w-8 bg-blue-600' : 'w-2 bg-slate-300'"
-                    class="h-2 rounded-full transition-all duration-300" aria-label="Go to PSA main slide"></button>
-
-            </div>
-
-
-            {{-- Next --}}
-            <button @click="next()" aria-label="Next slide"
-                class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-300 hover:text-blue-600 hover:shadow-md">
-
-                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="m9 18 6-6-6-6" />
-                </svg>
-
-            </button>
-
+    </section>
+@else
+    <section class="relative overflow-hidden bg-white px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl rounded-2xl border border-blue-100 bg-white p-8 shadow-xl shadow-blue-100/50 sm:p-14">
+            <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Philippine Society of Anesthesiologists</p>
+            <h1 class="mt-4 max-w-3xl font-display text-4xl font-extrabold leading-tight text-slate-950 sm:text-6xl">
+                Advancing anesthesia care through excellence, education, and innovation.
+            </h1>
+            <p class="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+                Discover the latest PSA programs, events, and announcements.
+            </p>
         </div>
-
-    </div>
-
-</section>
+    </section>
+@endif
