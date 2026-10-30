@@ -11,8 +11,7 @@ class WorkshopRegistrationConfirmation extends Mailable
 {
     public function __construct(
         public WorkshopRegistration $registration,
-        public string $workshopLabel,
-        public array $workshopDetails = [],
+        public array $workshops,
     ) {
     }
 
@@ -30,9 +29,7 @@ class WorkshopRegistrationConfirmation extends Mailable
             with: [
                 'registration' => $this->registration,
                 'name' => $this->registration->full_name,
-                'workshop' => $this->workshopLabel,
-                'session' => $this->workshopDetails['session'] ?? null,
-                'venue' => $this->workshopDetails['venue'] ?? null,
+                'workshops' => $this->workshops,
             ],
         );
     }

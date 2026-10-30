@@ -22,19 +22,19 @@
                 'icon' => 'document-text',
                 'href' => route('Event-Registration'),
             ],
-            // [
-            //     'key' => 'workshops',
-            //     'title' => 'Workshops Registration',
-            //     'description' => 'Register for the convention workshops',
-            //     'icon' => 'clipboard-document-check',
-            //     'href' => route('workshop'),
-            // ],
+            [
+                'key' => 'workshops',
+                'title' => 'Workshops Registration',
+                'description' => 'Register for the convention workshops',
+                'icon' => 'clipboard-document-check',
+                'href' => route('workshop'),
+            ],
             [
                 'key' => 'scientific',
                 'title' => 'Scientific Program',
                 'description' => 'View the full lineup of talks and sessions',
                 'icon' => 'book-open',
-                'href' => '#',
+                'href' => route('annual-convention-scientific-program'),
             ],
             [
                 'key' => 'social',

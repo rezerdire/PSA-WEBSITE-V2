@@ -3,22 +3,29 @@
 
 Hello {{ $name }},
 
-Thank you for registering. Your workshop slot has been recorded.
+Thank you for registering. Your selected workshop slots have been recorded.
 
 <x-mail::panel>
+@foreach ($workshops as $workshop)
+**Workshop:** {{ $workshop['label'] }}
 
-**Workshop:** {{ $workshop }}
-
-@if ($session)
-**Schedule:** {{ $session }}
+@if ($workshop['session'])
+**Schedule:** {{ $workshop['session'] }}
 @endif
 
-@if ($venue)
-**Venue:** {{ $venue }}
+@if ($workshop['venue'])
+**Venue:** {{ $workshop['venue'] }}
 @endif
+
+@if (!$loop->last)
+---
+@endif
+@endforeach
 </x-mail::panel>
 
 ## Registration details
+
+**Email:** {{ $registration->email }}
 
 For further inquiries, please contact us at **psainc_sec@yahoo.com**.
 

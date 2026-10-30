@@ -5,13 +5,16 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use App\Mail\WorkshopRegistrationConfirmation;
 use App\Models\Member;
+use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 
 new class extends Component {
@@ -36,33 +39,29 @@ new class extends Component {
     public string $email = '';
     public string $phone = '';
 
-    // Only one workshop allowed
-    public string $workshop = '';
+    // One registrant may choose several workshops.
+    public array $workshops = [];
 
     public bool $submitted = false;
 
     #[Locked]
     public bool $confirmationEmailSent = false;
 
-    // Maximum registrants per workshop
+    // Fallback used when a legacy workshop record has no configured capacity.
     public const WORKSHOP_LIMIT = 60;
     public const NON_MEMBER_PSA_PREFIX = 'NMW_';
 
     // Max PSA ID lookups per IP per minute
     protected const LOOKUP_MAX_ATTEMPTS = 10;
 
-    public const WORKSHOPS = [
-        'RA' => 'Regional Anesthesia Workshop (RA)',
-        'POCUS' => 'POCUS',
-        'AIRWAY' => 'Airway',
-    ];
-
     // Program details shown when a workshop is selected.
     // Program rows: [topic, speaker|null, time or duration|null]
     // Station rows: [name, description|null, setup]
     // Optional keys: 'program_label', 'stations_label', 'facilitators' (list of names)
-    // Leave 'program', 'stations' and 'facilitators' empty to show no panel.
+    // The workshop catalog supplies the editable name, schedule, venue, capacity,
+    // and active state. These legacy entries retain the existing detailed panels.
     public const WORKSHOP_DETAILS = [
+
         'RA' => [
             'title' => 'Regional Anesthesia Workshop',
             'program' => [['Opening Remarks and Introduction to the Course', 'Dr. Lily Jingco', null], ['Lecture on Updates on Interventional Pain', 'Dr. Richard Genuino', '20 minutes'], ['Demonstration of doing spine ultrasound', 'Dr. Roneil Nogoy', '20 minutes']],
@@ -126,18 +125,107 @@ new class extends Component {
     // Values in the member table that mean "no PRC number on file"
     protected const PRC_PLACEHOLDERS = ['', 'NA', 'NONE', 'NULL', 'NIL', '0'];
 
+    // Identity fields and PRC numbers are displayed and stored in uppercase. Email and hospital keep their normal formats.
+    protected const UPPERCASE_DETAIL_FIELDS = ['lastName', 'firstName', 'middleName'];
+
+
+    protected function normalizeRegistrationDetails(): void
+    {
+        foreach (self::UPPERCASE_DETAIL_FIELDS as $field) {
+            $this->{$field} = mb_strtoupper(trim((string) $this->{$field}));
+        }
+
+        $this->prcNumber = mb_strtoupper(preg_replace('/\s+/', '', trim($this->prcNumber)));
+    }
+
+
+    // Public workshops are managed from Filament. Inactive workshops disappear
+    // from new registrations but remain available in historical summaries.
+    #[Computed]
+    public function availableWorkshops(): array
+    {
+        return Workshop::query()
+            ->active()
+            ->ordered()
+            ->get()
+            ->all();
+    }
+
+    protected function activeWorkshopCodes(): array
+    {
+        return array_map(
+            static fn (Workshop $workshop): string => $workshop->code,
+            $this->availableWorkshops,
+        );
+    }
+
     // Registrations per workshop, e.g. ['RA' => 12, 'POCUS' => 0, 'AIRWAY' => 5]
     #[Computed]
     public function taken(): array
     {
         $counts = [];
-        foreach (array_keys(self::WORKSHOPS) as $key) {
-            $counts[$key] = $this->countFor($key);
+
+        foreach ($this->availableWorkshops as $workshop) {
+            $counts[$workshop->code] = $this->countFor($workshop->code);
         }
+
         return $counts;
     }
 
-    // protected so it can't be called from the browser
+    #[Computed]
+    public function selectedWorkshopSummaries(): array
+    {
+        return $this->workshopSummaries($this->workshops);
+    }
+
+    protected function capacityFor(string $code): int
+    {
+        foreach ($this->availableWorkshops as $workshop) {
+            if ($workshop->code === $code) {
+                return max((int) $workshop->capacity, 1);
+            }
+        }
+
+        return self::WORKSHOP_LIMIT;
+    }
+
+    protected function workshopDetailsFor(string $code, ?Workshop $workshop = null): array
+    {
+        $details = self::WORKSHOP_DETAILS[$code] ?? [];
+
+        if ($workshop !== null) {
+            $details['title'] = $workshop->name;
+            $details['session'] = $workshop->session ?: ($details['session'] ?? null);
+            $details['venue'] = $workshop->venue ?: ($details['venue'] ?? null);
+        }
+
+        return $details;
+    }
+
+    protected function workshopSummaries(array $codes): array
+    {
+        $workshops = Workshop::query()
+            ->whereIn('code', $codes)
+            ->get()
+            ->keyBy('code');
+
+        return array_values(array_map(function ($code) use ($workshops): array {
+            $code = (string) $code;
+            $workshop = $workshops->get($code);
+            $details = $this->workshopDetailsFor($code, $workshop);
+
+            return [
+                'code' => $code,
+                'label' => $workshop?->name
+                    ?? ($details['title'] ?? $code),
+                'session' => $details['session'] ?? null,
+                'venue' => $details['venue'] ?? null,
+                'details' => $details,
+            ];
+        }, $codes));
+    }
+
+    // Protected so it can't be called from the browser.
     protected function countFor(string $key): int
     {
         return WorkshopRegistration::whereJsonContains('workshops', $key)->count();
@@ -183,6 +271,7 @@ new class extends Component {
         $code = strtoupper(trim($member->psa_mem_type ?? ''));
 
         $this->psaId = (string) $member->getKey();
+        $this->psaIdInput = '';
         $this->lastName = (string) ($member->mem_last_name ?? '');
         $this->firstName = (string) ($member->mem_first_name ?? '');
         $this->middleName = (string) ($member->mem_middle_name ?? '');
@@ -288,17 +377,14 @@ new class extends Component {
             return;
         }
 
-        // Members: replace whatever the browser sent with the database values
+        // Members: replace whatever the browser sent with the database values.
         if (!$this->enforceMemberData()) {
             return;
         }
 
+        $this->normalizeRegistrationDetails();
         $this->email = trim($this->email);
         $this->phone = trim($this->phone);
-
-        // Normalize the PRC number (no spaces, uppercase) so "12345" and "12345 "
-        // are treated as the same number everywhere below.
-        $this->prcNumber = strtoupper(preg_replace('/\s+/', '', $this->prcNumber));
 
         $validated = $this->validate(
             [
@@ -309,7 +395,8 @@ new class extends Component {
                 'hospital' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email', 'max:255'],
                 'phone' => ['required', 'regex:/^09\d{9}$/'],
-                'workshop' => ['required', 'in:' . implode(',', array_keys(self::WORKSHOPS))],
+                'workshops' => ['required', 'array', 'min:1'],
+                'workshops.*' => ['string', 'distinct', Rule::in($this->activeWorkshopCodes())],
             ],
             [
                 'lastName.required' => 'Please enter your last name.',
@@ -322,10 +409,15 @@ new class extends Component {
                 'email.email' => 'Please enter a valid email address.',
                 'phone.required' => 'Please enter your phone number.',
                 'phone.regex' => 'Please enter a valid phone number.',
-                'workshop.required' => 'Please select a workshop.',
-                'workshop.in' => 'Please select a valid workshop.',
+                'workshops.required' => 'Please select at least one workshop.',
+                'workshops.array' => 'Please select valid workshops.',
+                'workshops.min' => 'Please select at least one workshop.',
+                'workshops.*.in' => 'Please select valid workshops.',
+                'workshops.*.distinct' => 'Please select each workshop only once.',
             ],
         );
+
+        $selectedWorkshops = array_values(array_unique($validated['workshops']));
 
         // CHECK 2: PRC number ownership.
         // If the PRC belongs to a PSA member, only that verified member may use it.
@@ -333,13 +425,11 @@ new class extends Component {
 
         if ($memberWithPrc) {
             if ($this->psaId === '') {
-                // Not verified, but using a member's PRC number
                 $this->addError('prcNumber', 'This PRC number belongs to a PSA member. Please verify your PSA ID above.');
                 return;
             }
 
             if ((string) $memberWithPrc->getKey() !== $this->psaId) {
-                // Verified as one member, but typed another member's PRC number
                 $this->addError('prcNumber', 'This PRC number belongs to a different PSA member.');
                 return;
             }
@@ -355,20 +445,33 @@ new class extends Component {
             return;
         }
 
-        // The lock makes "check the count, then insert" one step, so two people
-        // grabbing the last slot at the same time can't both get in.
+        // The lock makes capacity, duplicate checks, and insert one operation,
+        // so multiple selected workshops cannot be partially reserved.
         try {
-            $result = Cache::lock('workshop-registration', 10)->block(5, function () use ($validated) {
-                return DB::transaction(function () use ($validated) {
-                    if ($this->countFor($validated['workshop']) >= self::WORKSHOP_LIMIT) {
-                        return 'full';
+            $result = Cache::lock('workshop-registration', 10)->block(5, function () use ($validated, $selectedWorkshops) {
+                return DB::transaction(function () use ($validated, $selectedWorkshops) {
+                    if ($this->psaId !== '' && WorkshopRegistration::where('psa_id', $this->psaId)->exists()) {
+                        return ['status' => 'duplicate_psa'];
+                    }
+
+                    if (WorkshopRegistration::where('prc_number', $validated['prcNumber'])->exists()) {
+                        return ['status' => 'duplicate_prc'];
+                    }
+
+                    foreach ($selectedWorkshops as $workshopCode) {
+                        if ($this->countFor($workshopCode) >= $this->capacityFor($workshopCode)) {
+                            return [
+                                'status' => 'full',
+                                'code' => $workshopCode,
+                            ];
+                        }
                     }
 
                     $assignedPsaId = $this->psaId !== ''
                         ? $this->psaId
                         : $this->generateNonMemberPsaId();
 
-                    // Returns the saved record so we can email it after the lock is released
+                    // Returns the saved record so we can email it after the lock is released.
                     return WorkshopRegistration::create([
                         'psa_id' => $assignedPsaId,
                         'mem_last_name' => $validated['lastName'],
@@ -379,36 +482,52 @@ new class extends Component {
                         'hospital' => $validated['hospital'],
                         'email' => $validated['email'],
                         'phone' => $validated['phone'],
-                        'workshops' => [$validated['workshop']],
+                        'workshops' => $selectedWorkshops,
                     ]);
                 });
             });
         } catch (LockTimeoutException $e) {
-            $this->addError('workshop', 'The system is busy. Please try again in a moment.');
+            $this->addError('workshops', 'The system is busy. Please try again in a moment.');
             return;
         } catch (\OverflowException $e) {
             $this->addError('psaId', 'No non-member PSA IDs are available. Please contact the PSA secretariat.');
             return;
         } catch (UniqueConstraintViolationException $e) {
-            // Two submissions raced past the exists() check
+            // Two submissions raced past the exists() check.
             $this->addError('prcNumber', 'This PRC number is already registered.');
             return;
         }
 
-        if ($result === 'full') {
-            $this->addError('workshop', 'Sorry, this workshop is already full. Please choose another one.');
-            $this->workshop = '';
+        if (($result['status'] ?? null) === 'duplicate_psa') {
+            $this->addError('psaId', 'This PSA ID is already registered.');
             return;
         }
+
+        if (($result['status'] ?? null) === 'duplicate_prc') {
+            $this->addError('prcNumber', 'This PRC number is already registered.');
+            return;
+        }
+
+        if (($result['status'] ?? null) === 'full') {
+            $fullCode = (string) $result['code'];
+            $this->workshops = array_values(array_diff($this->workshops, [$fullCode]));
+            $fullWorkshop = $this->workshopSummaries([$fullCode])[0] ?? ['label' => $fullCode];
+            $this->addError(
+                'workshops',
+                "Sorry, {$fullWorkshop['label']} is already full. Please choose another workshop.",
+            );
+            return;
+        }
+
         $this->psaId = (string) $result->psa_id;
+        $this->workshops = $selectedWorkshops;
         $this->confirmationEmailSent = false;
 
         // Confirmation email. A mail failure must not undo a saved registration.
         try {
             Mail::to($result->email)->send(new WorkshopRegistrationConfirmation(
                 $result,
-                self::WORKSHOPS[$validated['workshop']],
-                self::WORKSHOP_DETAILS[$validated['workshop']] ?? [],
+                $this->workshopSummaries($selectedWorkshops),
             ));
             $this->confirmationEmailSent = true;
         } catch (\Throwable $e) {
@@ -426,8 +545,7 @@ new class extends Component {
 <div>
     @if ($submitted)
         @php
-            $confirmationDetails = self::WORKSHOP_DETAILS[$workshop] ?? [];
-            $confirmationWorkshop = self::WORKSHOPS[$workshop] ?? 'Selected workshop';
+            $confirmationWorkshops = $this->selectedWorkshopSummaries;
         @endphp
         <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100">
             <div class="h-1.5 bg-gradient-to-r from-[#000066] to-[#0000aa]"></div>
@@ -444,8 +562,7 @@ new class extends Component {
                         confirmed</p>
                     <h2 class="mt-2 text-2xl font-bold text-[#000066]">You're successfully registered</h2>
                     <p class="mt-2 max-w-lg text-sm leading-6 text-gray-500">
-                        Thank you, {{ $firstName }} {{ $lastName }}. Your workshop slot has been recorded.
-                    </p>
+                        Thank you, {{ $firstName }} {{ $lastName }}. Your selected workshop slots have been recorded.
                 </div>
 
                 <div class="mt-7 overflow-hidden rounded-xl border border-[#000066]/10">
@@ -453,22 +570,26 @@ new class extends Component {
                         Registration summary
                     </div>
                     <dl class="divide-y divide-gray-100">
-                        <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
-                            <dt class="text-xs text-gray-400">Workshop</dt>
-                            <dd class="text-sm font-semibold text-gray-700">{{ $confirmationWorkshop }}</dd>
-                        </div>
-                        @if (!empty($confirmationDetails['session']))
-                            <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
-                                <dt class="text-xs text-gray-400">Schedule</dt>
-                                <dd class="text-sm text-gray-700">{{ $confirmationDetails['session'] }}</dd>
+                        @foreach ($confirmationWorkshops as $confirmationWorkshop)
+                            <div class="px-4 py-3">
+                                <dt class="text-xs text-gray-400">Workshop</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-700">
+                                    {{ $confirmationWorkshop['label'] }}
+                                </dd>
+                                @if ($confirmationWorkshop['session'] || $confirmationWorkshop['venue'])
+                                    <div class="mt-2 space-y-1 text-xs text-gray-500">
+                                        @if ($confirmationWorkshop['session'])
+                                            <p><span class="font-semibold text-gray-600">Schedule:</span>
+                                                {{ $confirmationWorkshop['session'] }}</p>
+                                        @endif
+                                        @if ($confirmationWorkshop['venue'])
+                                            <p><span class="font-semibold text-gray-600">Venue:</span>
+                                                {{ $confirmationWorkshop['venue'] }}</p>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
-                        @endif
-                        @if (!empty($confirmationDetails['venue']))
-                            <div class="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
-                                <dt class="text-xs text-gray-400">Venue</dt>
-                                <dd class="text-sm text-gray-700">{{ $confirmationDetails['venue'] }}</dd>
-                            </div>
-                        @endif
+                        @endforeach
                     </dl>
                 </div>
 
@@ -536,10 +657,9 @@ new class extends Component {
 
                     <div>
                         <h2 class="font-bold text-base text-[#000066]">Workshop Registration</h2>
-                        <p class="text-gray-400 text-xs mt-0.5">
+                        <p class="text-gray-700 text-xs mt-0.5">
                             PSA members: select your PSA ID above to auto-fill your details.
-                            Non-members: just fill in the fields below; an NMW_0001 PSA ID will be assigned after
-                            registration.
+                            Non-members: just fill in the fields below.
                         </p>
                     </div>
 
@@ -584,8 +704,10 @@ new class extends Component {
                                 Last Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="lastName" placeholder="Last name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+
                             @error('lastName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -596,8 +718,9 @@ new class extends Component {
                                 First Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="firstName" placeholder="First name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('firstName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -608,8 +731,9 @@ new class extends Component {
                                 class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Middle
                                 Name</label>
                             <input type="text" wire:model="middleName" placeholder="Middle name (optional)"
-                                @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255"
+                                autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('middleName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -631,8 +755,9 @@ new class extends Component {
                                 PRC Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prcNumber" placeholder="Enter your PRC number"
-                                minlength="5" maxlength="7"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                                minlength="5" maxlength="7" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @if ($psaId)
                                 <p class="text-gray-400 text-xs mt-1">Please enter your PRC number manually.</p>
                             @endif
@@ -682,57 +807,69 @@ new class extends Component {
                         @enderror
                     </div>
 
-                    {{-- workshop selection: one only --}}
+                    {{-- workshop selection: multiple choices --}}
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                            Select Workshop <span class="text-red-500">*</span>
-                            <span class="text-gray-400 normal-case font-normal">(choose one)</span>
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            @foreach (self::WORKSHOPS as $key => $label)
-                                @php
-                                    $slotsTaken = $this->taken[$key] ?? 0;
-                                    $slotsLeft = max(self::WORKSHOP_LIMIT - $slotsTaken, 0);
-                                    $isFull = $slotsLeft === 0;
-                                @endphp
-                                <label wire:key="ws-{{ $key }}"
-                                    class="flex items-center gap-3 border rounded-lg px-4 py-3 transition
-                                    {{ $isFull ? 'opacity-60 cursor-not-allowed bg-gray-50 border-gray-200' : 'cursor-pointer' }}
-                                    {{ !$isFull && $workshop === $key ? 'border-[#000066] bg-[#f4f4fb]' : '' }}
-                                    {{ !$isFull && $workshop !== $key ? 'border-gray-200 hover:bg-gray-50' : '' }}">
-                                    <input type="radio" wire:model.live="workshop" value="{{ $key }}"
-                                        name="workshop" @disabled($isFull)
-                                        class="w-4 h-4 border-gray-300 text-[#000066] focus:ring-[#000066]">
-                                    <div class="min-w-0">
-                                        <span
-                                            class="block text-sm font-medium text-gray-700">{{ $label }}</span>
-                                        @if ($isFull)
-                                            <span class="block text-xs font-semibold text-red-500">Full</span>
-                                        @else
-                                            <span
-                                                class="block text-xs {{ $slotsLeft <= 10 ? 'text-amber-600 font-semibold' : 'text-gray-400' }}">
-                                                {{ $slotsTaken }} / {{ self::WORKSHOP_LIMIT }} registered
-                                                · {{ $slotsLeft }} {{ Str::plural('slot', $slotsLeft) }} left
-                                            </span>
-                                        @endif
-                                    </div>
-                                </label>
-                            @endforeach
-                        </div>
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                                Select Workshops <span class="text-red-500">*</span>
+                                <span class="text-gray-400 normal-case font-normal">(choose all that apply)</span>
+                            </legend>
+                            <p class="mb-3 text-xs text-gray-500">
+                                Each selected workshop reserves one slot for this registrant.
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                @forelse ($this->availableWorkshops as $workshop)
+                                    @php
+                                        $key = $workshop->code;
+                                        $slotsTaken = $this->taken[$key] ?? 0;
+                                        $capacity = max((int) $workshop->capacity, 1);
+                                        $slotsLeft = max($capacity - $slotsTaken, 0);
+                                        $isFull = $slotsLeft === 0;
+                                        $isSelected = in_array($key, $workshops, true);
+                                    @endphp
+                                    <label wire:key="ws-{{ $key }}"
+                                        class="flex items-center gap-3 border rounded-lg px-4 py-3 transition
+                                        {{ $isFull && !$isSelected ? 'opacity-60 cursor-not-allowed bg-gray-50 border-gray-200' : 'cursor-pointer' }}
+                                        {{ $isSelected ? 'border-[#000066] bg-[#f4f4fb]' : 'border-gray-200 hover:bg-gray-50' }}">
+                                        <input type="checkbox" wire:model.live="workshops" value="{{ $key }}"
+                                            name="workshops[]" @disabled($isFull && !$isSelected)
+                                            class="w-4 h-4 border-gray-300 text-[#000066] focus:ring-[#000066]">
+                                        <div class="min-w-0">
+                                            <span class="block text-sm font-medium text-gray-700">{{ $workshop->name }}</span>
+                                            @if ($isFull)
+                                                <span class="block text-xs font-semibold text-red-500">Full</span>
+                                            @else
+                                                <span
+                                                    class="block text-xs {{ $slotsLeft <= 10 ? 'text-amber-600 font-semibold' : 'text-gray-400' }}">
+                                                    {{ $slotsTaken }} / {{ $capacity }} registered
+                                                    · {{ $slotsLeft }} {{ Str::plural('slot', $slotsLeft) }} left
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </label>
+                                @empty
+                                    <p class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 sm:col-span-3">
+                                        No workshops are currently open for registration.
+                                    </p>
+                                @endforelse
+                            </div>
+                        </fieldset>
 
-                        {{-- selected workshop details --}}
-                        @php
-                            $details = self::WORKSHOP_DETAILS[$workshop] ?? null;
-                        @endphp
+                        {{-- Selected workshop details --}}
+                        @foreach ($this->selectedWorkshopSummaries as $selectedWorkshop)
+                            @php
+                                $details = $selectedWorkshop['details'];
+                                $workshopCode = $selectedWorkshop['code'];
+                            @endphp
 
-                        @if ($details && ($details['program'] || $details['stations'] || !empty($details['facilitators'])))
-                            <div wire:key="ws-details-{{ $workshop }}" x-data x-transition
-                                class="mt-4 rounded-xl border border-[#000066]/15 bg-[#f4f4fb] p-5 space-y-4">
+                            @if ($details && (!empty($details['program']) || !empty($details['stations']) || !empty($details['facilitators']) || !empty($details['session']) || !empty($details['venue'])))
+                                <div wire:key="ws-details-{{ $workshopCode }}" x-data x-transition
+                                    class="mt-4 rounded-xl border border-[#000066]/15 bg-[#f4f4fb] p-5 space-y-4">
 
                                 <h3 class="font-bold text-sm text-[#000066] uppercase tracking-wide">
                                     {{ $details['title'] }}
                                 </h3>
-                                @if ($details['program'])
+                                @if (!empty($details['program']))
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
                                             {{ $details['program_label'] ?? 'Program' }}</p>
@@ -764,9 +901,9 @@ new class extends Component {
                                         </div>
                                     </div>
                                 @endif
-                                @if ($details['session'] || $details['venue'])
+                                @if (!empty($details['session']) || !empty($details['venue']))
                                     <div class="rounded-lg bg-[#000066] text-white px-4 py-3 space-y-2">
-                                        @if ($details['session'])
+                                        @if (!empty($details['session']))
                                             <div class="flex items-center gap-2.5 text-sm font-semibold">
                                                 {{-- clock icon --}}
                                                 <svg class="w-4 h-4 shrink-0 text-white/70" fill="none"
@@ -779,7 +916,7 @@ new class extends Component {
                                             </div>
                                         @endif
 
-                                        @if ($details['venue'])
+                                        @if (!empty($details['venue']))
                                             <div class="flex items-center gap-2.5 text-sm font-semibold">
                                                 {{-- location pin icon --}}
                                                 <svg class="w-4 h-4 shrink-0 text-white/70" fill="none"
@@ -794,7 +931,7 @@ new class extends Component {
                                         @endif
                                     </div>
                                 @endif
-                                @if ($details['stations'])
+                                @if (!empty($details['stations']))
                                     <div>
                                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
                                             {{ $details['stations_label'] ?? 'Workshop Stations' }}</p>
@@ -829,7 +966,8 @@ new class extends Component {
                             </div>
                         @endif
 
-                        @error('workshop')
+                            @endforeach
+                        @error('workshops')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>

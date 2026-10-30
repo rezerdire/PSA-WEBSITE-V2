@@ -16,4 +16,5 @@ class ListWorkshopRegistrations extends ListRecords
             CreateAction::make(),
         ];
     }
+
 }

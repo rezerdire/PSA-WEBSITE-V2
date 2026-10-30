@@ -76,6 +76,7 @@ Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name(
 
 // Annual Convention 2026
 Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')->name('annual-convention-poster');
+Route::view('/CME/Annual-Convention/ScientificProgram', 'pages.CME.annualconvention.scientificprogram')->name('annual-convention-scientific-program');
 
 Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
 
@@ -83,15 +84,15 @@ Route::view('/MH-Registry','pages.mh-registry.mh-registry-page')->name('mh-regis
 
 
 
-// Route::get('/booth/{booth_code}', function (string $booth_code) {
-//     return view('pages.booth_page.index', ['booth_code' => $booth_code]);
-// })->name('booth.scan');
+Route::get('/booth/{booth_code}', function (string $booth_code) {
+    return view('pages.booth_page.index', ['booth_code' => $booth_code]);
+})->name('booth.scan');
 
-// // booth checker
-// Route::get('/booth-checker', function () {
-//     return view('pages.booth_page.checker');
-// })->name('booth.checker');
+// booth checker
+Route::get('/booth-checker', function () {
+    return view('pages.booth_page.checker');
+})->name('booth.checker');
 
 
 // WORKSHOP
-// Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');
+Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');

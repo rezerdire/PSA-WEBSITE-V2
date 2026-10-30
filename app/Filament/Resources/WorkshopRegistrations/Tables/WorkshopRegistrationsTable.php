@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Filament\Resources\WorkshopRegistrations\Tables;
+
+use App\Filament\Resources\WorkshopRegistrations\Schemas\WorkshopRegistrationInfolist;
+use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 
 use Filament\Actions\Action;
@@ -8,8 +11,7 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Section;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -23,10 +25,11 @@ class WorkshopRegistrationsTable
 {
     public static function configure(Table $table): Table
     {
+        $workshopLabels = Workshop::optionMap();
+
         return $table
             ->defaultSort('created_at', 'desc')
-            // Every row opens the hidden view action; only Edit remains visible.
-            ->recordAction('view_record')
+            ->recordAction(ViewAction::class)
             ->recordUrl(null)
             ->columns([
                 TextColumn::make('psa_id')
@@ -70,10 +73,6 @@ class WorkshopRegistrationsTable
                     })
                     ->searchable(),
 
-                TextColumn::make('prc_number')
-                    ->label('PRC number')
-                    ->searchable(),
-
                 TextColumn::make('email')
                     ->label('Email address')
                     ->wrap()
@@ -82,18 +81,14 @@ class WorkshopRegistrationsTable
                 TextColumn::make('workshops')
                     ->label('Workshops')
                     ->badge()
-                    ->formatStateUsing(fn ($state): string => match ((string) $state) {
-                        'RA' => 'RA',
-                        'AIRWAY' => 'AIRWAY',
-                        'POCUS' => 'POCUS',
-                        default => (string) $state,
-                    })
+                    ->formatStateUsing(fn ($state): string => $workshopLabels[(string) $state] ?? (string) $state)
                     ->color(fn ($state): string => match ((string) $state) {
                         'RA' => 'danger',
                         'AIRWAY' => 'success',
                         'POCUS' => 'info',
                         default => 'gray',
-                    }),
+                    })
+                    ->placeholder('—'),
 
                 TextColumn::make('created_at')
                     ->label('Registered')
@@ -115,11 +110,7 @@ class WorkshopRegistrationsTable
                 SelectFilter::make('workshop')
                     ->label('Workshop')
                     ->multiple()
-                    ->options([
-                        'RA' => 'Regional Anesthesia (RA)',
-                        'AIRWAY' => 'Airway',
-                        'POCUS' => 'POCUS',
-                    ])
+                    ->options($workshopLabels)
                     ->native(false)
                     ->query(function (Builder $query, array $data): Builder {
                         $values = array_values(array_filter($data['values'] ?? []));
@@ -137,89 +128,12 @@ class WorkshopRegistrationsTable
             ])
             ->filtersFormColumns(2)
             ->recordActions([
-                Action::make('view_record')
-                    ->label('View')
-                    ->icon('heroicon-o-eye')
-                    ->extraAttributes(['class' => 'hidden'])
-                    ->modalHeading(fn (WorkshopRegistration $record): string => 'Workshop registration — ' . $record->full_name)
-                    ->modalWidth('3xl')
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
-                    ->infolist([
-                        Section::make('Registrant details')
-                            ->columns(2)
-                            ->schema([
-                                TextEntry::make('full_name')
-                                    ->label('Full name')
-                                    ->weight('bold')
-                                    ->columnSpanFull(),
-
-                                TextEntry::make('psa_id')
-                                    ->label('PSA ID')
-                                    ->badge()
-                                    ->placeholder('—')
-                                    ->fontFamily('mono')
-                                    ->color(fn ($state): string => str_starts_with((string) $state, 'NMW_')
-                                        ? 'danger'
-                                        : 'primary'),
-
-                                TextEntry::make('mem_type')
-                                    ->label('Member type')
-                                    ->badge()
-                                    ->color(fn ($state): string => match ((string) $state) {
-                                        'Non-member' => 'danger',
-                                        'Regular Member' => 'info',
-                                        'Life Member' => 'success',
-                                        'Trainee Member' => 'warning',
-                                        default => 'gray',
-                                    }),
-
-                                TextEntry::make('prc_number')
-                                    ->label('PRC number')
-                                    ->badge()
-                                    ->color('warning'),
-
-                                TextEntry::make('email')
-                                    ->label('Email address')
-                                    ->icon('heroicon-m-envelope'),
-
-                                TextEntry::make('phone')
-                                    ->label('Phone')
-                                    ->icon('heroicon-m-phone'),
-
-                                TextEntry::make('hospital')
-                                    ->label('Hospital / institution')
-                                    ->icon('heroicon-m-building-office-2')
-                                    ->columnSpanFull(),
-
-                                TextEntry::make('created_at')
-                                    ->label('Registered at')
-                                    ->dateTime('F d, Y g:i A')
-                                    ->timezone('Asia/Manila')
-                                    ->icon('heroicon-m-calendar')
-                                    ->columnSpanFull(),
-                            ]),
-
-                        Section::make('Workshop selection')
-                            ->schema([
-                                TextEntry::make('workshops')
-                                    ->label('Workshops')
-                                    ->badge()
-                                    ->formatStateUsing(fn ($state): string => match ((string) $state) {
-                                        'RA' => 'RA',
-                                        'AIRWAY' => 'AIRWAY',
-                                        'POCUS' => 'POCUS',
-                                        default => (string) $state,
-                                    })
-                                    ->color(fn ($state): string => match ((string) $state) {
-                                        'RA' => 'danger',
-                                        'AIRWAY' => 'success',
-                                        'POCUS' => 'info',
-                                        default => 'gray',
-                                    }),
-                            ]),
-                    ])
-                    ->action(fn () => null),
+                ViewAction::make()
+                    ->label('View registration')
+                    ->slideOver()
+                    ->modalHeading(fn (WorkshopRegistration $record): string => $record->full_name ?: 'Workshop registration')
+                    ->modalWidth('2xl')
+                    ->schema(WorkshopRegistrationInfolist::components()),
 
                 EditAction::make(),
             ])
@@ -251,6 +165,8 @@ class WorkshopRegistrationsTable
             $writer = new Writer();
             $writer->openToFile('php://output');
 
+            $workshopLabels = Workshop::optionMap();
+
             $writer->addRow(Row::fromValues([
                 'PSA ID',
                 'Full Name',
@@ -259,7 +175,7 @@ class WorkshopRegistrationsTable
                 'Hospital',
                 'Email',
                 'Phone',
-                'Workshop',
+                'Workshops',
                 'Registered At',
             ]));
 
@@ -274,8 +190,11 @@ class WorkshopRegistrationsTable
                     $record->email,
                     $record->phone,
                     is_array($record->workshops)
-                        ? implode(', ', $record->workshops)
-                        : $record->workshops,
+                        ? implode(', ', array_map(
+                            fn (string $code): string => $workshopLabels[$code] ?? $code,
+                            $record->workshops,
+                        ))
+                        : (string) $record->workshops,
                     $record->created_at?->format('Y-m-d H:i:s'),
                 ]));
             }
