@@ -6,6 +6,7 @@ use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
@@ -305,6 +306,22 @@ it('persists a valid non-member registration with a workshop PSA ID', function (
     expect($registration->psa_id)->toBe('NMW_0001')
         ->and($registration->mem_type)->toBe('Non-member')
         ->and($registration->workshops)->toBe(['RA']);
+});
+
+it('keeps the workshop slot when confirmation email delivery fails', function () {
+    makeAnnualWorkshopRegistration(['prc_number' => 900013]);
+
+    Mail::shouldReceive('to')
+        ->once()
+        ->andThrow(new RuntimeException('SMTP unavailable'));
+
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData(['prcNumber' => '900013']))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('confirmationEmailSent', false);
+
+    expect(WorkshopRegistration::where('prc_number', '900013')->exists())->toBeTrue();
 });
 
 it('normalizes identity and PRC details while preserving email and hospital casing', function () {

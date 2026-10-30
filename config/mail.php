@@ -39,13 +39,18 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            // Laravel 12 uses MAIL_SCHEME; retain compatibility with older
+            // deployments that still define MAIL_ENCRYPTION=ssl.
+            'scheme' => env(
+                'MAIL_SCHEME',
+                strtolower((string) env('MAIL_ENCRYPTION')) === 'ssl' ? 'smtps' : null,
+            ),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'timeout' => env('MAIL_TIMEOUT'),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

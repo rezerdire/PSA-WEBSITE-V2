@@ -588,6 +588,9 @@ new class extends Component {
         } catch (\Throwable $e) {
             Log::error('Workshop confirmation email failed.', [
                 'registration_id' => $result->getKey(),
+                'mailer' => (string) config('mail.default'),
+                'mail_host' => (string) config('mail.mailers.' . config('mail.default') . '.host', ''),
+                'mail_port' => config('mail.mailers.' . config('mail.default') . '.port'),
                 'exception' => $e,
             ]);
         }
