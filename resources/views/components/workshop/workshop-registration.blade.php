@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use App\Mail\WorkshopRegistrationConfirmation;
 use App\Models\Member;
+use App\Models\Registration;
 use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 
@@ -265,6 +266,43 @@ new class extends Component {
         return in_array($normalized, self::PRC_PLACEHOLDERS, true);
     }
 
+    // Workshop registration is available only after an active annual registration.
+    // Member registrations are linked by PSA ID; non-member registrations are linked
+    // by the PRC number used in the annual guest registration.
+    protected function hasEligibleAnnualRegistration(string $psaId, string $prcNumber): bool
+    {
+        $query = Registration::query()->whereIn('status', [
+            Registration::STATUS_PENDING,
+            Registration::STATUS_APPROVED,
+        ]);
+
+        if ($psaId !== '') {
+            return $query
+                ->where('psa_id', $psaId)
+                ->whereIn('membership', array_keys(self::MEM_TYPE_MAP))
+                ->exists();
+        }
+
+        if (!preg_match('/^\d{5,7}$/', $prcNumber)) {
+            return false;
+        }
+
+        return $query
+            ->where('membership', 'NM')
+            ->where('prc_number', (int) $prcNumber)
+            ->exists();
+    }
+
+    protected function addAnnualRegistrationError(): void
+    {
+        $field = $this->psaId !== '' ? 'psaId' : 'prcNumber';
+
+        $this->addError(
+            $field,
+            'Please complete your Annual Convention registration before registering for a workshop.',
+        );
+    }
+
     // Copies only the member identity data from the database into the component.
     protected function applyMember(Member $member, bool $freshLookup): void
     {
@@ -391,7 +429,7 @@ new class extends Component {
                 'lastName' => ['required', 'string', 'max:255'],
                 'firstName' => ['required', 'string', 'max:255'],
                 'middleName' => ['nullable', 'string', 'max:255'],
-                'prcNumber' => ['required', 'string', 'min:5', 'max:7'],
+                'prcNumber' => ['required', 'string', 'digits_between:5,7'],
                 'hospital' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email', 'max:255'],
                 'phone' => ['required', 'regex:/^09\d{9}$/'],
@@ -402,8 +440,7 @@ new class extends Component {
                 'lastName.required' => 'Please enter your last name.',
                 'firstName.required' => 'Please enter your first name.',
                 'prcNumber.required' => 'Please enter your PRC number.',
-                'prcNumber.min' => 'PRC number must be at least 5 characters.',
-                'prcNumber.max' => 'PRC number must not be more than 7 characters.',
+                'prcNumber.digits_between' => 'PRC number must contain 5 to 7 digits.',
                 'hospital.required' => 'Please enter your hospital.',
                 'email.required' => 'Please enter your email address.',
                 'email.email' => 'Please enter a valid email address.',
@@ -445,6 +482,12 @@ new class extends Component {
             return;
         }
 
+        if (!$this->hasEligibleAnnualRegistration($this->psaId, $validated['prcNumber'])) {
+            $this->addAnnualRegistrationError();
+            return;
+        }
+
+
         // The lock makes capacity, duplicate checks, and insert one operation,
         // so multiple selected workshops cannot be partially reserved.
         try {
@@ -457,6 +500,11 @@ new class extends Component {
                     if (WorkshopRegistration::where('prc_number', $validated['prcNumber'])->exists()) {
                         return ['status' => 'duplicate_prc'];
                     }
+
+                    if (!$this->hasEligibleAnnualRegistration($this->psaId, $validated['prcNumber'])) {
+                        return ['status' => 'annual_required'];
+                    }
+
 
                     foreach ($selectedWorkshops as $workshopCode) {
                         if ($this->countFor($workshopCode) >= $this->capacityFor($workshopCode)) {
@@ -472,6 +520,8 @@ new class extends Component {
                         : $this->generateNonMemberPsaId();
 
                     // Returns the saved record so we can email it after the lock is released.
+
+
                     return WorkshopRegistration::create([
                         'psa_id' => $assignedPsaId,
                         'mem_last_name' => $validated['lastName'],
@@ -505,6 +555,11 @@ new class extends Component {
 
         if (($result['status'] ?? null) === 'duplicate_prc') {
             $this->addError('prcNumber', 'This PRC number is already registered.');
+            return;
+        }
+
+        if (($result['status'] ?? null) === 'annual_required') {
+            $this->addAnnualRegistrationError();
             return;
         }
 
@@ -658,8 +713,8 @@ new class extends Component {
                     <div>
                         <h2 class="font-bold text-base text-[#000066]">Workshop Registration</h2>
                         <p class="text-gray-700 text-xs mt-0.5">
-                            PSA members: select your PSA ID above to auto-fill your details.
-                            Non-members: just fill in the fields below.
+                            PSA members: verify your PSA ID and complete Annual Convention registration first.
+                            Non-members: use the same PRC number submitted in your Annual Convention registration.
                         </p>
                     </div>
 
@@ -755,11 +810,13 @@ new class extends Component {
                                 PRC Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prcNumber" placeholder="Enter your PRC number"
-                                minlength="5" maxlength="7" autocapitalize="characters"
-                                oninput="this.value = this.value.toUpperCase()"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                                minlength="5" maxlength="7" inputmode="numeric" pattern="[0-9]{5,7}"
+                                oninput="this.value = this.value.replace(/\D/g, '')"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @if ($psaId)
                                 <p class="text-gray-400 text-xs mt-1">Please enter your PRC number manually.</p>
+                            @else
+                                <p class="text-gray-400 text-xs mt-1">Use the PRC number from your Annual Convention registration.</p>
                             @endif
                             @error('prcNumber')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

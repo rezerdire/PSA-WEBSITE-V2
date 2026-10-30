@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Member;
+use App\Models\Registration;
 use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
-    foreach (['workshop_registrations', 'members', 'workshops'] as $table) {
+    foreach (['workshop_registrations', 'registrations', 'members', 'workshops'] as $table) {
         Schema::dropIfExists($table);
     }
 
@@ -78,6 +79,25 @@ beforeEach(function (): void {
         $table->json('workshops');
         $table->timestamps();
     });
+    Schema::create('registrations', function (Blueprint $table): void {
+        $table->id();
+        $table->string('psa_id', 100);
+        $table->integer('prc_number');
+        $table->string('last_name');
+        $table->string('first_name');
+        $table->string('middle_name');
+        $table->string('hospital_name');
+        $table->string('hospital_address');
+        $table->string('email');
+        $table->string('contact_number');
+        $table->string('membership');
+        $table->string('discount_id')->nullable();
+        $table->string('proof_payment')->nullable();
+        $table->string('status');
+        $table->string('country');
+        $table->timestamps();
+    });
+
 });
 
 function makeWorkshopMember(array $attributes = []): Member
@@ -105,6 +125,26 @@ function validWorkshopRegistrationData(array $overrides = []): array
         'phone' => '09171234567',
         'workshops' => ['RA'],
     ], $overrides);
+}
+
+function makeAnnualWorkshopRegistration(array $overrides = []): Registration
+{
+    return Registration::create(array_merge([
+        'psa_id' => 'NM_0001',
+        'prc_number' => 900001,
+        'last_name' => 'Visitor',
+        'first_name' => 'Workshop',
+        'middle_name' => '',
+        'hospital_name' => 'Test Hospital',
+        'hospital_address' => 'Test Address',
+        'email' => 'visitor@example.test',
+        'contact_number' => '09171234567',
+        'membership' => 'NM',
+        'discount_id' => null,
+        'proof_payment' => null,
+        'status' => Registration::STATUS_PENDING,
+        'country' => 'Philippines',
+    ], $overrides));
 }
 
 function workshopRegistrationRecordData(array $overrides = []): array
@@ -155,6 +195,57 @@ it('fills verified member data without populating the PRC number', function () {
         ->assertSet('lastName', '');
 });
 
+it('requires an annual registration for a verified member', function () {
+    $member = makeWorkshopMember([
+        'member_id_no' => '0002',
+        'mem_prc_no' => '900010',
+    ]);
+
+    Livewire::test('workshop.workshop-registration')
+        ->dispatch('psa-id-selected', psaId: $member->getKey())
+        ->set(validWorkshopRegistrationData(['prcNumber' => '900010']))
+        ->call('submit')
+        ->assertHasErrors([
+            'psaId' => 'Please complete your Annual Convention registration before registering for a workshop.',
+        ])
+        ->assertSet('submitted', false);
+
+    expect(WorkshopRegistration::count())->toBe(0);
+});
+
+it('allows an eligible member to register for a workshop', function () {
+    $member = makeWorkshopMember([
+        'member_id_no' => '0003',
+        'mem_prc_no' => '900011',
+    ]);
+
+    makeAnnualWorkshopRegistration([
+        'psa_id' => '0003',
+        'prc_number' => 900011,
+        'membership' => 'RM',
+    ]);
+
+    Livewire::test('workshop.workshop-registration')
+        ->dispatch('psa-id-selected', psaId: $member->getKey())
+        ->set(validWorkshopRegistrationData(['prcNumber' => '900011']))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('psaId', '0003');
+
+    expect(WorkshopRegistration::where('psa_id', '0003')->value('mem_type'))
+        ->toBe('Regular Member');
+});
+
+it('requires an annual registration for a non-member PRC number', function () {
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData(['prcNumber' => '900012']))
+        ->call('submit')
+        ->assertHasErrors([
+            'prcNumber' => 'Please complete your Annual Convention registration before registering for a workshop.',
+        ])
+        ->assertSet('submitted', false);
+});
+
 it('rejects unknown PSA IDs', function () {
     Livewire::test('workshop.workshop-registration')
         ->call('fillFromMember', '9999')
@@ -199,6 +290,7 @@ it('rejects overlong identity fields before attempting the database insert', fun
 });
 
 it('persists a valid non-member registration with a workshop PSA ID', function () {
+    makeAnnualWorkshopRegistration(['prc_number' => 900001]);
     $data = validWorkshopRegistrationData(['prcNumber' => '900001']);
     Livewire::test('workshop.workshop-registration')
         ->set($data)
@@ -215,13 +307,15 @@ it('persists a valid non-member registration with a workshop PSA ID', function (
         ->and($registration->workshops)->toBe(['RA']);
 });
 
-it('uppercases identity and PRC details while preserving email and hospital casing', function () {
+it('normalizes identity and PRC details while preserving email and hospital casing', function () {
+    makeAnnualWorkshopRegistration(['prc_number' => 900005]);
+
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
             'lastName' => 'visitor',
             'firstName' => 'workshop',
             'middleName' => 'm.',
-            'prcNumber' => ' ab1234 ',
+            'prcNumber' => ' 900005 ',
             'hospital' => "St. Luke's Medical Center",
             'email' => 'Visitor@Example.test',
         ]))
@@ -230,9 +324,9 @@ it('uppercases identity and PRC details while preserving email and hospital casi
         ->assertSet('lastName', 'VISITOR')
         ->assertSet('firstName', 'WORKSHOP')
         ->assertSet('middleName', 'M.')
-        ->assertSet('prcNumber', 'AB1234');
+        ->assertSet('prcNumber', '900005');
 
-    $registration = WorkshopRegistration::where('prc_number', 'AB1234')->firstOrFail();
+    $registration = WorkshopRegistration::where('prc_number', '900005')->firstOrFail();
 
     expect($registration->mem_last_name)->toBe('VISITOR')
         ->and($registration->mem_first_name)->toBe('WORKSHOP')
@@ -242,6 +336,7 @@ it('uppercases identity and PRC details while preserving email and hospital casi
 });
 
 it('persists multiple workshops for one registrant', function () {
+    makeAnnualWorkshopRegistration(['prc_number' => 900007]);
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
             'prcNumber' => '900007',
@@ -263,6 +358,7 @@ it('continues the four-digit non-member PSA ID sequence', function () {
         'psa_id' => 'NMW_0007',
         'prc_number' => '900002',
     ]));
+    makeAnnualWorkshopRegistration(['prc_number' => 900003]);
 
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
@@ -312,6 +408,7 @@ it('rejects a workshop after its capacity is reached', function () {
             'prc_number' => '91' . str_pad((string) $index, 4, '0', STR_PAD_LEFT),
         ]));
     }
+    makeAnnualWorkshopRegistration(['prc_number' => 920001]);
 
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData(['prcNumber' => '920001']))
@@ -328,8 +425,10 @@ it('keeps the 60-slot limit separate for each workshop', function () {
         ]));
     }
 
+    makeAnnualWorkshopRegistration(['prc_number' => 940001]);
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
+            'prcNumber' => '940001',
             'workshops' => ['POCUS'],
         ]))
         ->call('submit')

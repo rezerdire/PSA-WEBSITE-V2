@@ -7,3 +7,6 @@
 - The **Workshops** tab shows one card for each selected workshop, including schedule, venue, and capacity.
 - Use **Edit** to correct a registration and **Delete** to remove a cancellation.
 - Excel export still includes PRC number and the complete workshop selection for authorized administrators.
+- Public workshop registration requires an active Annual Convention registration (`Pending` or `Approved`). PSA members are matched by PSA ID; non-members are matched by the PRC number from their annual guest registration.
+- PSA member identity and member type are read from the `members` table, and existing workshop registrations block duplicate PSA ID or PRC submissions.
+- After deploying database imports, run `php artisan migrate --force`; the registration repair migration restores missing Filament record IDs and supports non-member PSA IDs.
