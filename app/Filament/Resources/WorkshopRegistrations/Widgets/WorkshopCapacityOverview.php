@@ -9,6 +9,10 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class WorkshopCapacityOverview extends BaseWidget
 {
+    protected ?string $heading = 'Workshop Capacity';
+
+    protected ?string $description = 'Registered seats and remaining capacity by workshop';
+
     protected function getStats(): array
     {
         return Workshop::query()

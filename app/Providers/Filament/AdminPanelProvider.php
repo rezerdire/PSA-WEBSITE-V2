@@ -19,6 +19,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Resources\Registrations\Widgets\RegistrationStatsOverview;
+use App\Filament\Resources\WorkshopRegistrations\Widgets\WorkshopCapacityOverview;
+use App\Filament\Resources\Registrations\Widgets\RegistrationAnalyticsChart;
 
 // New Feature: SPINNER
 //  THIS IS THE EXPORT BELOW?
@@ -52,6 +54,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 RegistrationStatsOverview::class,
+                WorkshopCapacityOverview::class,
+                RegistrationAnalyticsChart::class,
             ])
 
             // New Feature: SPINNER

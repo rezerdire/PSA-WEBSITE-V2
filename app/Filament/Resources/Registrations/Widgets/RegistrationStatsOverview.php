@@ -9,6 +9,10 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class RegistrationStatsOverview extends BaseWidget
 {
+    protected ?string $heading = 'Annual Registration Overview';
+
+    protected ?string $description = 'Convention registration status summary';
+
     protected function getStats(): array
     {
         $totalRegistered  = Registration::whereIn('status',[
@@ -23,8 +27,8 @@ class RegistrationStatsOverview extends BaseWidget
         $approved = Registration::where('status', Registration::STATUS_APPROVED)->count();
 
         return [
-            Stat::make('Total Registered', $totalRegistered)
-                ->description('Members who submitted a registration')
+            Stat::make('Annual Registrants', $totalRegistered)
+                ->description('Pending and approved convention registrations')
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('info'),
 
