@@ -704,7 +704,7 @@ new class extends Component {
                                 Last Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="lastName" placeholder="Last name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}" autocapitalize="characters"
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255" autocapitalize="characters"
                                 oninput="this.value = this.value.toUpperCase()"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
 
@@ -718,7 +718,7 @@ new class extends Component {
                                 First Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="firstName" placeholder="First name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}" autocapitalize="characters"
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255" autocapitalize="characters"
                                 oninput="this.value = this.value.toUpperCase()"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('firstName')
@@ -731,7 +731,7 @@ new class extends Component {
                                 class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Middle
                                 Name</label>
                             <input type="text" wire:model="middleName" placeholder="Middle name (optional)"
-                                @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}"
+                                @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}" maxlength="255"
                                 autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('middleName')
