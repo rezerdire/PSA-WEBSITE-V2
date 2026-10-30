@@ -8,6 +8,20 @@ new class extends Component {
 @props([
     'panels' => [],
 ])
+@php
+    $zoomableItems = collect($panels)
+        ->filter(fn ($panel): bool => !empty($panel['zoomable']) && !empty($panel['image']))
+        ->map(fn ($panel): array => [
+            'src' => $panel['image'],
+            'downloadName' => basename(parse_url($panel['image'], PHP_URL_PATH) ?: $panel['image']),
+            'alt' => $panel['alt'] ?? '',
+            'link' => $panel['link'] ?? null,
+            'linkLabel' => $panel['link_label'] ?? 'Open related page',
+        ])
+        ->values()
+        ->all();
+    $zoomableIndex = 0;
+@endphp
 
 <div class="max-w-6xl mx-auto px-6 py-14 sm:py-4  ">
     @foreach ($panels as $panel)
@@ -288,7 +302,15 @@ new class extends Component {
     </div>
 
             @elseif(!empty($panel['image']))
-                @if (!empty($panel['link']))
+                @if (!empty($panel['zoomable']))
+                    <x-image-lightbox
+                        :src="$panel['image']"
+                        :alt="$panel['alt'] ?? ''"
+                        :items="$zoomableItems"
+                        :index="$zoomableIndex"
+                    />
+                    @php $zoomableIndex++; @endphp
+                @elseif (!empty($panel['link']))
                     <a href="{{ $panel['link'] }}" class="block">
                         <img src="{{ $panel['image'] }}" alt="{{ $panel['alt'] ?? '' }}"
                             class="w-full h-auto object-cover mb-2">
