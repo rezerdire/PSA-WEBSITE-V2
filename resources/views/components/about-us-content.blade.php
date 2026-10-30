@@ -7,6 +7,7 @@ new class extends Component {
 
 @props([
     'panels' => [],
+    'compact' => false,
 ])
 @php
     $zoomableItems = collect($panels)
@@ -23,7 +24,7 @@ new class extends Component {
     $zoomableIndex = 0;
 @endphp
 
-<div class="max-w-6xl mx-auto px-6 py-14 sm:py-4  ">
+<div class="max-w-6xl mx-auto px-6 {{ $compact ? 'py-4 sm:py-4' : 'py-14 sm:py-4' }}">
     @foreach ($panels as $panel)
         <div x-show="activeTab === '{{ $panel['key'] }}'"
             @if (!$loop->first) x-cloak {{-- hide the raw structure if it loads --}} @endif
