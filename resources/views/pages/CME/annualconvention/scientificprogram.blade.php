@@ -18,7 +18,7 @@
             </a>
         </div>
 
-        <x-about-us-content :panels="[
+        <x-about-us-content :compact="true" :panels="[
             [
                 'key' => 'scientific-program',
                 'image' => '/annual-convention/ScientificProgram1.png',
