@@ -34,7 +34,7 @@
                 'title' => 'Scientific Program',
                 'description' => 'View the full lineup of talks and sessions',
                 'icon' => 'book-open',
-                'href' => '#',
+                'href' => route('annual-convention-scientific-program'),
             ],
             [
                 'key' => 'social',
