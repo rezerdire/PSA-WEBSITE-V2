@@ -186,6 +186,18 @@ it('rejects invalid contact details through Livewire validation', function () {
         ->assertSet('submitted', false);
 });
 
+it('rejects overlong identity fields before attempting the database insert', function () {
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData([
+            'lastName' => str_repeat('A', 256),
+        ]))
+        ->call('submit')
+        ->assertHasErrors(['lastName'])
+        ->assertSet('submitted', false);
+
+    expect(WorkshopRegistration::count())->toBe(0);
+});
+
 it('persists a valid non-member registration with a workshop PSA ID', function () {
     $data = validWorkshopRegistrationData(['prcNumber' => '900001']);
     Livewire::test('workshop.workshop-registration')
