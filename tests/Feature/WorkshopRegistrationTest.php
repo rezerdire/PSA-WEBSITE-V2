@@ -203,6 +203,32 @@ it('persists a valid non-member registration with a workshop PSA ID', function (
         ->and($registration->workshops)->toBe(['RA']);
 });
 
+it('uppercases identity and PRC details while preserving email and hospital casing', function () {
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData([
+            'lastName' => 'visitor',
+            'firstName' => 'workshop',
+            'middleName' => 'm.',
+            'prcNumber' => ' ab1234 ',
+            'hospital' => "St. Luke's Medical Center",
+            'email' => 'Visitor@Example.test',
+        ]))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('lastName', 'VISITOR')
+        ->assertSet('firstName', 'WORKSHOP')
+        ->assertSet('middleName', 'M.')
+        ->assertSet('prcNumber', 'AB1234');
+
+    $registration = WorkshopRegistration::where('prc_number', 'AB1234')->firstOrFail();
+
+    expect($registration->mem_last_name)->toBe('VISITOR')
+        ->and($registration->mem_first_name)->toBe('WORKSHOP')
+        ->and($registration->mem_middle_name)->toBe('M.')
+        ->and($registration->hospital)->toBe("St. Luke's Medical Center")
+        ->and($registration->email)->toBe('Visitor@Example.test');
+});
+
 it('persists multiple workshops for one registrant', function () {
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([

@@ -27,6 +27,7 @@ class WorkshopRegistrationResource extends Resource
         return WorkshopRegistrationForm::configure($schema);
     }
 
+
     public static function table(Table $table): Table
     {
         return WorkshopRegistrationsTable::configure($table);

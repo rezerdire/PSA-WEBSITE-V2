@@ -125,6 +125,20 @@ new class extends Component {
     // Values in the member table that mean "no PRC number on file"
     protected const PRC_PLACEHOLDERS = ['', 'NA', 'NONE', 'NULL', 'NIL', '0'];
 
+    // Identity fields and PRC numbers are displayed and stored in uppercase. Email and hospital keep their normal formats.
+    protected const UPPERCASE_DETAIL_FIELDS = ['lastName', 'firstName', 'middleName'];
+
+
+    protected function normalizeRegistrationDetails(): void
+    {
+        foreach (self::UPPERCASE_DETAIL_FIELDS as $field) {
+            $this->{$field} = mb_strtoupper(trim((string) $this->{$field}));
+        }
+
+        $this->prcNumber = mb_strtoupper(preg_replace('/\s+/', '', trim($this->prcNumber)));
+    }
+
+
     // Public workshops are managed from Filament. Inactive workshops disappear
     // from new registrations but remain available in historical summaries.
     #[Computed]
@@ -368,12 +382,9 @@ new class extends Component {
             return;
         }
 
+        $this->normalizeRegistrationDetails();
         $this->email = trim($this->email);
         $this->phone = trim($this->phone);
-
-        // Normalize the PRC number (no spaces, uppercase) so "12345" and "12345 "
-        // are treated as the same number everywhere below.
-        $this->prcNumber = strtoupper(preg_replace('/\s+/', '', $this->prcNumber));
 
         $validated = $this->validate(
             [
@@ -693,8 +704,10 @@ new class extends Component {
                                 Last Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="lastName" placeholder="Last name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+
                             @error('lastName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -705,8 +718,9 @@ new class extends Component {
                                 First Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="firstName" placeholder="First name" @readonly($memberLocked)
-                                tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                tabindex="{{ $memberLocked ? '-1' : '0' }}" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('firstName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -718,7 +732,8 @@ new class extends Component {
                                 Name</label>
                             <input type="text" wire:model="middleName" placeholder="Middle name (optional)"
                                 @readonly($memberLocked) tabindex="{{ $memberLocked ? '-1' : '0' }}"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
+                                autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066] {{ $memberLocked ? $lockedClass : '' }}">
                             @error('middleName')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -740,8 +755,9 @@ new class extends Component {
                                 PRC Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prcNumber" placeholder="Enter your PRC number"
-                                minlength="5" maxlength="7"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000066]">
+                                minlength="5" maxlength="7" autocapitalize="characters"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#000066]">
                             @if ($psaId)
                                 <p class="text-gray-400 text-xs mt-1">Please enter your PRC number manually.</p>
                             @endif

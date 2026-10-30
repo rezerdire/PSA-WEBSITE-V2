@@ -76,6 +76,7 @@ Route::view('/CME/Mid-Year-Convention', 'pages::CME.mid-year-convention')->name(
 
 // Annual Convention 2026
 Route::view('CME/Annual-Convention/Poster', 'pages.CME.annualconvention.poster')->name('annual-convention-poster');
+Route::view('/CME/Annual-Convention/ScientificProgram', 'pages.CME.annualconvention.scientificprogram')->name('annual-convention-scientific-program');
 
 Route::view('/Recent-Events-List', 'pages.RecentEvent.recent-event-list')->name('recent-event-list');
 
