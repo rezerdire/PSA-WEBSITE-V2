@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\WorkshopRegistrations\Tables;
 
 use App\Filament\Resources\WorkshopRegistrations\Schemas\WorkshopRegistrationInfolist;
+use App\Mail\WorkshopRegistrationConfirmation;
 use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 
@@ -12,11 +13,14 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -136,6 +140,43 @@ class WorkshopRegistrationsTable
                     ->schema(WorkshopRegistrationInfolist::components()),
 
                 EditAction::make(),
+
+                Action::make('resend_confirmation')
+                    ->label('Resend confirmation')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('Resend confirmation email?')
+                    ->modalDescription(fn (WorkshopRegistration $record): string => "Send the workshop confirmation again to {$record->email}?")
+                    ->visible(fn (WorkshopRegistration $record): bool => filled($record->email))
+                    ->action(function (WorkshopRegistration $record): void {
+                        try {
+                            Mail::to($record->email)->send(new WorkshopRegistrationConfirmation(
+                                $record,
+                                static::confirmationWorkshops($record),
+                            ));
+
+                            Notification::make()
+                                ->title('Confirmation email sent')
+                                ->body("The confirmation was sent to {$record->email}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Log::error('Workshop confirmation email resend failed.', [
+                                'registration_id' => $record->getKey(),
+                                'mailer' => (string) config('mail.default'),
+                                'mail_host' => (string) config('mail.mailers.' . config('mail.default') . '.host', ''),
+                                'mail_port' => config('mail.mailers.' . config('mail.default') . '.port'),
+                                'exception' => $e,
+                            ]);
+
+                            Notification::make()
+                                ->title('Confirmation email could not be sent')
+                                ->body('Check the mail configuration and try again.')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 Action::make('downloadExcel')
@@ -155,6 +196,28 @@ class WorkshopRegistrationsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    protected static function confirmationWorkshops(WorkshopRegistration $record): array
+    {
+        $codes = is_array($record->workshops)
+            ? array_values(array_map('strval', $record->workshops))
+            : [];
+        $workshops = Workshop::query()
+            ->whereIn('code', $codes)
+            ->get()
+            ->keyBy('code');
+
+        return array_map(static function (string $code) use ($workshops): array {
+            $workshop = $workshops->get($code);
+
+            return [
+                'code' => $code,
+                'label' => $workshop?->name ?? $code,
+                'session' => $workshop?->session,
+                'venue' => $workshop?->venue,
+            ];
+        }, $codes);
     }
 
     protected static function download(iterable $records): StreamedResponse

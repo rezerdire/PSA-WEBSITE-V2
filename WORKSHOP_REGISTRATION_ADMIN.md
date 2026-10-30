@@ -10,3 +10,4 @@
 - Public workshop registration requires an active Annual Convention registration (`Pending` or `Approved`). PSA members are matched by PSA ID; non-members are matched by the PRC number from their annual guest registration.
 - PSA member identity and member type are read from the `members` table, and existing workshop registrations block duplicate PSA ID or PRC submissions.
 - After deploying database imports, run `php artisan migrate --force`; the registration repair migration restores missing Filament record IDs and supports non-member PSA IDs.
+- The Workshop Registrations table includes **Resend confirmation** for records with an email address. It sends the same selected-workshop confirmation again and reports SMTP failures in the Filament notification and application log.
