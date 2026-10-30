@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WorkshopRegistrations\Schemas;
 
+use App\Models\Workshop;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -88,24 +89,20 @@ class WorkshopRegistrationForm
                     ]),
 
                 Section::make('Workshop selection')
-                    ->description('Choose the workshop assigned to this registration. Public registration allows one workshop per registrant.')
+                    ->description('Choose one or more workshops for this registrant. Public registration and admin edits use the same workshop catalog.')
                     ->icon('heroicon-o-academic-cap')
                     ->compact()
                     ->schema([
                         Select::make('workshops')
-                            ->label('Workshop')
-                            ->options([
-                                'RA' => 'Regional Anesthesia (RA)',
-                                'AIRWAY' => 'Airway',
-                                'POCUS' => 'POCUS',
-                            ])
+                            ->label('Workshops')
+                            ->options(fn (): array => Workshop::optionMap())
                             ->searchable()
                             ->native(false)
                             ->multiple()
-                            ->maxItems(1)
+                            ->minItems(1)
                             ->required()
-                            ->rules(['array', 'size:1'])
-                            ->helperText('Select one workshop per registrant. Badges use red for RA, green for Airway, and blue for POCUS.')
+                            ->rules(['array', 'min:1'])
+                            ->helperText('Select every workshop this registrant will attend. Workshops are managed from the Workshops menu.')
                             ->columnSpanFull(),
                     ]),
             ]);

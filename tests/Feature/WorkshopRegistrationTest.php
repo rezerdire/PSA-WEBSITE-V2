@@ -1,9 +1,84 @@
 <?php
 
 use App\Models\Member;
+use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
+
+beforeEach(function (): void {
+    foreach (['workshop_registrations', 'members', 'workshops'] as $table) {
+        Schema::dropIfExists($table);
+    }
+
+    Schema::create('members', function (Blueprint $table): void {
+        $table->string('member_id_no')->primary();
+        $table->string('psa_chapter_code');
+        $table->string('psa_mem_type');
+        $table->string('mem_last_name');
+        $table->string('mem_first_name');
+        $table->string('mem_middle_name')->nullable();
+        $table->string('mem_email_address')->nullable();
+        $table->string('mem_prc_no')->nullable();
+        $table->timestamps();
+    });
+
+    Schema::create('workshops', function (Blueprint $table): void {
+        $table->id();
+        $table->string('code', 50)->unique();
+        $table->string('name');
+        $table->string('session')->nullable();
+        $table->string('venue')->nullable();
+        $table->unsignedInteger('capacity')->default(60);
+        $table->unsignedInteger('sort_order')->default(0);
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+
+    Workshop::create([
+        'code' => 'RA',
+        'name' => 'Regional Anesthesia Workshop (RA)',
+        'session' => '9:00 AM – 12:00 Noon (Workshop Session)',
+        'venue' => 'Executive 5',
+        'capacity' => 60,
+        'sort_order' => 10,
+    ]);
+
+    Workshop::create([
+        'code' => 'POCUS',
+        'name' => 'POCUS',
+        'session' => '8:30 AM – 12:00 Noon',
+        'venue' => 'Executive 5',
+        'capacity' => 60,
+        'sort_order' => 20,
+    ]);
+
+    Workshop::create([
+        'code' => 'AIRWAY',
+        'name' => 'Airway',
+        'session' => '1:30 – 4:30 PM',
+        'venue' => 'Executive 5',
+        'capacity' => 60,
+        'sort_order' => 30,
+    ]);
+
+    Schema::create('workshop_registrations', function (Blueprint $table): void {
+        $table->id();
+        $table->string('psa_id')->nullable()->unique();
+        $table->string('mem_last_name');
+        $table->string('mem_first_name');
+        $table->string('mem_middle_name');
+        $table->string('mem_type')->nullable();
+        $table->string('prc_number')->unique();
+        $table->string('hospital');
+        $table->string('email');
+        $table->string('phone', 20);
+        $table->json('workshops');
+        $table->timestamps();
+    });
+});
 
 function makeWorkshopMember(array $attributes = []): Member
 {
@@ -28,7 +103,7 @@ function validWorkshopRegistrationData(array $overrides = []): array
         'hospital' => 'Test Hospital',
         'email' => 'visitor@example.test',
         'phone' => '09171234567',
-        'workshop' => 'RA',
+        'workshops' => ['RA'],
     ], $overrides);
 }
 
@@ -96,7 +171,7 @@ it('requires the registration fields', function () {
             'hospital',
             'email',
             'phone',
-            'workshop',
+            'workshops',
         ]);
 });
 
@@ -113,19 +188,36 @@ it('rejects invalid contact details through Livewire validation', function () {
 
 it('persists a valid non-member registration with a workshop PSA ID', function () {
     $data = validWorkshopRegistrationData(['prcNumber' => '900001']);
-
     Livewire::test('workshop.workshop-registration')
         ->set($data)
         ->call('submit')
         ->assertSet('submitted', true)
         ->assertSet('psaId', 'NMW_0001')
-        ->assertSee("You're successfully registered")
+        ->assertSee("You're successfully registered", escape: false)
         ->assertDontSee('NMW_0001');
 
     $registration = WorkshopRegistration::where('prc_number', '900001')->firstOrFail();
 
     expect($registration->psa_id)->toBe('NMW_0001')
-        ->and($registration->mem_type)->toBe('Non-member');
+        ->and($registration->mem_type)->toBe('Non-member')
+        ->and($registration->workshops)->toBe(['RA']);
+});
+
+it('persists multiple workshops for one registrant', function () {
+    Livewire::test('workshop.workshop-registration')
+        ->set(validWorkshopRegistrationData([
+            'prcNumber' => '900007',
+            'workshops' => ['RA', 'POCUS'],
+        ]))
+        ->call('submit')
+        ->assertSet('submitted', true)
+        ->assertSet('workshops', ['RA', 'POCUS']);
+
+    $registration = WorkshopRegistration::where('prc_number', '900007')->firstOrFail();
+
+    expect($registration->workshops)->toBe(['RA', 'POCUS'])
+        ->and(WorkshopRegistration::whereJsonContains('workshops', 'RA')->count())->toBe(1)
+        ->and(WorkshopRegistration::whereJsonContains('workshops', 'POCUS')->count())->toBe(1);
 });
 
 it('continues the four-digit non-member PSA ID sequence', function () {
@@ -137,7 +229,7 @@ it('continues the four-digit non-member PSA ID sequence', function () {
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
             'prcNumber' => '900003',
-            'workshop' => 'POCUS',
+            'workshops' => ['POCUS'],
         ]))
         ->call('submit')
         ->assertSet('submitted', true)
@@ -146,19 +238,22 @@ it('continues the four-digit non-member PSA ID sequence', function () {
 
 it('rejects an already registered PSA ID inside the registration lock', function () {
     $member = makeWorkshopMember(['member_id_no' => '0002']);
+
+    $component = Livewire::test('workshop.workshop-registration')
+        ->dispatch('psa-id-selected', psaId: $member->getKey())
+        ->set(validWorkshopRegistrationData([
+            'lastName' => 'Tester',
+            'firstName' => 'Member',
+            'workshops' => ['RA'],
+        ]));
+
     WorkshopRegistration::create(workshopRegistrationRecordData([
         'psa_id' => $member->getKey(),
         'mem_type' => 'Regular Member',
         'prc_number' => '900004',
     ]));
 
-    Livewire::test('workshop.workshop-registration')
-        ->dispatch('psa-id-selected', psaId: $member->getKey())
-        ->set(validWorkshopRegistrationData([
-            'lastName' => 'Tester',
-            'firstName' => 'Member',
-            'prcNumber' => '900005',
-        ]))
+    $component
         ->call('submit')
         ->assertHasErrors(['psaId' => 'This PSA ID is already registered.'])
         ->assertSet('submitted', false);
@@ -183,8 +278,8 @@ it('rejects a workshop after its capacity is reached', function () {
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData(['prcNumber' => '920001']))
         ->call('submit')
-        ->assertHasErrors(['workshop' => 'Sorry, this workshop is already full. Please choose another one.'])
-        ->assertSet('workshop', '')
+        ->assertHasErrors(['workshops' => 'Sorry, Regional Anesthesia Workshop (RA) is already full. Please choose another workshop.'])
+        ->assertSet('workshops', [])
         ->assertSet('submitted', false);
 });
 
@@ -197,8 +292,7 @@ it('keeps the 60-slot limit separate for each workshop', function () {
 
     Livewire::test('workshop.workshop-registration')
         ->set(validWorkshopRegistrationData([
-            'prcNumber' => '940001',
-            'workshop' => 'POCUS',
+            'workshops' => ['POCUS'],
         ]))
         ->call('submit')
         ->assertSet('submitted', true)
