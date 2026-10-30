@@ -22,13 +22,13 @@
                 'icon' => 'document-text',
                 'href' => route('Event-Registration'),
             ],
-            // [
-            //     'key' => 'workshops',
-            //     'title' => 'Workshops Registration',
-            //     'description' => 'Register for the convention workshops',
-            //     'icon' => 'clipboard-document-check',
-            //     'href' => route('workshop'),
-            // ],
+            [
+                'key' => 'workshops',
+                'title' => 'Workshops Registration',
+                'description' => 'Register for the convention workshops',
+                'icon' => 'clipboard-document-check',
+                'href' => route('workshop'),
+            ],
             [
                 'key' => 'scientific',
                 'title' => 'Scientific Program',
