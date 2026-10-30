@@ -8,21 +8,25 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('members', function (Blueprint $table) {
-            // Drop columns you no longer want here
-            $table->dropColumn([
-                'mem_birth_date',
-                'mem_pma_id_no',
-                'mem_fellow_no',
-                'mem_phic_no',
-                'mem_pic', // moving to its own table
-            ]);
+        $columnsToDrop = array_values(array_filter([
+            'mem_birth_date',
+            'mem_pma_id_no',
+            'mem_fellow_no',
+            'mem_phic_no',
+            'mem_pic',
+        ], static fn (string $column): bool => Schema::hasColumn('members', $column)));
 
-            // Add mem_stat if it isn't already in the live table
-            if (!Schema::hasColumn('members', 'mem_stat')) {
+        if ($columnsToDrop !== []) {
+            Schema::table('members', function (Blueprint $table) use ($columnsToDrop): void {
+                $table->dropColumn($columnsToDrop);
+            });
+        }
+
+        if (!Schema::hasColumn('members', 'mem_stat')) {
+            Schema::table('members', function (Blueprint $table): void {
                 $table->string('mem_stat')->nullable()->after('psa_mem_type');
-            }
-        });
+            });
+        }
     }
 
     public function down(): void

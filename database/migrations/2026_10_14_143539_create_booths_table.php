@@ -11,13 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('booths', function (Blueprint $table) {
-                $table->id('booth_id');
-                $table->string('booth_type');
-                $table->string('booth_name');
-                $table->string('location')->nullable();
-                $table->string('booth_code')->unique();
-                $table->string('booth_qr')->nullable()->unique();
+        if (Schema::hasTable('booths')) {
+            return;
+        }
+
+        Schema::create('booths', function (Blueprint $table): void {
+            $table->id('booth_id');
+            $table->string('booth_type')->nullable();
+            $table->string('booth_name');
+            $table->string('location')->nullable();
+            $table->string('booth_code');
+            $table->string('booth_generated_code')->unique();
+            $table->string('booth_qr')->nullable()->unique();
             $table->timestamps();
         });
     }

@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Filament\Resources\WorkshopRegistrations\Tables;
+
+use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 
 use Filament\Actions\Action;
@@ -23,6 +25,8 @@ class WorkshopRegistrationsTable
 {
     public static function configure(Table $table): Table
     {
+        $workshopLabels = Workshop::optionMap();
+
         return $table
             ->defaultSort('created_at', 'desc')
             // Every row opens the hidden view action; only Edit remains visible.
@@ -82,18 +86,14 @@ class WorkshopRegistrationsTable
                 TextColumn::make('workshops')
                     ->label('Workshops')
                     ->badge()
-                    ->formatStateUsing(fn ($state): string => match ((string) $state) {
-                        'RA' => 'RA',
-                        'AIRWAY' => 'AIRWAY',
-                        'POCUS' => 'POCUS',
-                        default => (string) $state,
-                    })
+                    ->formatStateUsing(fn ($state): string => $workshopLabels[(string) $state] ?? (string) $state)
                     ->color(fn ($state): string => match ((string) $state) {
                         'RA' => 'danger',
                         'AIRWAY' => 'success',
                         'POCUS' => 'info',
                         default => 'gray',
-                    }),
+                    })
+                    ->placeholder('—'),
 
                 TextColumn::make('created_at')
                     ->label('Registered')
@@ -115,11 +115,7 @@ class WorkshopRegistrationsTable
                 SelectFilter::make('workshop')
                     ->label('Workshop')
                     ->multiple()
-                    ->options([
-                        'RA' => 'Regional Anesthesia (RA)',
-                        'AIRWAY' => 'Airway',
-                        'POCUS' => 'POCUS',
-                    ])
+                    ->options($workshopLabels)
                     ->native(false)
                     ->query(function (Builder $query, array $data): Builder {
                         $values = array_values(array_filter($data['values'] ?? []));
@@ -200,23 +196,20 @@ class WorkshopRegistrationsTable
                                     ->columnSpanFull(),
                             ]),
 
-                        Section::make('Workshop selection')
+                        Section::make('Registered workshops')
                             ->schema([
                                 TextEntry::make('workshops')
                                     ->label('Workshops')
                                     ->badge()
-                                    ->formatStateUsing(fn ($state): string => match ((string) $state) {
-                                        'RA' => 'RA',
-                                        'AIRWAY' => 'AIRWAY',
-                                        'POCUS' => 'POCUS',
-                                        default => (string) $state,
-                                    })
+                                    ->listWithLineBreaks()
+                                    ->formatStateUsing(fn ($state): string => $workshopLabels[(string) $state] ?? (string) $state)
                                     ->color(fn ($state): string => match ((string) $state) {
                                         'RA' => 'danger',
                                         'AIRWAY' => 'success',
                                         'POCUS' => 'info',
                                         default => 'gray',
-                                    }),
+                                    })
+                                    ->placeholder('—'),
                             ]),
                     ])
                     ->action(fn () => null),
@@ -251,6 +244,8 @@ class WorkshopRegistrationsTable
             $writer = new Writer();
             $writer->openToFile('php://output');
 
+            $workshopLabels = Workshop::optionMap();
+
             $writer->addRow(Row::fromValues([
                 'PSA ID',
                 'Full Name',
@@ -259,7 +254,7 @@ class WorkshopRegistrationsTable
                 'Hospital',
                 'Email',
                 'Phone',
-                'Workshop',
+                'Workshops',
                 'Registered At',
             ]));
 
@@ -274,8 +269,11 @@ class WorkshopRegistrationsTable
                     $record->email,
                     $record->phone,
                     is_array($record->workshops)
-                        ? implode(', ', $record->workshops)
-                        : $record->workshops,
+                        ? implode(', ', array_map(
+                            fn (string $code): string => $workshopLabels[$code] ?? $code,
+                            $record->workshops,
+                        ))
+                        : (string) $record->workshops,
                     $record->created_at?->format('Y-m-d H:i:s'),
                 ]));
             }
