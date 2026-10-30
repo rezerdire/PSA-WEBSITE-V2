@@ -184,6 +184,8 @@
                                 @php
                                     $primaryUrl = $slide->primary_href;
                                     $secondaryUrl = $slide->secondary_href;
+                                    $primaryIsPdf = filled($primaryUrl) && str_ends_with(strtolower((string) parse_url($primaryUrl, PHP_URL_PATH)), '.pdf');
+                                    $secondaryIsPdf = filled($secondaryUrl) && str_ends_with(strtolower((string) parse_url($secondaryUrl, PHP_URL_PATH)), '.pdf');
                                 @endphp
 
                                 @if ((filled($slide->primary_label) && filled($primaryUrl)) || (filled($slide->secondary_label) && filled($secondaryUrl)))
@@ -191,23 +193,42 @@
                                         @if (filled($slide->primary_label) && filled($primaryUrl))
                                             <a
                                                 href="{{ $primaryUrl }}"
-                                                @if (str_starts_with($primaryUrl, 'http')) target="_blank" rel="noopener noreferrer" @endif
-                                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
+                                                class="{{ $primaryIsPdf ? 'inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 hover:text-red-700' : 'inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 hover:bg-blue-700' }}"
                                             >
+                                                @if ($primaryIsPdf)
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5" aria-hidden="true">
+                                                        <path d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
+                                                    </svg>
+                                                @endif
                                                 {{ $slide->primary_label }}
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
-                                                </svg>
+                                                @if ($primaryIsPdf)
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                                                    </svg>
+                                                @else
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+                                                    </svg>
+                                                @endif
                                             </a>
                                         @endif
 
                                         @if (filled($slide->secondary_label) && filled($secondaryUrl))
                                             <a
                                                 href="{{ $secondaryUrl }}"
-                                                @if (str_starts_with($secondaryUrl, 'http')) target="_blank" rel="noopener noreferrer" @endif
-                                                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600"
+                                                class="{{ $secondaryIsPdf ? 'inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-all hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 hover:text-red-700' : 'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-blue-300 hover:text-blue-600' }}"
                                             >
+                                                @if ($secondaryIsPdf)
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5" aria-hidden="true">
+                                                        <path d="M5.25 2.25A2.25 2.25 0 0 0 3 4.5v15A2.25 2.25 0 0 0 5.25 21.75h13.5A2.25 2.25 0 0 0 21 19.5v-15a2.25 2.25 0 0 0-2.25-2.25H5.25ZM7.5 8.25h2.25a2.25 2.25 0 0 1 0 4.5H9v2.25H7.5v-6.75Zm1.5 1.5v1.5h.75a.75.75 0 0 0 0-1.5H9Zm4.125-1.5h1.5a2.625 2.625 0 0 1 0 5.25h-.75V15h-1.5V8.25h.75Zm.75 1.5v2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
+                                                    </svg>
+                                                @endif
                                                 {{ $slide->secondary_label }}
+                                                @if ($secondaryIsPdf)
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                                                    </svg>
+                                                @endif
                                             </a>
                                         @endif
                                     </div>
