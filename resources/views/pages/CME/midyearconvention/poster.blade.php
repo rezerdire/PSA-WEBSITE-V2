@@ -18,9 +18,18 @@
     ]" />
 </div>
     <x-about-us-content :panels="[
-        ['key' => 'poster',   'image' => '/midyearconvention/PSA_MIDYEAR_2026_POSTER.jpg',  'alt' => 'POSTER'],
-        ['key' => 'rates',   'image' => '/midyearconvention/PSA MIDYEAR 2026 RATES.png',  'alt' => 'RATES'],
-
+        [
+            'key' => 'poster',
+            'image' => '/midyearconvention/PSA_MIDYEAR_2026_POSTER.jpg',
+            'alt' => 'Midyear Convention 2026 poster',
+            'zoomable' => true,
+        ],
+        [
+            'key' => 'rates',
+            'image' => '/midyearconvention/PSA MIDYEAR 2026 RATES.png',
+            'alt' => 'Midyear Convention 2026 registration rates',
+            'zoomable' => true,
+        ],
     ]" />
 </div>
 @endsection

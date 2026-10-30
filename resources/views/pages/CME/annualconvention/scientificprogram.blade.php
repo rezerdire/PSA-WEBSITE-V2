@@ -23,11 +23,13 @@
                 'key' => 'scientific-program',
                 'image' => '/annual-convention/ScientificProgram1.png',
                 'alt' => 'Annual Convention 2026 scientific program poster with workshops, forums, and convention information',
+                'zoomable' => true,
             ],
             [
                 'key' => 'scientific-program',
                 'image' => '/annual-convention/ScientificProgram2.png',
                 'alt' => 'Annual Convention 2026 scientific program schedule for Days 1 through 3',
+                'zoomable' => true,
             ],
         ]" />
     </div>
