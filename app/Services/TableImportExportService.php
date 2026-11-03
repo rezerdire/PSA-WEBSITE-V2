@@ -45,6 +45,21 @@ class TableImportExportService
     }
 
     /**
+     * Normalize a CSV header row, including the UTF-8 BOM emitted by some
+     * spreadsheet exports.
+     */
+    protected function readCsvHeaders($handle): array
+    {
+        $headers = fgetcsv($handle, null, ',', '"', '') ?: [];
+
+        return array_map(function ($header): string {
+            $header = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header);
+
+            return trim($header);
+        }, $headers);
+    }
+
+    /**
      * Read just the header row of a CSV (or the column list of a CREATE TABLE
      * statement if a .sql file is given) without loading the whole file.
      */
@@ -60,10 +75,10 @@ class TableImportExportService
         }
 
         $handle = fopen($path, 'r');
-        $headers = fgetcsv($handle) ?: [];
+        $headers = $this->readCsvHeaders($handle);
         fclose($handle);
 
-        return array_map('trim', $headers);
+        return $headers;
     }
 
     /**
@@ -71,12 +86,17 @@ class TableImportExportService
      *
      * Rule: if the table exists, its header/columns must match the file's
      * header/columns. Existing rows (matched on primary key / unique columns)
-     * are skipped; only new rows are inserted. If the table doesn't exist and
-     * $createIfMissing is true, it's created from the CSV header or the SQL
-     * file's CREATE TABLE statement.
+     * are skipped by default. Set $overwriteExisting to true to update those
+     * rows instead. If the table doesn't exist and $createIfMissing is true,
+     * it's created from the CSV header or the SQL file's CREATE TABLE
+     * statement.
      */
-    public function importTable(string $path, string $table, bool $createIfMissing = false): array
-    {
+    public function importTable(
+        string $path,
+        string $table,
+        bool $createIfMissing = false,
+        bool $overwriteExisting = false
+    ): array {
         $isSql = Str::endsWith($path, '.sql');
         $exists = $this->schema()->hasTable($table);
 
@@ -86,19 +106,19 @@ class TableImportExportService
 
         if ($isSql) {
             return $exists
-                ? $this->importSqlIntoExistingTable($path, $table)
+                ? $this->importSqlIntoExistingTable($path, $table, $overwriteExisting)
                 : $this->importSqlCreatingTable($path, $table);
         }
 
         return $exists
-            ? $this->importCsvIntoExistingTable($path, $table)
+            ? $this->importCsvIntoExistingTable($path, $table, $overwriteExisting)
             : $this->importCsvCreatingTable($path, $table);
     }
 
     protected function importCsvCreatingTable(string $path, string $table): array
     {
         $handle = fopen($path, 'r');
-        $headers = array_map('trim', fgetcsv($handle));
+        $headers = $this->readCsvHeaders($handle);
 
         $this->schema()->create($table, function ($t) use ($headers) {
             $t->id();
@@ -118,9 +138,9 @@ class TableImportExportService
         $skipped = 0;
         $headerCount = count($headers);
 
-        while ($row = fgetcsv($handle)) {
+        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
             // Skip blank/trailing lines (fgetcsv returns [null] for a blank line).
-            if ($row === [null] || $row === false) {
+            if ($row === [null]) {
                 continue;
             }
 
@@ -140,13 +160,16 @@ class TableImportExportService
         }
         fclose($handle);
 
-        return ['inserted' => $inserted, 'skipped' => $skipped];
+        return ['inserted' => $inserted, 'updated' => 0, 'skipped' => $skipped];
     }
 
-    protected function importCsvIntoExistingTable(string $path, string $table): array
-    {
+    protected function importCsvIntoExistingTable(
+        string $path,
+        string $table,
+        bool $overwriteExisting = false
+    ): array {
         $handle = fopen($path, 'r');
-        $headers = array_map('trim', fgetcsv($handle));
+        $headers = $this->readCsvHeaders($handle);
 
         $existingColumns = $this->schema()->getColumnListing($table);
         $missing = array_diff($headers, $existingColumns);
@@ -161,12 +184,13 @@ class TableImportExportService
         $uniqueKey = $this->guessUniqueKey($table, $headers);
 
         $inserted = 0;
+        $updated = 0;
         $skipped = 0;
         $headerCount = count($headers);
 
-        while ($row = fgetcsv($handle)) {
+        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
             // Skip blank/trailing lines (fgetcsv returns [null] for a blank line).
-            if ($row === [null] || $row === false) {
+            if ($row === [null]) {
                 continue;
             }
 
@@ -179,9 +203,18 @@ class TableImportExportService
             $data = array_combine($headers, $row);
 
             if ($uniqueKey && isset($data[$uniqueKey])) {
-                $existsRow = $this->db()->table($table)->where($uniqueKey, $data[$uniqueKey])->exists();
-                if ($existsRow) {
-                    $skipped++;
+                $query = $this->db()->table($table)->where($uniqueKey, $data[$uniqueKey]);
+
+                if ($query->exists()) {
+                    if ($overwriteExisting) {
+                        $updateData = $data;
+                        unset($updateData[$uniqueKey]);
+                        $query->update($updateData);
+                        $updated++;
+                    } else {
+                        $skipped++;
+                    }
+
                     continue;
                 }
             }
@@ -194,7 +227,7 @@ class TableImportExportService
         }
         fclose($handle);
 
-        return ['inserted' => $inserted, 'skipped' => $skipped];
+        return ['inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped];
     }
 
     protected function importSqlCreatingTable(string $path, string $table): array
@@ -215,11 +248,15 @@ class TableImportExportService
             }
         }
 
-        return ['inserted' => $inserted, 'skipped' => 0];
+        return ['inserted' => $inserted, 'updated' => 0, 'skipped' => 0];
     }
 
-    protected function importSqlIntoExistingTable(string $path, string $table): array
-    {
+
+    protected function importSqlIntoExistingTable(
+        string $path,
+        string $table,
+        bool $overwriteExisting = false
+    ): array {
         $sql = file_get_contents($path);
 
         // Pull column list out of the dump's INSERT statements to verify
@@ -245,6 +282,7 @@ class TableImportExportService
 
         $uniqueKey = null;
         $inserted = 0;
+        $updated = 0;
         $skipped = 0;
 
         foreach ($matches as $match) {
@@ -254,7 +292,7 @@ class TableImportExportService
             $valueTuples = $this->splitValueTuples($match[2]);
 
             foreach ($valueTuples as $tupleRaw) {
-                $values = str_getcsv($tupleRaw, ',', "'");
+                $values = str_getcsv($tupleRaw, ',', "'", '');
 
                 if (count($values) !== count($columns)) {
                     // Mismatched column/value count — skip this row rather than crash.
@@ -267,8 +305,18 @@ class TableImportExportService
                 $uniqueKey ??= $this->guessUniqueKey($table, $columns);
 
                 if ($uniqueKey && isset($data[$uniqueKey])) {
-                    if ($this->db()->table($table)->where($uniqueKey, $data[$uniqueKey])->exists()) {
-                        $skipped++;
+                    $query = $this->db()->table($table)->where($uniqueKey, $data[$uniqueKey]);
+
+                    if ($query->exists()) {
+                        if ($overwriteExisting) {
+                            $updateData = $data;
+                            unset($updateData[$uniqueKey]);
+                            $query->update($updateData);
+                            $updated++;
+                        } else {
+                            $skipped++;
+                        }
+
                         continue;
                     }
                 }
@@ -281,8 +329,9 @@ class TableImportExportService
             }
         }
 
-        return ['inserted' => $inserted, 'skipped' => $skipped];
+        return ['inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped];
     }
+
 
     /**
      * Split a VALUES clause body into individual row tuples, respecting
@@ -328,25 +377,18 @@ class TableImportExportService
     }
 
     /**
-     * Look up the table's actual primary key column name from information_schema,
-     * so dedupe works even when the PK isn't called "id" (e.g. member_id_no).
+     * Look up the table's primary key column through Laravel's schema
+     * metadata API so this works with MySQL and SQLite alike.
      */
     protected function getPrimaryKeyColumn(string $table): ?string
     {
-        $connectionName = $this->connection ?? config('database.default');
-        $databaseName = config("database.connections.{$connectionName}.database");
+        foreach ($this->schema()->getIndexes($table) as $index) {
+            if (($index['primary'] ?? false) && ! empty($index['columns'])) {
+                return $index['columns'][0];
+            }
+        }
 
-        $row = $this->db()->selectOne(
-            "SELECT COLUMN_NAME
-             FROM information_schema.KEY_COLUMN_USAGE
-             WHERE TABLE_SCHEMA = ?
-               AND TABLE_NAME = ?
-               AND CONSTRAINT_NAME = 'PRIMARY'
-             LIMIT 1",
-            [$databaseName, $table]
-        );
-
-        return $row->COLUMN_NAME ?? null;
+        return null;
     }
 
     /**
@@ -378,7 +420,7 @@ class TableImportExportService
                 $valueTuples = $this->splitValueTuples($m[3]);
 
                 foreach ($valueTuples as $tupleRaw) {
-                    $values = str_getcsv($tupleRaw, ',', "'");
+                    $values = str_getcsv($tupleRaw, ',', "'", '');
 
                     if (count($values) !== count($columns)) {
                         $skipped++;
