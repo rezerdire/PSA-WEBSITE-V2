@@ -8,30 +8,41 @@ new class extends Component
     public ?string $mobileVideoUrl = null;
     public ?string $poster = null;
     public string $title = 'Sim Wars';
+    public string $eyebrow = 'Highlights';
+    public ?string $description = null;
+    public ?string $sectionId = null;
     public bool $forcePortrait = false; // true = always portrait, even on desktop
+    public bool $forceLandscape = false; // true = use a landscape frame at every breakpoint
 };
 ?>
 
-<section class="py-24 bg-slate-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+ 
+ 
 
-        <div class="text-center mb-16">
-            <div class="flex items-center justify-center gap-3 mb-3">
-                <span class="w-10 h-1 bg-blue-600 rounded-full"></span>
+<section @if($sectionId) id="{{ $sectionId }}" @endif class="scroll-mt-24 bg-slate-50 py-20 sm:py-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-16 text-center">
+            <div class="mb-3 flex items-center justify-center gap-3">
+                <span class="h-1 w-10 rounded-full bg-blue-600"></span>
                 <p class="text-xs font-bold uppercase tracking-widest text-blue-600">
-                    Highlights
+                    {{ $eyebrow }}
                 </p>
             </div>
-            <h2 class="font-serif text-4xl lg:text-5xl text-slate-900">
+            <h2 class="font-serif text-4xl text-slate-900 lg:text-5xl">
                 {{ $title }}
             </h2>
+            @if($description)
+                <p class="mx-auto mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+                    {{ $description }}
+                </p>
+            @endif
         </div>
-        
-<div class="{{ $forcePortrait ? 'max-w-sm' : 'max-w-md sm:max-w-2xl lg:max-w-7xl' }} mx-auto">
-            <div class="border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300">
-                <div class="relative rounded-2xl overflow-hidden bg-black {{ $forcePortrait ? 'aspect-[9/16]' : 'aspect-[9/16] sm:aspect-video' }}">
+
+        <div class="{{ $forcePortrait ? 'max-w-sm' : 'max-w-md sm:max-w-2xl lg:max-w-7xl' }} mx-auto">
+            <div class="border border-slate-100 transition-all duration-300 hover:shadow-lg">
+                <div class="relative overflow-hidden rounded-2xl bg-black {{ $forcePortrait ? 'aspect-[9/16]' : ($forceLandscape ? 'aspect-video' : 'aspect-[9/16] sm:aspect-video') }}">
                     <video
-                        class="w-full h-full object-contain"
+                        class="h-full w-full object-contain"
                         controls
                         preload="metadata"
                         @if($poster) poster="{{ asset($poster) }}" @endif
@@ -42,6 +53,5 @@ new class extends Component
                 </div>
             </div>
         </div>
-
     </div>
 </section>
