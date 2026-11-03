@@ -13,10 +13,19 @@ new class extends Component
 
 @section('content')
     <x-hero-section />
-   <livewire:video-section videoUrl="video/Elimination Round Winners.mp4" title="TNT ELIMINATION ROUND WINNERS" :forcePortrait="true"/>
 
+    
+    <livewire:video-section
+        sectionId="gala-night"
+        videoUrl="video/gala_night.mp4"
+        title="PSA-STC TANGLAW Postgraduate Course and Gala Night 2026"
+        eyebrow="Highlights"
+        :forceLandscape="true"
+    />
+    <livewire:video-section videoUrl="video/Elimination Round Winners.mp4" title="TNT ELIMINATION ROUND WINNERS" :forcePortrait="true"/>
 
-   <livewire:video-section videoUrl="video/simwarsvideo.mp4" title="Sim Wars" />
+    <livewire:video-section videoUrl="video/simwarsvideo.mp4" title="Sim Wars" />
+
     <x-mission-vision-section />
     <x-convention-highlight />
     <x-recent-events />
