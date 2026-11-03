@@ -124,6 +124,11 @@ class ImportExport extends Page implements HasForms
         $this->newTableName = null;
     }
 
+    protected function shouldOverwriteExisting(string $table): bool
+    {
+        return strtolower($table) === 'members';
+    }
+
     protected function processTableImport(
         TableImportExportService $service,
         string $path,
@@ -131,11 +136,21 @@ class ImportExport extends Page implements HasForms
         bool $createIfMissing = false
     ): void {
         try {
-            $result = $service->importTable($path, $table, $createIfMissing);
+            $result = $service->importTable(
+                $path,
+                $table,
+                $createIfMissing,
+                $this->shouldOverwriteExisting($table)
+            );
 
             Notification::make()
                 ->title("Import into `{$table}` complete")
-                ->body("{$result['inserted']} new rows inserted, {$result['skipped']} existing rows skipped.")
+                ->body(sprintf(
+                    '%d new rows inserted, %d existing rows updated, %d rows skipped.',
+                    $result['inserted'],
+                    $result['updated'] ?? 0,
+                    $result['skipped'],
+                ))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
