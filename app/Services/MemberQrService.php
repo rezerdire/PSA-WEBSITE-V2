@@ -150,10 +150,6 @@ class MemberQrService
         $nameParts = array_filter([$firstName, $middleInitial, $lastName]);
         $fullName = implode(' ', $nameParts);
 
-        if (!preg_match('/,\s*M\.?D\.?$/i', $fullName)) {
-            $fullName .= ', MD';
-        }
-
         $this->drawFittedMultiline(
             canvas: $canvas,
             text: $fullName,
