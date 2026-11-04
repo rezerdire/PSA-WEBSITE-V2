@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
-    foreach (['registrations', 'workshop_registrations', 'workshops', 'members', 'users'] as $table) {
+    foreach (['registration_qr_sends', 'registrations', 'workshop_registrations', 'workshops', 'members', 'users'] as $table) {
         Schema::dropIfExists($table);
     }
 
@@ -49,6 +49,13 @@ beforeEach(function (): void {
         $table->string('rejection_title')->nullable();
         $table->text('rejection_reason')->nullable();
         $table->string('country')->nullable();
+        $table->timestamps();
+    });
+
+    Schema::create('registration_qr_sends', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('registration_id');
+        $table->timestamp('sent_at');
         $table->timestamps();
     });
 
@@ -129,6 +136,34 @@ test('the Filament annual registration list renders records with a valid key', f
         ->get('/admin/registrations')
         ->assertOk()
         ->assertSee('PSA ID');
+});
+
+test('Filament records QR delivery and changes the action to resend', function (): void {
+    $user = User::create([
+        'name' => 'Admin',
+        'email' => 'admin@example.test',
+        'password' => Hash::make('password'),
+    ]);
+    config(['app.env' => 'local']);
+    Mail::fake();
+
+    $registration = Registration::query()->first();
+    $registration->update(['status' => Registration::STATUS_APPROVED]);
+
+    $component = Livewire::actingAs($user)
+        ->test(App\Filament\Resources\Registrations\Pages\ListRegistrations::class);
+
+    $component->assertSee('Send QR');
+    $component->callTableAction('approve', $registration->getKey());
+    $component->assertSee('Resend QR');
+
+    $registration->refresh();
+
+    $latestQrSend = $registration->latestQrSend()->first();
+
+    expect($latestQrSend)->not->toBeNull();
+    expect($latestQrSend->sent_at)->not->toBeNull();
+    Mail::assertSent(App\Mail\Registrationqrcode::class);
 });
 
 test('the Filament workshop list exposes the resend confirmation action', function () {

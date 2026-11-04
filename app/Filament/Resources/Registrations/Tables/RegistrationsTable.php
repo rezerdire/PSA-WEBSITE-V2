@@ -37,7 +37,7 @@ class RegistrationsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('latestQrSend'))
             ->recordAction('view_record')
             ->recordUrl(null)
             ->columns([
@@ -165,10 +165,17 @@ class RegistrationsTable
                     ->label('Submitted')
                     ->width('160px')
                     ->dateTime('M d, Y g:i A')
-                                                        ->timezone('Asia/Manila')
-
+                    ->timezone('Asia/Manila')
                     ->sortable()
                     ->toggleable(),
+
+                TextColumn::make('latestQrSend.sent_at')
+                    ->label('QR Sent')
+                    ->width('160px')
+                    ->dateTime('M d, Y g:i A')
+                    ->timezone('Asia/Manila')
+                    ->placeholder('Not sent')
+                    ->sortable(),
 
             ])
             ->filters([
@@ -455,15 +462,15 @@ class RegistrationsTable
                     }),
 
                 Action::make('approve')
-                    ->label('Send QR')
+                    ->label(fn (Registration $r) => $r->latestQrSend ? 'Resend QR' : 'Send QR')
                     ->modalWidth('7xl')
                     ->icon('heroicon-o-qr-code')
                     ->color('primary')
                     ->visible(fn (Registration $r) => $r->status === Registration::STATUS_APPROVED)
                     ->requiresConfirmation()
-                    ->modalHeading('Send QR Code')
+                    ->modalHeading(fn (Registration $r) => $r->latestQrSend ? 'Resend QR Code' : 'Send QR Code')
                     ->modalDescription('This will generate and email the registrant their PSA ID card with QR code. Review the details below before sending.')
-                    ->modalSubmitActionLabel('Send QR Code')
+                    ->modalSubmitActionLabel(fn (Registration $r) => $r->latestQrSend ? 'Resend QR Code' : 'Send QR Code')
                     ->infolist([
                         Section::make('Email Preview')
                             ->columns(2)
@@ -531,6 +538,7 @@ class RegistrationsTable
                             ]),
                     ])
                    ->action(function (Registration $r): void {
+                        $wasSent = $r->latestQrSend !== null;
                         $member = Member::find($r->psa_id);
                         $hasIdCard = false;
 
@@ -543,9 +551,13 @@ class RegistrationsTable
 
                         if ($r->email) {
                             Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
+                            $r->qrSends()->create(['sent_at' => now()]);
                         }
 
-                        Notification::make()->title('QR code sent.')->success()->send();
+                        Notification::make()
+                            ->title($wasSent ? 'QR code resent.' : 'QR code sent.')
+                            ->success()
+                            ->send();
                     }),
 
                     Action::make('reject')
@@ -620,13 +632,13 @@ class RegistrationsTable
                         }),
 
                     BulkAction::make('approve_selected')
-                        ->label('Send QR (Selected)')
+                        ->label('Send / Resend QR (Selected)')
                         ->icon('heroicon-o-qr-code')
                         ->color('primary')
                         ->requiresConfirmation()
-                        ->modalHeading('Send QR Codes to Selected Registrations')
+                        ->modalHeading('Send / Resend QR Codes')
                         ->modalDescription(fn ($records) => 'This will generate and email each of the ' . $records->count() . ' selected registration(s) their PSA ID card with QR code.')
-                        ->modalSubmitActionLabel('Send QR Codes')
+                        ->modalSubmitActionLabel('Send / Resend QR Codes')
                         ->action(function ($records) {
                             $service = app(MemberQrService::class);
 
@@ -643,6 +655,7 @@ class RegistrationsTable
 
                                 if ($r->email) {
                                     Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
+                                    $r->qrSends()->create(['sent_at' => now()]);
                                 }
                             });
                         }),
