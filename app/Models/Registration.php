@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 class Registration extends Model
 {
     protected $table = 'registrations';
@@ -19,7 +20,9 @@ class Registration extends Model
         'status', 'country', 'rejection_title', 'rejection_reason',
     ];
 
-    protected $casts = ['prc_number' => 'integer'];
+    protected $casts = [
+        'prc_number' => 'integer',
+    ];
 
     // No booted()/status-change hook here anymore. Mail is sent explicitly
     // from RegistrationsTable's confirm/approve/reject actions instead, so
@@ -38,6 +41,16 @@ class Registration extends Model
     public function isApproved(): bool  { return $this->status === self::STATUS_APPROVED; }
     public function hasDiscount(): bool { return !is_null($this->discount_id); }
 
+
+    public function qrSends(): HasMany
+    {
+        return $this->hasMany(RegistrationQrSend::class);
+    }
+
+    public function latestQrSend(): HasOne
+    {
+        return $this->hasOne(RegistrationQrSend::class)->latestOfMany('sent_at');
+    }
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'psa_id', 'member_id_no');
