@@ -18,14 +18,13 @@
                             <p style="margin:0 0 18px 0;">Greetings!</p>
 
                             <p style="margin:0 0 18px 0;">
-                                Your PSA ID with QR code for the
+                                Your PSA QR ID for the
                                 <strong>PSA 58th Annual Convention</strong> is attached to this email.
                             </p>
 
                             @if ($hasIdCard ?? false)
                                 <p style="margin:0 0 18px 0;">
-                                    Please keep the attached PNG ID card safe. You will need the QR code when
-                                    claiming your Convention ID.
+                                    IDK
                                 </p>
                             @else
                                 <p style="margin:0 0 18px 0;">
@@ -34,9 +33,7 @@
                                 </p>
                             @endif
 
-                            <p style="margin:0 0 18px 0;">
-                                <strong>PSA ID:</strong> {{ $registration->psa_id }}
-                            </p>
+                           
 
                             <p style="margin:0 0 40px 0;">Best regards,</p>
 
