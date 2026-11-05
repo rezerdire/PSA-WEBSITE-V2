@@ -15,17 +15,17 @@
                         <td style="font-size:16px;color:#111827;line-height:1.7;">
                             <p style="margin:0 0 18px 0;">Dear Dr. {{ $registration->last_name }},</p>
 
-                            <p style="margin:0 0 18px 0;">Greetings!</p>
-
-                            <p style="margin:0 0 18px 0;">
-                                Your PSA QR ID for the
-                                <strong>PSA 58th Annual Convention</strong> is attached to this email.
-                            </p>
-
                             @if ($hasIdCard ?? false)
                                 <p style="margin:0 0 18px 0;">
-                                    IDK
+                                    Thank you for joining us at the PSA 58th Annual Convention and Postgraduate Course! We sincerely appreciate your participation and hope you are having a meaningful and enriching convention experience.
+                                    Please see the QR code below, which you may use to claim your Convention ID. You may proceed to the Pre-registration Area on the 2nd Floor of the Marriott Grand Ballroom to claim your ID.
+                                    We would also like to remind you to complete the Visit-a-Booth to qualify for the PSA Raffle, which will take place during the Closing Ceremony.
+                                    Thank you once again for being part of this year's convention. We look forward to seeing you at the event activities!                   
                                 </p>
+
+                                
+                     
+
                             @else
                                 <p style="margin:0 0 18px 0;">
                                     We were unable to attach your ID card. Please contact the PSA secretariat and
@@ -38,7 +38,7 @@
                             <p style="margin:0 0 40px 0;">Best regards,</p>
 
                             <p style="margin:0;">
-                                <strong>PSA 58th Annual Convention Secretariat</strong>
+                                <strong>PSA Secretariat</strong>
                             </p>
                         </td>
                     </tr>
