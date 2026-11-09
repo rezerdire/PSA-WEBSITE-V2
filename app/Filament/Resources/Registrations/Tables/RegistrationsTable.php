@@ -550,7 +550,7 @@ class RegistrationsTable
                         }
 
                         if ($r->email) {
-                            Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
+                            Mail::to($r->email)->send(new Registrationqrcode($r, $hasIdCard));
                             $r->qrSends()->create(['sent_at' => now()]);
                         }
 
@@ -654,7 +654,7 @@ class RegistrationsTable
                                 }
 
                                 if ($r->email) {
-                                    Mail::to($r->email)->send(new RegistrationQrCode($r, $hasIdCard));
+                                    Mail::to($r->email)->send(new Registrationqrcode($r, $hasIdCard));
                                     $r->qrSends()->create(['sent_at' => now()]);
                                 }
                             });
