@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Registrations\Tables;
 use App\Services\MemberQrService;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\RegistrationQrCode;
+use App\Mail\Registrationqrcode;
 use App\Mail\RegistrationConfirmed;
 use App\Models\MemberQr;
 use Illuminate\Support\Facades\Storage;
