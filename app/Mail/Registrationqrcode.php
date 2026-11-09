@@ -13,7 +13,7 @@ use App\Models\Registration;
 use App\Models\Member;
 use App\Models\MemberQr;
 use Illuminate\Support\Facades\Storage;
-class Registrationqrcode extends Mailable
+class RegistrationQrCode extends Mailable
 {
     use Queueable, SerializesModels;
 
