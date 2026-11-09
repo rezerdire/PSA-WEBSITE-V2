@@ -96,3 +96,81 @@ Route::get('/booth-checker', function () {
 
 // WORKSHOP
 Route::view('/CME/Workshop', 'pages.workshop.index')->name('workshop');
+
+// TEMPORARY QR diagnostic — remove after debugging deployed Send QR (2026-11-09)
+Route::get('/qr-diag', function (\Illuminate\Http\Request $request) {
+    abort_unless($request->query('token') === 'psa-diag-5847', 403);
+
+    $gd = extension_loaded('gd') ? gd_info() : [];
+
+    $diskRoot = config('filesystems.disks.members_qr.root');
+
+    $dirs = [];
+    foreach (['member_id', 'new QR', 'qr'] as $d) {
+        $dirs[$d] = is_dir($diskRoot . '/' . $d)
+            ? count(array_diff(scandir($diskRoot . '/' . $d) ?: [], ['.', '..']))
+            : 'MISSING';
+    }
+
+    $logPath = storage_path('logs/laravel.log');
+    $logTail = 'no laravel.log';
+    if (is_file($logPath)) {
+        $lines = array_slice(file($logPath, FILE_IGNORE_NEW_LINES) ?: [], -80);
+        $logTail = collect($lines)
+            ->filter(fn ($l) => str_contains($l, 'ERROR') || str_contains($l, 'Exception'))
+            ->take(-5)
+            ->values()
+            ->toArray();
+    }
+
+    return response()->json([
+        'php'                => PHP_VERSION,
+        'gd_loaded'          => extension_loaded('gd'),
+        'gd_freetype'        => $gd['FreeType Support'] ?? false,
+        'font_exists'        => is_file(public_path('fonts/Roboto-Bold.ttf')),
+        'font_path'          => public_path('fonts/Roboto-Bold.ttf'),
+        'members_qr_root'    => $diskRoot,
+        'members_qr_dir_exists'   => is_dir($diskRoot),
+        'members_qr_writable'     => is_writable($diskRoot),
+        'card_files_on_disk'      => $dirs,
+        'db_database'             => config('database.connections.' . config('database.default') . '.database'),
+        'app_timezone'            => config('app.timezone'),
+        'registration_model_file' => (new ReflectionClass(\App\Models\Registration::class))->getFileName(),
+        'registration_has_latestQrSend' => method_exists(\App\Models\Registration::class, 'latestQrSend'),
+        'registration_has_qrSends'      => method_exists(\App\Models\Registration::class, 'qrSends'),
+        'qr_send_rows'            => \Illuminate\Support\Facades\Schema::hasTable('registration_qr_sends')
+            ? \DB::table('registration_qr_sends')->count()
+            : null,
+        'qr_send_last3'           => \Illuminate\Support\Facades\Schema::hasTable('registration_qr_sends')
+            ? \DB::table('registration_qr_sends')->orderByDesc('id')->limit(3)
+                ->get(['id', 'registration_id', 'sent_at'])->toArray()
+            : null,
+        'relation_probe'          => (function () {
+            $r = \App\Models\Registration::with('latestQrSend')->first();
+            return $r ? [
+                'ref'         => $r->id,
+                'has_related' => $r->latestQrSend !== null,
+                'sent_at'     => optional($r->latestQrSend)->sent_at?->format('Y-m-d H:i:s'),
+            ] : 'no registrations';
+        })(),
+        'table_members_qr'          => \Illuminate\Support\Facades\Schema::hasTable('members_qr'),
+        'table_registration_qr_sends' => \Illuminate\Support\Facades\Schema::hasTable('registration_qr_sends'),
+        'members_qr_rows'           => \Illuminate\Support\Facades\Schema::hasTable('members_qr')
+            ? \DB::table('members_qr')->count()
+            : null,
+        'last_errors'        => $logTail,
+    ]);
+});
+
+// TEMPORARY QR import runner — remove after debugging (2026-11-09)
+Route::get('/qr-run-import', function (\Illuminate\Http\Request $request) {
+    abort_unless($request->query('token') === 'psa-diag-5847', 403);
+
+    @set_time_limit(300);
+    @ignore_user_abort(true);
+
+    $exit = \Illuminate\Support\Facades\Artisan::call('members:import-qr');
+    $output = \Illuminate\Support\Facades\Artisan::output();
+
+    return response("<pre>" . e($output) . "</pre><p>Exit code: {$exit} — refresh to re-run (safe, resumes where it stopped)</p>");
+});

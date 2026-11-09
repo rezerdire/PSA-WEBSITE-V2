@@ -5,6 +5,10 @@
 
 @section('content')
     <div class="container mx-auto min-h-screen px-4 pb-12 pt-24">
-        <livewire:workshop.workshop-registration />
+        {{-- <livewire:workshop.workshop-registration /> --}}
+
+        <x-registration-closed
+            event="Workshop Registration"
+            primaryLabel="Back to Annual Convention"
+            primaryRoute="convention" />
     </div>
-@endsection
