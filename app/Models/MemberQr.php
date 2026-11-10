@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MemberQr extends Model
 {
     protected $table = 'members_qr';
-
+    
     protected $fillable = [
         'member_id_no',
         'qr_path',
