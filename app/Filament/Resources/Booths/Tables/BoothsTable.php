@@ -14,7 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 
 class BoothsTable
 {
@@ -59,7 +59,7 @@ class BoothsTable
                     ->visible(fn (Booth $record) => filled(BoothQr::url($record->booth_qr)))
                     ->action(fn (Booth $record) => self::downloadPdf(
                         collect([$record]),
-                        "booth-{$record->booth_code}.pdf"
+                        self::pdfFilename($record)
                     )),
 
                 EditAction::make(),
@@ -89,8 +89,20 @@ class BoothsTable
             ]);
     }
 
+    protected static function pdfFilename(Booth $booth): string
+    {
+        $name = Str::slug((string) $booth->booth_name);
+
+        return 'booth-' . ($name !== '' ? $name : $booth->booth_id) . '.pdf';
+    }
+
     protected static function downloadPdf($booths, string $filename)
     {
+        $headerPath = public_path('booth_template/annual_convention_qr_header.png');
+        $header = is_file($headerPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($headerPath))
+            : null;
+
         $items = $booths->map(function (Booth $b) {
             $path = public_path($b->booth_qr);
 
@@ -105,7 +117,10 @@ class BoothsTable
             ];
         });
 
-        $pdf = Pdf::loadView('pdf.booth-qr', ['booths' => $items])->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('pdf.booth-qr', [
+            'booths' => $items,
+            'header' => $header,
+        ])->setPaper('a4', 'portrait');
 
         return response()->streamDownload(fn () => print($pdf->output()), $filename);
     }
