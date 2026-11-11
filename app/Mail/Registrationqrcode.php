@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -13,25 +12,18 @@ use App\Models\Registration;
 use App\Models\Member;
 use App\Models\MemberQr;
 use Illuminate\Support\Facades\Storage;
-class RegistrationQrCode extends Mailable
+
+class Registrationqrcode extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Create a new message instance.
-     */
     public function __construct(
-            public Registration $registration,
-            public bool $hasIdCard = false,
-            public ?string $idCardUrl = null,
-        ) 
-    {
-
+        public Registration $registration,
+        public bool $hasIdCard = false,
+        public ?string $idCardUrl = null,
+    ) {
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -39,27 +31,22 @@ class RegistrationQrCode extends Mailable
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
         return new Content(
             view: 'emails.registration-qr',
             with: [
                 'registration' => $this->registration,
-                'hasIdCard'    => $this->hasIdCard,
-                'idCardUrl'    => $this->idCardUrl,
+                'hasIdCard' => $this->hasIdCard,
+                'idCardUrl' => $this->idCardUrl,
             ],
-            );
+        );
     }
 
     /**
-     * Get the attachments for the message.
-     *
      * @return array<int, Attachment>
      */
-      public function attachments(): array
+    public function attachments(): array
     {
         $qr = $this->getQr();
 

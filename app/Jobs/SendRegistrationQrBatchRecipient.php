@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Mail\RegistrationQrCode;
+use App\Mail\Registrationqrcode;
 use App\Models\Member;
 use App\Models\MemberQr;
 use App\Models\RegistrationQrBatch;
@@ -103,7 +103,7 @@ class SendRegistrationQrBatchRecipient implements ShouldQueue
                 throw new \RuntimeException('QR/ID card was not generated; email not sent.');
             }
 
-            Mail::to($email)->send(new RegistrationQrCode($registration, true));
+            Mail::to($email)->send(new Registrationqrcode($registration, true));
             $registration->qrSends()->create(['sent_at' => now()]);
 
             $this->finishRecipient($recipient, RegistrationQrBatchRecipient::STATUS_SENT);
