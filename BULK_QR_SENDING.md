@@ -17,3 +17,13 @@ php artisan queue:work
 ```
 
 Invalid or missing addresses, missing member records, missing generated QR/ID cards, QR generation errors, and SMTP rejections are recorded per recipient. A recipient with no generated QR/ID card is marked failed and no email is sent. A generic SMTP connection cannot detect a delayed bounce after the provider accepts a message; automatic delayed-bounce tracking requires a provider webhook or bounce mailbox integration.
+
+After deploying, preserve the exact case of `app/Mail/Registrationqrcode.php`, then rebuild and clear Laravel state:
+
+```bash
+composer dump-autoload --optimize
+php artisan optimize:clear
+php artisan queue:restart
+```
+
+The admin dashboard includes a **QR Delivery Overview** count of unique registrations with a successful QR send record; resends do not inflate the user count.
