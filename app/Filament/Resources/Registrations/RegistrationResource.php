@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Registrations;
 use App\Filament\Resources\Registrations\Pages\CreateRegistration;
 use App\Filament\Resources\Registrations\Pages\EditRegistration;
 use App\Filament\Resources\Registrations\Pages\ListRegistrations;
+use App\Filament\Resources\Registrations\Pages\BulkQrSending;
 use App\Filament\Resources\Registrations\Pages\ViewRegistration;
 use App\Filament\Resources\Registrations\Schemas\RegistrationForm;
 use App\Filament\Resources\Registrations\Schemas\RegistrationInfolist;
@@ -68,6 +69,7 @@ class RegistrationResource extends Resource
         return [
             'index' => ListRegistrations::route('/'),
             'create' => CreateRegistration::route('/create'),
+            'bulk-qr' => BulkQrSending::route('/bulk-qr/{batch?}'),
             'view' => ViewRegistration::route('/{record}'),
             'edit' => EditRegistration::route('/{record}/edit'),
         ];

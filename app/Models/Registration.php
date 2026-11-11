@@ -51,6 +51,11 @@ class Registration extends Model
     {
         return $this->hasOne(RegistrationQrSend::class)->latestOfMany('sent_at');
     }
+
+    public function bulkQrBatchRecipients(): HasMany
+    {
+        return $this->hasMany(RegistrationQrBatchRecipient::class);
+    }
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'psa_id', 'member_id_no');

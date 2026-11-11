@@ -637,12 +637,13 @@ class RegistrationsTable
                         ->color('primary')
                         ->requiresConfirmation()
                         ->modalHeading('Send / Resend QR Codes')
-                        ->modalDescription(fn ($records) => 'This will generate and email each of the ' . $records->count() . ' selected registration(s) their PSA ID card with QR code.')
+                        ->modalDescription(fn ($records) => 'Only Approved registration(s) will be sent. This will generate and email QR ID cards for up to ' . $records->count() . ' selected record(s).')
                         ->modalSubmitActionLabel('Send / Resend QR Codes')
                         ->action(function ($records) {
                             $service = app(MemberQrService::class);
 
-                            $records->each(function (Registration $r) use ($service) {
+                            $records->filter(fn (Registration $r) => $r->status === Registration::STATUS_APPROVED)
+                                ->each(function (Registration $r) use ($service) {
                                 $member = Member::find($r->psa_id);
                                 $hasIdCard = false;
 
