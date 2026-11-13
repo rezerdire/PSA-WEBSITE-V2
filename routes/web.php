@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AnnualConventionEvaluationController;
 use App\Http\Controllers\Admin\RegistrationPdfController;
 use App\Http\Controllers\Admin\RegistrationQrBatchExportController;
 use App\Models\GalleryDay;
@@ -47,6 +48,8 @@ Route::view('/Chapter-Presidents', 'pages.AboutUs.chapter-presidents')->name('Ch
 Route::view('/Legacy', 'pages.AboutUs.legacy')->name('Legacy');
 Route::view('/Membership', 'pages.Membership.member-registation')->name('Membership');
 Route::view('/AnnualConvention2026/Registration', 'pages.Event-Registration.events-registration')->name('Event-Registration');
+Route::get('/AnnualConvention2026/Evaluation', [AnnualConventionEvaluationController::class, 'show'])->name('annual-convention-evaluation');
+Route::post('/AnnualConvention2026/Evaluation', [AnnualConventionEvaluationController::class, 'check'])->name('annual-convention-evaluation.check');
 Route::view('/CME/PJA', 'pages.CME.pja')->name('pja');  
 Route::view('/AnnualConvention2026', 'pages.CME.convention')->name('convention');
 Route::view('/CME/Mid-Year-Convention', 'pages.CME.mid-year-convention')->name('mid-year-convention');
