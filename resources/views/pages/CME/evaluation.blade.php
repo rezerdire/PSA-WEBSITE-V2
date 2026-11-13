@@ -43,16 +43,37 @@
                     We could not find an active Annual Convention registration for this PSA ID. Check the ID or complete your registration first.
                 </p>
             @elseif (($status ?? null) === 'completed')
-                <p role="status" class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    Our response sheet shows that this PSA ID has already completed the evaluation.
-                </p>
+                <div role="status" class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                    You have already completed the Annual Convention evaluation for this PSA ID. Thank you for participating.
+                   
+                </div>
+                <div class="mt-5 flex justify-center">
+                    <button
+                        type="button"
+                        class="group inline-flex w-full max-w-md items-center gap-3 rounded-xl border border-red-700 bg-red-700 px-5 py-4 text-left text-white shadow-lg shadow-red-950/15 transition hover:-translate-y-0.5 hover:bg-red-800 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                    >
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-red-100" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3.75h6l5 5v10.5A1.75 1.75 0 0 1 16.25 21h-9.5A1.75 1.75 0 0 1 5 19.25v-13.5A1.75 1.75 0 0 1 6.75 4H13m0 0v5h5m-6 3v6m0 0-2.5-2.5M12 18l2.5-2.5" />
+                            </svg>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block font-semibold">Download Certificate of Attendance</span>
+                            <span class="mt-0.5 block text-xs text-red-100">Certificate file · PDF</span>
+                        </span>
+                        <span class="ml-1 rounded-md border border-white/30 px-2 py-1 text-xs font-bold tracking-wide text-white">PDF</span>
+                    </button>
+                </div>
             @elseif (($status ?? null) === 'eligible')
                 <div role="status" class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                     Your registration is verified and no evaluation response was found for this PSA ID.
-                    <a href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex rounded-lg bg-[#000066] px-5 py-3 font-semibold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                </div>
+                <div class = "justify-center flex">
+                 <a href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex rounded-lg bg-[#000066] px-5 py-3 font-semibold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
                         Open Evaluation Form
                     </a>
-                </div>
+                </div>   
+
             @elseif (($status ?? null) === 'not-configured')
                 <p role="status" class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                     Your registration is verified, but the evaluation form is not configured yet. Please contact the convention organizers.

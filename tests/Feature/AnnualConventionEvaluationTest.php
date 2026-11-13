@@ -64,10 +64,11 @@ test('registered PSA IDs get the evaluation link only when absent from the respo
         ->assertOk()
         ->assertSee('Your registration is verified')
         ->assertSee('https://forms.google.test/evaluation')
-        ->assertSee('Open Evaluation Form');
+        ->assertSee('Open Evaluation Form')
+        ->assertDontSee('Download Certificate of Attendance');
 });
 
-test('a matching PSA ID in the response sheet is marked completed and not linked', function () {
+test('a matching PSA ID shows the completion message and a visual-only certificate button', function () {
     createConventionRegistration('PSA-123');
     Http::fake([
         'sheets.google.test/*' => Http::response("Timestamp,PSA ID No. \n2026-11-13,PSA-123\n", 200),
@@ -75,8 +76,12 @@ test('a matching PSA ID in the response sheet is marked completed and not linked
 
     $this->post(route('annual-convention-evaluation.check'), ['psa_id' => 'PSA-123'])
         ->assertOk()
-        ->assertSee('already completed the evaluation')
-        ->assertDontSee('Open Evaluation Form');
+        ->assertSee('already completed the Annual Convention evaluation')
+        ->assertDontSee('Open Evaluation Form')
+        ->assertSee('Download Certificate of Attendance')
+        ->assertSee('Certificate file · PDF')
+        ->assertSee('type="button"', false)
+        ->assertDontSee('annual-convention-evaluation.certificate');
 });
 
 test('the evaluation link stays hidden when the response sheet cannot be checked', function () {
@@ -88,5 +93,6 @@ test('the evaluation link stays hidden when the response sheet cannot be checked
     $this->post(route('annual-convention-evaluation.check'), ['psa_id' => 'PSA-123'])
         ->assertOk()
         ->assertSee('could not verify the evaluation response sheet')
-        ->assertDontSee('Open Evaluation Form');
+        ->assertDontSee('Open Evaluation Form')
+        ->assertDontSee('Download Certificate of Attendance');
 });

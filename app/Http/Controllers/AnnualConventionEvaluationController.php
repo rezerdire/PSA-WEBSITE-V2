@@ -22,12 +22,12 @@ class AnnualConventionEvaluationController extends Controller
         ]);
 
         $psaId = trim($validated['psa_id']);
-        $registrationExists = Registration::query()
+        $registration = Registration::query()
             ->whereRaw('LOWER(TRIM(psa_id)) = ?', [mb_strtolower($psaId)])
             ->where('status', '!=', Registration::STATUS_REJECTED)
-            ->exists();
+            ->first();
 
-        if (! $registrationExists) {
+        if (! $registration) {
             return view('pages.CME.evaluation', [
                 'status' => 'not-registered',
                 'psaId' => $psaId,
@@ -51,7 +51,7 @@ class AnnualConventionEvaluationController extends Controller
                 throw new \RuntimeException('Evaluation response sheet request failed.');
             }
 
-            $alreadyCompleted = $this->responseSheetContains($response->body(), $psaId);
+            $alreadyCompleted = $this->responseSheetContains($response->body(), $registration->psa_id);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -67,6 +67,7 @@ class AnnualConventionEvaluationController extends Controller
             'formUrl' => $formUrl,
         ]);
     }
+
 
     private function responseSheetContains(string $csv, string $psaId): bool
     {
