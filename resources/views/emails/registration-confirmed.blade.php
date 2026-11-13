@@ -30,11 +30,19 @@
                                 We truly appreciate your participation and look forward to welcoming you to the event.
                             </p>
 
-                            <p style="margin:0 0 18px 0;">
-                                Please <strong>wait for the succeeding email containing your PSA ID with QR Code</strong>,
-                                This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QR Code
-                                safe and readily accessible for your convenience.
-                            </p>
+                            @if ($registration->membership === 'NM')
+                                <p style="margin:0 0 18px 0;">
+                                     Please wait for the succeeding email containing your <strong>Convention ID with QR Code</strong>,
+                                    This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QR Code
+                                    safe and readily accessible for your convenience.
+                                </p>
+                            @else
+                                <p style="margin:0 0 18px 0;">
+                                    Please <strong>wait for the succeeding email containing your PSA ID with QR Code</strong>,
+                                    This code will be required when you <strong>claim your Convention ID</strong>. Kindly keep your QR Code
+                                    safe and readily accessible for your convenience.
+                                </p>
+                            @endif
 
                             <p style="margin:0 0 18px 0;">
                                 Once again, thank you for registering for the <strong>PSA 58th Annual Convention</strong>.

@@ -27,12 +27,19 @@
                                 participation and look forward to welcoming you to the event.
                             </p>
 
-                            <p style="margin:0 0 18px 0;">
-                                Please <strong>wait for the succeeding email confirming your registration</strong>,
-                                which will be followed by your PSA ID with QC Code, which you will use to
-                                <strong>claim your Convention ID</strong>. Kindly keep your QC Code safe and
-                                accessible for the duration of the convention.
-                            </p>
+                            @if ($registration->membership === 'NM')
+                                <p style="margin:0 0 18px 0;">
+                                    Your assigned <strong>Convention ID</strong> is
+                                    <strong>{{ $registration->psa_id }}</strong>. Please keep this code available for your convention registration and check-in.
+                                </p>
+                            @else
+                                <p style="margin:0 0 18px 0;">
+                                    Please <strong>wait for the succeeding email confirming your registration</strong>,
+                                    which will be followed by your PSA ID with QC Code, which you will use to
+                                    <strong>claim your Convention ID</strong>. Kindly keep your QC Code safe and
+                                    accessible for the duration of the convention.
+                                </p>
+                            @endif
 
                             <p style="margin:0 0 18px 0;">
                                 Please also note that the <strong>PSA Accounting Department will contact you
