@@ -17,6 +17,10 @@
         }
 
         .page {
+            width: 100%;
+            height: 296mm;
+            border-collapse: collapse;
+            border-spacing: 0;
             page-break-after: always;
         }
 
@@ -24,17 +28,19 @@
             page-break-after: auto;
         }
 
-        .header {
-            width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto 24px;
+        .page td {
+            height: 296mm;
+            padding: 0;
+            vertical-align: middle;
+            text-align: center;
         }
+
 
         .qr {
             width: 720px;
             height: 720px;
             display: block;
+            margin: 0 auto;
         }
 
         .raffle-title {
@@ -76,25 +82,23 @@
             };
         @endphp
 
-        <div class="page">
+        <table class="page">
+            <tr>
+                <td>
+                    <div class="raffle-title" style="font-size: {{ $nameFontSize }}px;">
+                        PSA QR RAFFLE
+                    </div>
 
-            @if ($header)
-                <img class="header" src="{{ $header }}" alt="Annual Convention 2026">
-            @endif
+                    @if ($booth['qr'])
+                        <img class="qr" src="{{ $booth['qr'] }}" alt="QR">
+                    @endif
 
-            <div class="raffle-title" style="font-size: {{ $nameFontSize }}px;">
-                PSA QR RAFFLE
-            </div>
-
-            @if ($booth['qr'])
-                <img class="qr" src="{{ $booth['qr'] }}" alt="QR">
-            @endif
-
-            <div class="name" style="font-size: {{ $nameFontSize }}px;">
-                {{ $name }}
-            </div>
-
-        </div>
+                    <div class="name" style="font-size: {{ $nameFontSize }}px;">
+                        {{ $name }}
+                    </div>
+                </td>
+            </tr>
+        </table>
     @endforeach
 
 </body>
