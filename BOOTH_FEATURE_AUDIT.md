@@ -279,3 +279,9 @@ Rotate the SMTP credential immediately, audit access/logs, move secrets to a man
 4. **Stabilize quality gates:** repair the test database setup and add Booth feature/security regression tests.
 5. **Fix the user experience:** mobile fixed-header overlap, accessible form/menu semantics, and a scan-again action.
 6. **Harden deployment:** rotate the SMTP credential, pin/self-host CDN assets, and configure security headers.
+
+## Booth QR exports
+
+In the admin panel's **Booths** page:
+
+- **Download All QR Codes** exports the booth QR codes to one PDF.
