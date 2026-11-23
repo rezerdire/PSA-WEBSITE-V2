@@ -22,13 +22,13 @@
                 'icon' => 'document-text',
                 'href' => route('Event-Registration'),
             ],
-            [
-                'key' => 'evaluation',
-                'title' => 'Evaluation Form',
-                'description' => 'Verify your convention registration and open the evaluation form',
-                'icon' => 'clipboard-document-check',
-                'href' => route('annual-convention-evaluation'),
-            ],
+            // [
+            //     'key' => 'evaluation',
+            //     'title' => 'Evaluation Form',
+            //     'description' => 'Verify your convention registration and open the evaluation form',
+            //     'icon' => 'clipboard-document-check',
+            //     'href' => route('annual-convention-evaluation'),
+            // ],
             [
                 'key' => 'workshops',
                 'title' => 'Workshops Registration',
