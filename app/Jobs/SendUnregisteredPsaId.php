@@ -17,12 +17,12 @@ class SendUnregisteredPsaId implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public int $recipientId)
+    public function __construct(public int $batchId, public int $batchRecipientId)
     {
     }
 
     public function handle(UnregisteredPsaRecipientService $service): void
     {
-        $service->processQueuedRecipient($this->recipientId);
+        $service->processQueuedRecipient($this->batchId, $this->batchRecipientId);
     }
 }

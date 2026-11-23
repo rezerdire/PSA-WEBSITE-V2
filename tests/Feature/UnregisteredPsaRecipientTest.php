@@ -1,9 +1,12 @@
 <?php
 
 use App\Filament\Pages\UnregisteredPsaRecipients;
+use App\Jobs\FinalizeUnregisteredPsaSendBatch;
 use App\Jobs\SendUnregisteredPsaId;
 use App\Mail\UnregisteredPsaId;
 use App\Models\UnregisteredPsaRecipient;
+use App\Filament\Pages\UnregisteredPsaSendHistory;
+use App\Models\UnregisteredPsaSendBatch;
 use App\Models\User;
 use App\Services\PsaIdCardLocator;
 use App\Services\UnregisteredPsaRecipientService;
@@ -14,6 +17,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
+    Schema::dropIfExists('unregistered_psa_send_batch_recipients');
+    Schema::dropIfExists('unregistered_psa_send_batches');
     Schema::dropIfExists('unregistered_psa_recipients');
     Schema::create('unregistered_psa_recipients', function (Blueprint $table): void {
         $table->id();
@@ -30,10 +35,47 @@ beforeEach(function (): void {
         $table->text('error')->nullable();
         $table->timestamps();
     });
+    Schema::create('unregistered_psa_send_batches', function (Blueprint $table): void {
+        $table->id();
+        $table->string('status')->default('queued');
+        $table->unsignedInteger('requested_limit');
+        $table->unsignedInteger('total_count')->default(0);
+        $table->unsignedInteger('processed_count')->default(0);
+        $table->unsignedInteger('sent_count')->default(0);
+        $table->unsignedInteger('failed_count')->default(0);
+        $table->unsignedBigInteger('current_recipient_id')->nullable();
+        $table->string('current_psa_id')->nullable();
+        $table->string('current_name')->nullable();
+        $table->string('current_email')->nullable();
+        $table->string('current_status')->nullable();
+        $table->text('error_message')->nullable();
+        $table->timestamp('started_at')->nullable();
+        $table->timestamp('finished_at')->nullable();
+        $table->unsignedBigInteger('created_by')->nullable();
+        $table->timestamps();
+    });
+    Schema::create('unregistered_psa_send_batch_recipients', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('batch_id');
+        $table->unsignedBigInteger('recipient_id')->nullable();
+        $table->unsignedInteger('position');
+        $table->string('psa_id');
+        $table->string('name');
+        $table->string('email')->nullable();
+        $table->string('chapter')->nullable();
+        $table->string('status')->default('pending');
+        $table->text('error_message')->nullable();
+        $table->timestamp('started_at')->nullable();
+        $table->timestamp('sent_at')->nullable();
+        $table->timestamp('failed_at')->nullable();
+        $table->timestamps();
+    });
 });
 
 afterEach(function (): void {
     PsaIdCardLocator::flush();
+    Schema::dropIfExists('unregistered_psa_send_batch_recipients');
+    Schema::dropIfExists('unregistered_psa_send_batches');
     Schema::dropIfExists('unregistered_psa_recipients');
     Schema::dropIfExists('users');
 });
@@ -195,31 +237,85 @@ test('editing a recipient saves its chapter', function (): void {
     expect($recipient->fresh()->chapter)->toBe('Central Luzon');
 });
 
-test('bulk send queues pending recipients and immediately marks them queued', function (): void {
+test('bulk send records batch progress and queues a finalizer', function (): void {
     Bus::fake();
     $recipient = UnregisteredPsaRecipient::create(['psa_id' => '00123', 'email' => 'member@example.test', 'last_name' => 'Smith']);
 
-    expect(app(UnregisteredPsaRecipientService::class)->queuePending(10))->toBe(1)
+    $batch = app(UnregisteredPsaRecipientService::class)->queuePending(10);
+    $item = $batch->recipients()->firstOrFail();
+
+    expect($batch->total_count)->toBe(1)
+        ->and($batch->status)->toBe('queued')
         ->and($recipient->fresh()->status)->toBe('queued')
         ->and($recipient->fresh()->sent_at)->toBeNull();
 
-    Bus::assertChained([new SendUnregisteredPsaId($recipient->id)]);
+    Bus::assertChained([
+        new SendUnregisteredPsaId($batch->id, $item->id),
+        new FinalizeUnregisteredPsaSendBatch($batch->id),
+    ]);
 });
 
-test('queued recipient job sends email and marks the row sent', function (): void {
+test('queued recipient updates batch outcomes and finishes completed', function (): void {
     Mail::fake();
     $recipient = UnregisteredPsaRecipient::create([
         'psa_id' => '00123',
         'email' => 'member@example.test',
         'last_name' => 'Smith',
+        'full_name' => 'Jane Smith',
         'status' => 'queued',
     ]);
+    $batch = UnregisteredPsaSendBatch::create(['status' => 'queued', 'requested_limit' => 1, 'total_count' => 1]);
+    $item = $batch->recipients()->create([
+        'recipient_id' => $recipient->id,
+        'position' => 1,
+        'psa_id' => $recipient->psa_id,
+        'name' => $recipient->full_name,
+        'email' => $recipient->email,
+        'status' => 'pending',
+    ]);
 
-    app(UnregisteredPsaRecipientService::class)->processQueuedRecipient($recipient->id);
+    $service = app(UnregisteredPsaRecipientService::class);
+    $service->processQueuedRecipient($batch->id, $item->id);
+    $service->finalizeBatch($batch->id);
 
     expect($recipient->fresh()->status)->toBe('sent')
-        ->and($recipient->fresh()->sent_at)->not->toBeNull();
+        ->and($batch->fresh()->status)->toBe('completed')
+        ->and($batch->fresh()->processed_count)->toBe(1)
+        ->and($batch->fresh()->sent_count)->toBe(1)
+        ->and($item->fresh()->status)->toBe('sent');
     Mail::assertSent(UnregisteredPsaId::class, fn (UnregisteredPsaId $mail) => $mail->psaId === '00123' && $mail->lastName === 'Smith');
+});
+
+test('send history page displays batch outcomes and progress', function (): void {
+    Schema::create('users', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->string('email')->unique();
+        $table->string('password');
+        $table->string('remember_token')->nullable();
+        $table->timestamps();
+    });
+    config(['app.env' => 'local']);
+    $user = User::create([
+        'name' => 'Admin',
+        'email' => 'admin@example.test',
+        'password' => 'password',
+    ]);
+    UnregisteredPsaSendBatch::create([
+        'status' => 'completed',
+        'requested_limit' => 10,
+        'total_count' => 2,
+        'processed_count' => 2,
+        'sent_count' => 1,
+        'failed_count' => 1,
+    ]);
+
+    Livewire\Livewire::actingAs($user)
+        ->test(UnregisteredPsaSendHistory::class)
+        ->assertSee('Bulk email batches')
+        ->assertSee('Completed')
+        ->assertSee('2 / 2 (100%)')
+        ->assertSee('1');
 });
 
 test('full names derive the final surname while dropping common name suffixes', function (): void {

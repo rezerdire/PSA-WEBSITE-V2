@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Pages\UnregisteredPsaSendHistory;
 use App\Models\UnregisteredPsaRecipient;
 use App\Services\PsaIdCardLocator;
 use App\Services\UnregisteredPsaRecipientService;
@@ -36,6 +37,11 @@ class UnregisteredPsaRecipients extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('sendHistory')
+                ->label('Bulk send history')
+                ->icon('heroicon-o-clock')
+                ->color('gray')
+                ->url(UnregisteredPsaSendHistory::getUrl()),
             Action::make('createRecipient')
                 ->label('Add recipient')
                 ->schema([
@@ -75,8 +81,8 @@ class UnregisteredPsaRecipients extends Page implements HasTable
                 ])
                 ->action(function (array $data, UnregisteredPsaRecipientService $service): void {
                     try {
-                        $count = $service->queuePending((int) $data['limit']);
-                        Notification::make()->title("Queued {$count} recipients for delivery.")->body('Delivery continues in the background; the queue worker must be running.')->success()->send();
+                        $batch = $service->queuePending((int) $data['limit']);
+                        Notification::make()->title("Queued {$batch->total_count} recipients for delivery.")->body('Delivery continues in the background. View live progress in Bulk send history; the queue worker must be running.')->success()->send();
                     } catch (\Throwable $exception) {
                         Notification::make()->title('Bulk send failed')->body($exception->getMessage())->danger()->send();
                     }

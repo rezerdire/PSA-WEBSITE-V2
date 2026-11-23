@@ -20,6 +20,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Resources\Registrations\Widgets\RegistrationStatsOverview;
 use App\Filament\Resources\Registrations\Widgets\QrDeliveryStatsOverview;
+use App\Filament\Resources\Registrations\Widgets\UnregisteredPsaEmailStatsOverview;
 
 // New Feature: SPINNER
 //  THIS IS THE EXPORT BELOW?
@@ -54,6 +55,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 RegistrationStatsOverview::class,
                 QrDeliveryStatsOverview::class,
+                UnregisteredPsaEmailStatsOverview::class,
             ])
 
             // New Feature: SPINNER

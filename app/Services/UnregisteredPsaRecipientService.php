@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\FinalizeUnregisteredPsaSendBatch;
 use App\Jobs\SendUnregisteredPsaId;
 use App\Mail\UnregisteredPsaId;
 use App\Models\UnregisteredPsaRecipient;
+use App\Models\UnregisteredPsaSendBatch;
+use App\Models\UnregisteredPsaSendBatchRecipient;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -96,71 +99,164 @@ class UnregisteredPsaRecipientService
         }
     }
 
-    public function queuePending(int $limit): int
+    public function queuePending(int $limit): UnregisteredPsaSendBatch
     {
         if ($limit < 1 || $limit > 500) {
             throw new RuntimeException('The bulk send limit must be between 1 and 500.');
         }
 
-        $recipientIds = DB::transaction(function () use ($limit): array {
+        $batch = DB::transaction(function () use ($limit): ?UnregisteredPsaSendBatch {
             $recipients = UnregisteredPsaRecipient::query()
                 ->where('status', 'pending')
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->limit($limit)
-                ->get(['id']);
+                ->get();
 
-            $ids = $recipients->modelKeys();
-            if ($ids !== []) {
-                UnregisteredPsaRecipient::query()->whereIn('id', $ids)->update([
-                    'status' => 'queued',
-                    'error' => null,
-                    'updated_at' => now(),
-                ]);
+            if ($recipients->isEmpty()) {
+                return null;
             }
 
-            return $ids;
+            $batch = UnregisteredPsaSendBatch::create([
+                'status' => UnregisteredPsaSendBatch::STATUS_QUEUED,
+                'requested_limit' => $limit,
+                'total_count' => $recipients->count(),
+                'created_by' => auth()->id(),
+            ]);
+
+            foreach ($recipients->values() as $index => $recipient) {
+                $batch->recipients()->create([
+                    'recipient_id' => $recipient->id,
+                    'position' => $index + 1,
+                    'psa_id' => $recipient->psa_id,
+                    'name' => $recipient->full_name ?: trim(implode(' ', array_filter([
+                        $recipient->first_name,
+                        $recipient->middle_name,
+                        $recipient->last_name,
+                    ]))),
+                    'email' => $recipient->email,
+                    'chapter' => $recipient->chapter,
+                    'status' => UnregisteredPsaSendBatchRecipient::STATUS_PENDING,
+                ]);
+                $recipient->update(['status' => 'queued', 'error' => null]);
+            }
+
+            return $batch;
         });
 
-        if ($recipientIds === []) {
+        if (! $batch) {
             throw new RuntimeException('There are no pending recipients to queue.');
         }
 
         try {
-            $jobs = array_map(
-                fn (int $id): SendUnregisteredPsaId => new SendUnregisteredPsaId($id),
-                $recipientIds,
-            );
+            $jobs = $batch->recipients()
+                ->orderBy('position')
+                ->get(['id'])
+                ->map(fn (UnregisteredPsaSendBatchRecipient $item): SendUnregisteredPsaId => new SendUnregisteredPsaId($batch->id, $item->id))
+                ->all();
+            $jobs[] = new FinalizeUnregisteredPsaSendBatch($batch->id);
             Bus::chain($jobs)->dispatch();
         } catch (\Throwable $exception) {
-            UnregisteredPsaRecipient::query()->whereIn('id', $recipientIds)->where('status', 'queued')->update([
-                'status' => 'pending',
-                'updated_at' => now(),
-            ]);
+            DB::transaction(function () use ($batch, $exception): void {
+                $batch->recipients()->where('status', UnregisteredPsaSendBatchRecipient::STATUS_PENDING)->update([
+                    'status' => UnregisteredPsaSendBatchRecipient::STATUS_FAILED,
+                    'error_message' => mb_substr($exception->getMessage(), 0, 5000),
+                    'failed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                UnregisteredPsaRecipient::query()
+                    ->whereIn('id', $batch->recipients()->whereNotNull('recipient_id')->pluck('recipient_id'))
+                    ->where('status', 'queued')
+                    ->update(['status' => 'pending', 'updated_at' => now()]);
+                $batch->update([
+                    'status' => UnregisteredPsaSendBatch::STATUS_QUEUE_FAILED,
+                    'failed_count' => $batch->total_count,
+                    'processed_count' => $batch->total_count,
+                    'error_message' => mb_substr($exception->getMessage(), 0, 5000),
+                    'finished_at' => now(),
+                ]);
+            });
 
             throw $exception;
         }
 
-        return count($recipientIds);
+        return $batch;
     }
 
-    public function processQueuedRecipient(int $recipientId): void
+    public function processQueuedRecipient(int $batchId, int $batchRecipientId): void
     {
-        $recipient = UnregisteredPsaRecipient::query()
-            ->whereKey($recipientId)
-            ->where('status', 'queued')
+        $item = UnregisteredPsaSendBatchRecipient::query()
+            ->where('batch_id', $batchId)
+            ->whereKey($batchRecipientId)
+            ->where('status', UnregisteredPsaSendBatchRecipient::STATUS_PENDING)
             ->first();
 
-        if (! $recipient) {
+        if (! $item) {
             return;
         }
 
-        $recipient->update(['status' => 'processing']);
-        $this->sendRecipient($recipient);
+        $recipient = $item->recipient;
+        $item->update([
+            'status' => UnregisteredPsaSendBatchRecipient::STATUS_PROCESSING,
+            'started_at' => now(),
+        ]);
+        $item->batch->update([
+            'status' => UnregisteredPsaSendBatch::STATUS_RUNNING,
+            'current_recipient_id' => $recipient?->id,
+            'current_psa_id' => $item->psa_id,
+            'current_name' => $item->name,
+            'current_email' => $item->email,
+            'current_status' => 'processing',
+            'started_at' => $item->batch->started_at ?? now(),
+        ]);
+
+        if (! $recipient || $recipient->status !== 'queued') {
+            $success = false;
+            $error = $recipient
+                ? 'Recipient was no longer queued when this job ran.'
+                : 'Recipient record was deleted after the batch was queued.';
+        } else {
+            $recipient->update(['status' => 'processing']);
+            $success = $this->sendRecipient($recipient);
+            $error = $success ? null : $recipient->fresh()->error;
+        }
+
+        $now = now();
+        $item->update([
+            'status' => $success ? UnregisteredPsaSendBatchRecipient::STATUS_SENT : UnregisteredPsaSendBatchRecipient::STATUS_FAILED,
+            'error_message' => $error,
+            'sent_at' => $success ? $now : null,
+            'failed_at' => $success ? null : $now,
+        ]);
+
+        $batch = $item->batch;
+        $batch->increment('processed_count');
+        $batch->increment($success ? 'sent_count' : 'failed_count');
+        $batch->update(['current_status' => $success ? 'sent' : 'failed']);
+    }
+
+    public function finalizeBatch(int $batchId): void
+    {
+        $batch = UnregisteredPsaSendBatch::query()->find($batchId);
+        if (! $batch || in_array($batch->status, [UnregisteredPsaSendBatch::STATUS_COMPLETED, UnregisteredPsaSendBatch::STATUS_COMPLETED_WITH_FAILURES, UnregisteredPsaSendBatch::STATUS_QUEUE_FAILED], true)) {
+            return;
+        }
+
+        $batch->update([
+            'status' => $batch->failed_count > 0
+                ? UnregisteredPsaSendBatch::STATUS_COMPLETED_WITH_FAILURES
+                : UnregisteredPsaSendBatch::STATUS_COMPLETED,
+            'finished_at' => now(),
+            'current_status' => 'completed',
+        ]);
     }
 
     public function sendOne(UnregisteredPsaRecipient $recipient): bool
     {
+        if (in_array($recipient->status, ['queued', 'processing'], true)) {
+            return false;
+        }
+
         return $this->sendRecipient($recipient);
     }
 
