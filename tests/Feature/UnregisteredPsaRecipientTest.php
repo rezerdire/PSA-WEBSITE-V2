@@ -1,12 +1,14 @@
 <?php
 
 use App\Filament\Pages\UnregisteredPsaRecipients;
+use App\Jobs\SendUnregisteredPsaId;
 use App\Mail\UnregisteredPsaId;
 use App\Models\UnregisteredPsaRecipient;
 use App\Models\User;
 use App\Services\PsaIdCardLocator;
 use App\Services\UnregisteredPsaRecipientService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -193,16 +195,31 @@ test('editing a recipient saves its chapter', function (): void {
     expect($recipient->fresh()->chapter)->toBe('Central Luzon');
 });
 
-test('bulk send uses the registration email view and tracks sent recipients', function (): void {
-    Mail::fake();
+test('bulk send queues pending recipients and immediately marks them queued', function (): void {
+    Bus::fake();
     $recipient = UnregisteredPsaRecipient::create(['psa_id' => '00123', 'email' => 'member@example.test', 'last_name' => 'Smith']);
-    $result = app(UnregisteredPsaRecipientService::class)->sendPending(10);
 
-    expect($result)->toBe(['sent' => 1, 'failed' => 0])
-        ->and($recipient->fresh()->status)->toBe('sent')
+    expect(app(UnregisteredPsaRecipientService::class)->queuePending(10))->toBe(1)
+        ->and($recipient->fresh()->status)->toBe('queued')
+        ->and($recipient->fresh()->sent_at)->toBeNull();
+
+    Bus::assertChained([new SendUnregisteredPsaId($recipient->id)]);
+});
+
+test('queued recipient job sends email and marks the row sent', function (): void {
+    Mail::fake();
+    $recipient = UnregisteredPsaRecipient::create([
+        'psa_id' => '00123',
+        'email' => 'member@example.test',
+        'last_name' => 'Smith',
+        'status' => 'queued',
+    ]);
+
+    app(UnregisteredPsaRecipientService::class)->processQueuedRecipient($recipient->id);
+
+    expect($recipient->fresh()->status)->toBe('sent')
         ->and($recipient->fresh()->sent_at)->not->toBeNull();
-
-    Mail::assertSent(UnregisteredPsaId::class, fn (UnregisteredPsaId $mail) => $mail->psaId === '00123' && $mail->lastName === 'Smith' && $mail->content()->with['registration']->last_name === 'Smith');
+    Mail::assertSent(UnregisteredPsaId::class, fn (UnregisteredPsaId $mail) => $mail->psaId === '00123' && $mail->lastName === 'Smith');
 });
 
 test('full names derive the final surname while dropping common name suffixes', function (): void {

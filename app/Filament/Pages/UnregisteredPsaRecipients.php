@@ -75,8 +75,8 @@ class UnregisteredPsaRecipients extends Page implements HasTable
                 ])
                 ->action(function (array $data, UnregisteredPsaRecipientService $service): void {
                     try {
-                        $result = $service->sendPending((int) $data['limit']);
-                        Notification::make()->title("Sent {$result['sent']}; failed {$result['failed']}.")->success()->send();
+                        $count = $service->queuePending((int) $data['limit']);
+                        Notification::make()->title("Queued {$count} recipients for delivery.")->body('Delivery continues in the background; the queue worker must be running.')->success()->send();
                     } catch (\Throwable $exception) {
                         Notification::make()->title('Bulk send failed')->body($exception->getMessage())->danger()->send();
                     }
@@ -108,7 +108,11 @@ class UnregisteredPsaRecipients extends Page implements HasTable
                     ->state(fn (UnregisteredPsaRecipient $record): bool => app(PsaIdCardLocator::class)->pathFor($record->psa_id) !== null),
                 TextColumn::make('email')->searchable(),
                 TextColumn::make('status')->badge()->color(fn (string $state): string => match ($state) {
-                    'sent' => 'success', 'failed' => 'danger', default => 'gray'
+                    'sent' => 'success',
+                    'failed' => 'danger',
+                    'queued' => 'warning',
+                    'processing' => 'info',
+                    default => 'gray',
                 }),
                 TextColumn::make('sent_at')->dateTime()->sortable()->placeholder('—'),
                 TextColumn::make('chapter')->label('Chapter')->searchable()->placeholder('—'),
