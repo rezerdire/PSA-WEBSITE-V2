@@ -21,6 +21,10 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Unregistered PSA ID email delivery
+
+Run `php artisan migrate` to create the email batch history tables. Bulk sends run through Laravel's queue; keep a worker running with `php artisan queue:work` (or the production process supervisor) to deliver them. In the admin panel, open **Unregistered PSA IDs** and choose **Bulk send history** to view live progress and recipient outcomes. The dashboard's **Unregistered PSA Email Delivery** metric counts recipients whose email send was accepted by the configured mail transport.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
