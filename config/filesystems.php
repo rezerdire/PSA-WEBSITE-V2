@@ -47,6 +47,15 @@ return [
         'report'     => false,
     ],
 
+        'psa_id_cards' => [
+            'driver' => 'local',
+            'root' => public_path('remaining/psa_id_remaining'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/') . '/remaining/psa_id_remaining',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
