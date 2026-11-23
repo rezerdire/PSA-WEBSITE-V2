@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\SendUnregisteredPsaId;
 use App\Mail\UnregisteredPsaId;
 use App\Models\UnregisteredPsaRecipient;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -94,23 +96,67 @@ class UnregisteredPsaRecipientService
         }
     }
 
-    public function sendPending(int $limit): array
+    public function queuePending(int $limit): int
     {
         if ($limit < 1 || $limit > 500) {
-            throw new RuntimeException('The send limit must be between 1 and 500.');
+            throw new RuntimeException('The bulk send limit must be between 1 and 500.');
         }
 
-        $sent = 0;
-        $failed = 0;
-        UnregisteredPsaRecipient::query()->where('status', 'pending')->orderBy('id')->limit($limit)->get()->each(function ($recipient) use (&$sent, &$failed): void {
-            if ($this->sendRecipient($recipient)) {
-                $sent++;
-            } else {
-                $failed++;
+        $recipientIds = DB::transaction(function () use ($limit): array {
+            $recipients = UnregisteredPsaRecipient::query()
+                ->where('status', 'pending')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->limit($limit)
+                ->get(['id']);
+
+            $ids = $recipients->modelKeys();
+            if ($ids !== []) {
+                UnregisteredPsaRecipient::query()->whereIn('id', $ids)->update([
+                    'status' => 'queued',
+                    'error' => null,
+                    'updated_at' => now(),
+                ]);
             }
+
+            return $ids;
         });
 
-        return compact('sent', 'failed');
+        if ($recipientIds === []) {
+            throw new RuntimeException('There are no pending recipients to queue.');
+        }
+
+        try {
+            $jobs = array_map(
+                fn (int $id): SendUnregisteredPsaId => new SendUnregisteredPsaId($id),
+                $recipientIds,
+            );
+            Bus::chain($jobs)->dispatch();
+        } catch (\Throwable $exception) {
+            UnregisteredPsaRecipient::query()->whereIn('id', $recipientIds)->where('status', 'queued')->update([
+                'status' => 'pending',
+                'updated_at' => now(),
+            ]);
+
+            throw $exception;
+        }
+
+        return count($recipientIds);
+    }
+
+    public function processQueuedRecipient(int $recipientId): void
+    {
+        $recipient = UnregisteredPsaRecipient::query()
+            ->whereKey($recipientId)
+            ->where('status', 'queued')
+            ->first();
+
+        if (! $recipient) {
+            return;
+        }
+
+        $recipient->update(['status' => 'processing']);
+        $this->sendRecipient($recipient);
     }
 
     public function sendOne(UnregisteredPsaRecipient $recipient): bool
