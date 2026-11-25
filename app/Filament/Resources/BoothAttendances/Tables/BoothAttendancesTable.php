@@ -11,9 +11,13 @@ use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BoothAttendancesTable
 {
@@ -102,7 +106,11 @@ class BoothAttendancesTable
                     ->sortable(),
             ])
             ->filters([
-                //
+                Filter::make('completed_attendance')
+                    ->label('Completed attendance')
+                    ->query(fn (Builder $query) => $totalBooths > 0
+                        ? $query->havingRaw('COUNT(DISTINCT booth_attendances.booth_id) >= ?', [$totalBooths])
+                        : $query->whereRaw('1 = 0')),
             ])
             // Clicking a row opens the "View" slide-over
             ->recordAction(ViewAction::class)
@@ -164,7 +172,80 @@ class BoothAttendancesTable
                     ->action(fn ($record) => BoothAttendance::where('member_id_no', $record->member_id_no)->delete()),
             ])
             ->toolbarActions([
-                //
+                Action::make('exportCompletedExcel')
+                    ->label('Export completed (Excel)')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(fn (): StreamedResponse => self::downloadCompletedAttendees($totalBooths, 'xlsx')),
+
+                Action::make('exportCompletedCsv')
+                    ->label('Export completed (CSV)')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(fn (): StreamedResponse => self::downloadCompletedAttendees($totalBooths, 'csv')),
             ]);
+    }
+
+    protected static function downloadCompletedAttendees(int $totalBooths, string $format): StreamedResponse
+    {
+        $attendees = self::completedAttendeesQuery($totalBooths)->cursor();
+        $filename = 'completed-booth-attendance-' . now()->format('Y-m-d_His') . '.' . $format;
+
+        return response()->streamDownload(function () use ($attendees, $format): void {
+            if ($format === 'xlsx') {
+                $writer = new Writer();
+                $writer->openToFile('php://output');
+                $writer->addRow(Row::fromValues(['PSA ID', 'Full Name']));
+
+                foreach ($attendees as $attendee) {
+                    $writer->addRow(Row::fromValues([
+                        $attendee->member_id_no,
+                        self::fullName($attendee),
+                    ]));
+                }
+
+                $writer->close();
+
+                return;
+            }
+
+            $output = fopen('php://output', 'wb');
+            fputcsv($output, ['PSA ID', 'Full Name'], ',', '"', '');
+
+            foreach ($attendees as $attendee) {
+                fputcsv($output, [
+                    $attendee->member_id_no,
+                    self::fullName($attendee),
+                ], ',', '"', '');
+            }
+
+            fclose($output);
+        }, $filename, [
+            'Content-Type' => $format === 'xlsx'
+                ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                : 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    protected static function completedAttendeesQuery(int $totalBooths): Builder
+    {
+        $members = (new Member)->getTable();
+
+        return BoothAttendance::query()
+            ->leftJoin($members, "{$members}.member_id_no", '=', 'booth_attendances.member_id_no')
+            ->select([
+                'booth_attendances.member_id_no',
+                DB::raw("MAX({$members}.mem_first_name) as mem_first_name"),
+                DB::raw("MAX({$members}.mem_middle_name) as mem_middle_name"),
+                DB::raw("MAX({$members}.mem_last_name) as mem_last_name"),
+            ])
+            ->groupBy('booth_attendances.member_id_no')
+            ->when(
+                $totalBooths > 0,
+                fn (Builder $query) => $query->havingRaw(
+                    'COUNT(DISTINCT booth_attendances.booth_id) >= ?',
+                    [$totalBooths]
+                ),
+                fn (Builder $query) => $query->whereRaw('1 = 0')
+            )
+            ->orderBy('booth_attendances.member_id_no');
     }
 }
