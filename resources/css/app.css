@@ -14,6 +14,56 @@
         50% { opacity: 0.35; }
     }
 
+@keyframes booth-confetti-fall {
+  0% { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate3d(var(--confetti-drift), 110vh, 0) rotate(720deg); opacity: 0; }
+}
+
+@keyframes booth-popup-enter {
+  0% { transform: translateY(1rem) scale(0.92); opacity: 0; }
+  70% { transform: translateY(-0.25rem) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.booth-confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.booth-confetti-piece {
+  position: absolute;
+  top: -1rem;
+  left: var(--confetti-left);
+  width: 0.55rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  background-color: var(--confetti-color);
+  animation: booth-confetti-fall 3.2s var(--confetti-delay) ease-in both;
+}
+
+.booth-confetti-piece:nth-child(4n + 1) { --confetti-color: #2563eb; }
+.booth-confetti-piece:nth-child(4n + 2) { --confetti-color: #f59e0b; }
+.booth-confetti-piece:nth-child(4n + 3) { --confetti-color: #10b981; }
+.booth-confetti-piece:nth-child(4n) { --confetti-color: #ec4899; }
+
+.booth-popup-enter {
+  animation: booth-popup-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-confetti-piece,
+  .booth-popup-enter {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .booth-confetti-piece:nth-child(2n) { display: none; }
+}
+
 
 @theme {
   --font-heading:"Cormorant Garamond", serif;
