@@ -212,6 +212,40 @@ new #[Title('Booth Check-in')] class extends Component {
                 </div>
             </x-booth.progress-summary>
         </div>
+            @if ($totalBooths > 0 && $visitedBooths === $totalBooths)
+                <div x-data="{ open: true }" x-show="open" x-cloak
+                    x-on:keydown.escape.window="open = false"
+                    x-on:click.self="open = false"
+                    role="dialog" aria-modal="true" aria-labelledby="booth-completion-title"
+                    class="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-slate-950/60 p-4 backdrop-blur-sm">
+                    <div aria-hidden="true" class="booth-confetti">
+                        @foreach (range(0, 31) as $piece)
+                            <span class="booth-confetti-piece"
+                                style="--confetti-left: {{ ($piece * 37) % 100 }}%; --confetti-delay: -{{ ($piece % 12) * 0.23 }}s; --confetti-drift: {{ (($piece % 3) - 1) * 45 }}px"></span>
+                        @endforeach
+                    </div>
+                    <div class="booth-popup-enter w-full max-w-md rounded-2xl bg-white p-7 text-center shadow-2xl sm:p-9">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="m5 12 4 4L19 6M12 2l2.2 2.2 3.1-.3.9 3 2.7 1.6-1.1 2.9 1.1 2.9-2.7 1.6-.9 3-3.1-.3L12 21l-2.2-2.2-3.1.3-.9-3-2.7-1.6 1.1-2.9-1.1-2.9 2.7-1.6.9-3 3.1.3L12 2Z" />
+                            </svg>
+                        </div>
+                        <p class="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-amber-600">Booth journey complete</p>
+                        <h2 id="booth-completion-title" class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
+                            Congratulations!
+                        </h2>
+                        <p class="mt-3 text-sm leading-6 text-slate-600">
+                            You completed all the booths and are now qualified for the raffle!
+                        </p>
+                        <button type="button" x-on:click="open = false"
+                            class="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            @endif
     @endif
 </div>
 
