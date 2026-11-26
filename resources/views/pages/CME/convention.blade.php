@@ -50,13 +50,13 @@
                 'icon' => 'sparkles',
                 'href' => '#',
             ],
-            // [
-            //     'key' => 'booth-checker',
-            //     'title' => 'Booth Checker',
-            //     'description' => 'Check the booths you have visited',
-            //     'icon' => 'clipboard-document-list',
-            //     'href' => route('booth.checker'),
-            // ],
+            [
+                'key' => 'booth-checker',
+                'title' => 'Booth Checker',
+                'description' => 'Check the booths you have visited',
+                'icon' => 'clipboard-document-list',
+                'href' => route('booth.checker'),
+            ],
           
         ];
     @endphp
