@@ -37,6 +37,10 @@ When an eligible visitor opens the Google Form, their PSA ID is temporarily stor
 
 In the Filament admin panel, **Evaluation Master List** lets administrators search, filter, create, edit, and delete entries. CSV imports replace non-VIP entries, including manual changes to those entries.
 
+## Booth check-in
+
+Booth QR check-in is closed because the event has ended. QR links display the raffle notice, and check-in submissions are rejected. Existing visits remain available through the booth checker and admin panel.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
