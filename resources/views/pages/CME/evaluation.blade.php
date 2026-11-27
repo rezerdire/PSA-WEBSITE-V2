@@ -13,7 +13,7 @@
             @if (($status ?? null) === 'eligible')
                 <div class="mb-6 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 text-center">
                     <p class="mb-3 font-semibold text-emerald-900">Your evaluation form is ready.</p>
-                    <a href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-700 px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2">
+                    <a id="open-evaluation-form" data-psa-id="{{ $psaId }}" href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-700 px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2">
                         Open Evaluation Form &rarr;
                     </a>
                 </div>
@@ -24,7 +24,7 @@
                 Enter the PSA ID used for the Annual Convention 2026. We will check our system and the evaluation response sheet before showing the form link.
             </p>
 
-            <form method="POST" action="{{ route('annual-convention-evaluation.check') }}" class="space-y-4">
+            <form id="evaluation-check-form" method="POST" action="{{ route('annual-convention-evaluation.check') }}" class="space-y-4">
                 @csrf
                 <div>
                     <label for="psa_id" class="mb-1 block text-sm font-medium text-slate-700">PSA ID</label>
@@ -105,4 +105,33 @@
             @endif
         </section>
     </main>
+    <script>
+        (() => {
+            const storageKey = 'annual-convention-evaluation-return-id';
+            const link = document.getElementById('open-evaluation-form');
+            const form = document.getElementById('evaluation-check-form');
+            const input = document.getElementById('psa_id');
+
+            link?.addEventListener('click', () => {
+                try {
+                    localStorage.setItem(storageKey, link.dataset.psaId);
+                } catch (error) {
+                    // Verification remains available manually when browser storage is blocked.
+                }
+            });
+
+            @if (! isset($status) && ! $errors->any())
+                try {
+                    const savedId = localStorage.getItem(storageKey);
+                    if (savedId) {
+                        localStorage.removeItem(storageKey);
+                        input.value = savedId;
+                        form.requestSubmit();
+                    }
+                } catch (error) {
+                    // The user can enter their PSA ID manually.
+                }
+            @endif
+        })();
+    </script>
 @endsection
