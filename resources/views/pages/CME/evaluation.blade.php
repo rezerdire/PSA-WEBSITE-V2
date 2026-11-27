@@ -5,14 +5,23 @@
 @section('content')
     <x-about-us-header
         title="Annual Convention Evaluation"
-        description="Verify your annual convention registration before opening the evaluation form."
+        description="Verify your PSA ID before opening the evaluation form."
     />
 
     <main class="min-h-[60vh] bg-slate-50 px-4 py-12 sm:px-6">
         <section class="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
-            <h2 class="mb-2 text-xl font-semibold text-[#000066]">Check your registration</h2>
+            @if (($status ?? null) === 'eligible')
+                <div class="mb-6 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 text-center">
+                    <p class="mb-3 font-semibold text-emerald-900">Your evaluation form is ready.</p>
+                    <a href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-700 px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2">
+                        Open Evaluation Form &rarr;
+                    </a>
+                </div>
+            @endif
+
+            <h2 class="mb-2 text-xl font-semibold text-[#000066]">Check your PSA ID</h2>
             <p class="mb-6 text-sm leading-relaxed text-slate-600">
-                Enter the PSA ID used for your Annual Convention 2026 registration. We will check your registration and the evaluation response sheet before showing the form link.
+                Enter the PSA ID used for the Annual Convention 2026. We will check our system and the evaluation response sheet before showing the form link.
             </p>
 
             <form method="POST" action="{{ route('annual-convention-evaluation.check') }}" class="space-y-4">
@@ -38,15 +47,23 @@
                 </button>
             </form>
 
+            @if (isset($masterListRecord))
+                <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-950">
+                    <p class="text-sm font-medium">Name</p>
+                    <p class="mt-1 text-lg font-bold">{{ implode(' ', array_filter([$masterListRecord->first_name, $masterListRecord->middle_name, $masterListRecord->last_name], fn ($part) => filled($part))) }}</p>
+                </div>
+            @endif
+
             @if (($status ?? null) === 'not-registered')
                 <p role="status" class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                    We could not find an active Annual Convention registration for this PSA ID. Check the ID or complete your registration first.
+                    We could not find this PSA ID in our system. Check the ID or contact the convention organizers if you believe this is an error.
                 </p>
             @elseif (($status ?? null) === 'completed')
                 <div role="status" class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                     You have already completed the Annual Convention evaluation for this PSA ID. Thank you for participating.
                    
                 </div>
+                {{--
                 <div class="mt-5 flex justify-center">
                     <button
                         type="button"
@@ -64,19 +81,22 @@
                         <span class="ml-1 rounded-md border border-white/30 px-2 py-1 text-xs font-bold tracking-wide text-white">PDF</span>
                     </button>
                 </div>
+                --}}
+                <div role="note" class="mt-5 rounded-xl border-2 border-amber-400 bg-amber-50 p-5 text-amber-950 shadow-md">
+                    <p class="text-lg font-extrabold">Certificate update</p>
+                    <p class="mt-1 font-semibold">The certificate will be announced on Facebook once it is available. Please check our Facebook page for updates.</p>
+                    <a href="https://www.facebook.com/philippinesocietyofanesthesiologists" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center rounded-lg bg-[#000066] px-4 py-2 font-bold text-white underline decoration-white/60 underline-offset-2 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                        Visit our Facebook page
+                    </a>
+                </div>
             @elseif (($status ?? null) === 'eligible')
                 <div role="status" class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    Your registration is verified and no evaluation response was found for this PSA ID.
+                    Your PSA ID is verified, and no evaluation response was found.
                 </div>
-                <div class = "justify-center flex">
-                 <a href="{{ $formUrl }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex rounded-lg bg-[#000066] px-5 py-3 font-semibold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
-                        Open Evaluation Form
-                    </a>
-                </div>   
 
             @elseif (($status ?? null) === 'not-configured')
                 <p role="status" class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                    Your registration is verified, but the evaluation form is not configured yet. Please contact the convention organizers.
+                    Your PSA ID is verified, but the evaluation form is not configured yet. Please contact the convention organizers.
                 </p>
             @elseif (($status ?? null) === 'unavailable')
                 <p role="status" class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

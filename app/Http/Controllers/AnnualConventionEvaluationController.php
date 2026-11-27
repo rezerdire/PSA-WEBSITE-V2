@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Registration;
+use App\Models\MasterList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
@@ -22,12 +22,11 @@ class AnnualConventionEvaluationController extends Controller
         ]);
 
         $psaId = trim($validated['psa_id']);
-        $registration = Registration::query()
+        $masterListRecord = MasterList::query()
             ->whereRaw('LOWER(TRIM(psa_id)) = ?', [mb_strtolower($psaId)])
-            ->where('status', '!=', Registration::STATUS_REJECTED)
             ->first();
 
-        if (! $registration) {
+        if (! $masterListRecord) {
             return view('pages.CME.evaluation', [
                 'status' => 'not-registered',
                 'psaId' => $psaId,
@@ -41,6 +40,7 @@ class AnnualConventionEvaluationController extends Controller
             return view('pages.CME.evaluation', [
                 'status' => 'not-configured',
                 'psaId' => $psaId,
+                'masterListRecord' => $masterListRecord,
             ]);
         }
 
@@ -51,19 +51,21 @@ class AnnualConventionEvaluationController extends Controller
                 throw new \RuntimeException('Evaluation response sheet request failed.');
             }
 
-            $alreadyCompleted = $this->responseSheetContains($response->body(), $registration->psa_id);
+            $alreadyCompleted = $this->responseSheetContains($response->body(), $masterListRecord->psa_id);
         } catch (Throwable $exception) {
             report($exception);
 
             return view('pages.CME.evaluation', [
                 'status' => 'unavailable',
                 'psaId' => $psaId,
+                'masterListRecord' => $masterListRecord,
             ]);
         }
 
         return view('pages.CME.evaluation', [
             'status' => $alreadyCompleted ? 'completed' : 'eligible',
             'psaId' => $psaId,
+            'masterListRecord' => $masterListRecord,
             'formUrl' => $formUrl,
         ]);
     }
