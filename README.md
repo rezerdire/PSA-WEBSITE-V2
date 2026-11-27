@@ -25,6 +25,16 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 Run `php artisan migrate` to create the email batch history tables. Bulk sends run through Laravel's queue; keep a worker running with `php artisan queue:work` (or the production process supervisor) to deliver them. In the admin panel, open **Unregistered PSA IDs** and choose **Bulk send history** to view live progress and recipient outcomes. The dashboard's **Unregistered PSA Email Delivery** metric counts recipients whose email send was accepted by the configured mail transport.
 
+## Annual Convention evaluation master list
+
+Run `php artisan migrate` to create the unified `master_lists` table, then import both CSVs from `public/masterlist` with `php artisan masterlist:import`. Optional positional paths let you use alternate files: `php artisan masterlist:import path/to/members.csv path/to/nonmembers.csv`. The import replaces non-VIP entries, updates matching VIP entries from the CSVs, and retains VIP details and VIP-only entries.
+
+Import the consolidated VIP workbook with `php artisan masterlist:import-vip "path/to/AC2026 VIP MASTERLIST - Official_consolidated.xlsx"`. It reads the Summary sheet and matches existing records by PSA ID or, when absent, payment reference. VIPs without a PSA ID are retained but cannot access the evaluation form until an administrator adds one.
+
+Rows missing a first or last name in the CSV are skipped with their row numbers; correct the source files and re-import to include them. After a PSA ID is verified, the evaluation page displays the matching name.
+
+In the Filament admin panel, **Evaluation Master List** lets administrators search, filter, create, edit, and delete entries. CSV imports replace non-VIP entries, including manual changes to those entries.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
