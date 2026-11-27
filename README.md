@@ -33,6 +33,8 @@ Import the consolidated VIP workbook with `php artisan masterlist:import-vip "pa
 
 Rows missing a first or last name in the CSV are skipped with their row numbers; correct the source files and re-import to include them. After a PSA ID is verified, the evaluation page displays the matching name.
 
+When an eligible visitor opens the Google Form, their PSA ID is temporarily stored in their browser. Add the evaluation page URL to the Google Form confirmation message; returning through that link in the same browser automatically checks the ID once and clears it from browser storage. If storage is blocked, visitors can enter the ID manually.
+
 In the Filament admin panel, **Evaluation Master List** lets administrators search, filter, create, edit, and delete entries. CSV imports replace non-VIP entries, including manual changes to those entries.
 
 ## Learning Laravel
